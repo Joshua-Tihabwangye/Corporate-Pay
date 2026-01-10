@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Smooth scrolling for in-page anchors */
+html { scroll-behavior: smooth; }
+
+/* Better default text rendering */
+body { text-rendering: optimizeLegibility; }
