@@ -119,15 +119,15 @@ type HistoryItem = {
   ts: number;
   actor: string;
   type:
-    | "Budget created"
-    | "Budget updated"
-    | "User cap updated"
-    | "Spend attempted"
-    | "Spend applied"
-    | "Hard cap blocked"
-    | "Exception requested"
-    | "Exception approved"
-    | "Exception rejected";
+  | "Budget created"
+  | "Budget updated"
+  | "User cap updated"
+  | "Spend attempted"
+  | "Spend applied"
+  | "Hard cap blocked"
+  | "Exception requested"
+  | "Exception approved"
+  | "Exception rejected";
   details: string;
 };
 
@@ -272,8 +272,8 @@ function Button({
     variant === "primary"
       ? { background: EVZ.green }
       : variant === "accent"
-      ? { background: EVZ.orange }
-      : undefined;
+        ? { background: EVZ.orange }
+        : undefined;
 
   return (
     <button
@@ -608,12 +608,12 @@ function StatCard({
     tone === "good"
       ? "bg-emerald-50 text-emerald-700"
       : tone === "warn"
-      ? "bg-amber-50 text-amber-800"
-      : tone === "bad"
-      ? "bg-rose-50 text-rose-700"
-      : tone === "info"
-      ? "bg-blue-50 text-blue-700"
-      : "bg-slate-50 text-slate-700";
+        ? "bg-amber-50 text-amber-800"
+        : tone === "bad"
+          ? "bg-rose-50 text-rose-700"
+          : tone === "info"
+            ? "bg-blue-50 text-blue-700"
+            : "bg-slate-50 text-slate-700";
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1440,10 +1440,10 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                                   b.scope === "Org"
                                     ? "Organization"
                                     : b.scope === "Group"
-                                    ? b.group
-                                    : b.scope === "Module"
-                                    ? b.module
-                                    : `${b.marketplace}`;
+                                      ? b.group
+                                      : b.scope === "Module"
+                                        ? b.module
+                                        : `${b.marketplace}`;
                                 return (
                                   <tr key={b.id} className="border-t border-slate-100 hover:bg-slate-50/60">
                                     <td className="px-4 py-3"><Pill label={b.scope} tone="neutral" /></td>
@@ -2326,4 +2326,8 @@ export default function CorporatePayBudgetsSpendControlsV2() {
     return (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-slate-700">
         <path d="M15 17H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" strokeWidth="2" strokeLine
+        <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+}

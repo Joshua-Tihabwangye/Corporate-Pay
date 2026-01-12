@@ -130,8 +130,8 @@ function Button({
     variant === "primary"
       ? { background: EVZ.green }
       : variant === "accent"
-      ? { background: EVZ.orange }
-      : undefined;
+        ? { background: EVZ.orange }
+        : undefined;
 
   return (
     <button
@@ -1224,25 +1224,25 @@ export default function CorporatePayNotificationsCenterV2() {
               <div className="text-sm font-semibold text-slate-900">Suggested rule</div>
               <div className="mt-2 text-xs text-slate-600">This is a safe draft. Review before saving.</div>
               <pre className="mt-3 overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
-{JSON.stringify(
-  {
-    if: {
-      kind: ruleTarget.kind,
-      severity: ruleTarget.severity,
-      module: ruleTarget.module,
-      marketplace: ruleTarget.marketplace || "-",
-      rootCause: ruleTarget.rootCauseKey,
-    },
-    then: {
-      action: ruleTarget.kind === "Vendor" ? "Require approvals for vendor" : "Route to role",
-      routeTo: ruleTarget.kind === "Payment" ? "Accountant" : "Approver",
-      notify: ["Email", "WhatsApp"],
-    },
-    notes: "Generated from event. Audit logged.",
-  },
-  null,
-  2
-)}
+                {JSON.stringify(
+                  {
+                    if: {
+                      kind: ruleTarget.kind,
+                      severity: ruleTarget.severity,
+                      module: ruleTarget.module,
+                      marketplace: ruleTarget.marketplace || "-",
+                      rootCause: ruleTarget.rootCauseKey,
+                    },
+                    then: {
+                      action: ruleTarget.kind === "Vendor" ? "Require approvals for vendor" : "Route to role",
+                      routeTo: ruleTarget.kind === "Payment" ? "Accountant" : "Approver",
+                      notify: ["Email", "WhatsApp"],
+                    },
+                    notes: "Generated from event. Audit logged.",
+                  },
+                  null,
+                  2
+                )}
               </pre>
             </div>
           </div>
@@ -1380,60 +1380,7 @@ export default function CorporatePayNotificationsCenterV2() {
     </div>
   );
 
-  // helpers within component
-  function resolve(e: EventRow) {
-    setEvents((prev) => prev.map((x) => (x.id === e.id ? { ...x, status: "Resolved", snoozeUntil: null } : x)));
-    toast({ title: "Resolved", message: `${e.id} resolved.`, kind: "success" });
-  }
 
-  function snooze(e: EventRow, minutes: number) {
-    const until = Date.now() + minutes * 60 * 1000;
-    setEvents((prev) => prev.map((x) => (x.id === e.id ? { ...x, status: "Snoozed", snoozeUntil: until } : x)));
-    toast({ title: "Snoozed", message: `${e.id} snoozed for ${minutes} minutes.`, kind: "info" });
-  }
-
-  function assign(e: EventRow, who: string) {
-    setEvents((prev) => prev.map((x) => (x.id === e.id ? { ...x, assignedTo: who } : x)));
-    toast({ title: "Assigned", message: `${e.id} assigned to ${who}.`, kind: "success" });
-  }
-
-  function createRuleFrom(e: EventRow) {
-    setRuleTarget(e);
-    setRuleOpen(true);
-  }
-
-  function createDigestPreview() {
-    toast({ title: "Digest preview", message: "Generating digest preview (demo).", kind: "info" });
-  }
-
-  function triggerSendDigest() {
-    toast({ title: "Digest sent", message: "Digest sent to configured channels (demo).", kind: "success" });
-  }
-
-  function toggleDigestEnabled(id: string) {
-    setDigestRules((prev) => prev.map((d) => (d.id === id ? { ...d, enabled: !d.enabled } : d)));
-  }
-
-  function toggleRoutingEnabled(id: string) {
-    setRoutingRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
-  }
-
-  function addRoutingRuleFromTemplate() {
-    const r: RoutingRule = {
-      id: uid("RR"),
-      enabled: true,
-      name: "Policy breaches to Approvers",
-      match: {
-        kinds: ["Policy"],
-        severities: ["Warning", "Critical"],
-        modules: ["Rides & Logistics"],
-        marketplaces: ["-"],
-      },
-      routeToRole: "Approver",
-    };
-    setRoutingRules((p) => [r, ...p]);
-    toast({ title: "Rule added", message: "Routing rule added from template.", kind: "success" });
-  }
 }
 
 function Empty({ title, subtitle }: { title: string; subtitle: string }) {

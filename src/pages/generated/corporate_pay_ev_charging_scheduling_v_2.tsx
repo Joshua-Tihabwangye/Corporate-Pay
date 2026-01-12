@@ -1031,7 +1031,12 @@ export default function CorporatePayEVChargingSchedulingV2() {
     // Choose approval flags
     const approvalFlags = f.flags.filter((x) => x !== "Peak tariff");
 
-    return { whenTs, requiredErrors, ...f, needsApproval, canCreate, suggestion, approvalFlags };
+    const hasActiveVipException =
+      (f.isDC && hasVipException(draft.vehicleId, "DC fast", whenTs)) ||
+      (draft.prioritySlot && hasVipException(draft.vehicleId, "Priority slot", whenTs)) ||
+      (f.after && hasVipException(draft.vehicleId, "After-hours", whenTs));
+
+    return { whenTs, requiredErrors, ...f, needsApproval, canCreate, suggestion, approvalFlags, hasActiveVipException };
   }, [draft, policy, vipExceptions, vehicleById]);
 
   const filteredSessions = useMemo(() => {
@@ -1044,7 +1049,7 @@ export default function CorporatePayEVChargingSchedulingV2() {
         if (!query) return true;
         const v = vehicleById[s.vehicleId];
         const site = siteById[s.siteId];
-        const blob = `${s.ref} ${s.id} ${v?.label || ""} ${v?.ownerName || ""} ${site?.name || ""} ${s.connector} ${s.purpose} ${s.tags.join(" ")} ${s.costCenter} ${s.projectTag} ${s.pickup}`;
+        const blob = `${s.ref} ${s.id} ${v?.label || ""} ${v?.ownerName || ""} ${site?.name || ""} ${s.connector} ${s.purpose} ${s.tags.join(" ")} ${s.costCenter} ${s.projectTag}`;
         return blob.toLowerCase().includes(query);
       })
       .slice()
@@ -2239,11 +2244,11 @@ export default function CorporatePayEVChargingSchedulingV2() {
                       p.map((s) =>
                         s.id === activeSession.id
                           ? {
-                              ...s,
-                              status: "Completed",
-                              proofs: [{ id: uid("AT"), name: "Charge receipt.pdf", note: "Receipt", addedAt: endedAt, addedBy: "System" }, ...s.proofs],
-                              result: { kWhDelivered: delivered, costUGX: cost, endedAt },
-                            }
+                            ...s,
+                            status: "Completed",
+                            proofs: [{ id: uid("AT"), name: "Charge receipt.pdf", note: "Receipt", addedAt: endedAt, addedBy: "System" }, ...s.proofs],
+                            result: { kWhDelivered: delivered, costUGX: cost, endedAt },
+                          }
                           : s
                       )
                     );

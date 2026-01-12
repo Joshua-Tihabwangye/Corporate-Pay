@@ -800,7 +800,7 @@ export default function CorporatePaySupportEVzoneAdminToolsV2() {
       module: "Security",
       kind: "Guided action",
       risk: "High",
-      description: "Creates a tamper-evident audit export (production requires approval).","
+      description: "Creates a tamper-evident audit export (production requires approval).",
     },
   ];
 
@@ -1082,8 +1082,8 @@ export default function CorporatePaySupportEVzoneAdminToolsV2() {
             ? "Check completed. No write actions performed."
             : "Check failed. Review integrations and retry."
           : ok
-          ? "Guided action completed with guardrails."
-          : "Guided action failed. Requires manual review.",
+            ? "Guided action completed with guardrails."
+            : "Guided action failed. Requires manual review.",
     };
 
     setSessions((prev) => prev.map((x) => (x.id === s.id ? { ...x, actions: [...x.actions, action] } : x)));
@@ -1127,10 +1127,10 @@ export default function CorporatePaySupportEVzoneAdminToolsV2() {
       prev.map((s) =>
         s.id === sessionId
           ? {
-              ...s,
-              toolsScope: { ...s.toolsScope, guidedActionsAllowed: true },
-              mode: "Guided actions",
-            }
+            ...s,
+            toolsScope: { ...s.toolsScope, guidedActionsAllowed: true },
+            mode: "Guided actions",
+          }
           : s
       )
     );

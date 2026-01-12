@@ -126,8 +126,8 @@ function Button({
     variant === "primary"
       ? { background: EVZ.green }
       : variant === "accent"
-      ? { background: EVZ.orange }
-      : undefined;
+        ? { background: EVZ.orange }
+        : undefined;
 
   return (
     <button
@@ -824,10 +824,10 @@ export default function CorporatePayMfaDeviceTrustV2() {
       prev.map((b) =>
         b.id === id
           ? {
-              ...b,
-              emergencyCodes: generateBackupCodes(12),
-              lastRotatedTs: Date.now(),
-            }
+            ...b,
+            emergencyCodes: generateBackupCodes(12),
+            lastRotatedTs: Date.now(),
+          }
           : b
       )
     );
@@ -1648,8 +1648,4 @@ function Card({
   );
 }
 
-function severityTone(sev: "Info" | "Warning" | "Critical") {
-  if (sev === "Critical") return "bad" as const;
-  if (sev === "Warning") return "warn" as const;
-  return "info" as const;
-}
+

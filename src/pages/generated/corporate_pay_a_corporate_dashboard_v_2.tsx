@@ -118,8 +118,8 @@ function Button({
     variant === "primary"
       ? { background: EVZ.green }
       : variant === "accent"
-      ? { background: EVZ.orange }
-      : undefined;
+        ? { background: EVZ.orange }
+        : undefined;
 
   return (
     <button
@@ -800,7 +800,7 @@ export default function CorporatePayDashboardV2() {
       const mtd = data.spendByGroup[g];
       const forecast = Math.round((mtd / Math.max(1, data.monthDay)) * data.daysInMonth);
       const budget = data.budgetByGroup[g];
-      const risk = forecast > budget ? "bad" : forecast > budget * 0.9 ? "warn" : "good";
+      const risk: "bad" | "warn" | "good" = forecast > budget ? "bad" : forecast > budget * 0.9 ? "warn" : "good";
       return { group: g, mtd, forecast, budget, risk };
     });
     return out;

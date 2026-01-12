@@ -15,7 +15,7 @@ import {
   FileText,
   Filter,
   Flame,
-  Freeze,
+  Snowflake,
   Globe,
   Hash,
   HelpCircle,
@@ -131,8 +131,8 @@ function Button({
     variant === "primary"
       ? { background: EVZ.green }
       : variant === "accent"
-      ? { background: EVZ.orange }
-      : undefined;
+        ? { background: EVZ.orange }
+        : undefined;
 
   return (
     <button
@@ -1153,7 +1153,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
                       onClick={() => openAction("budget")}
                     />
                     <QuickActionCard
-                      icon={<Freeze className="h-4 w-4" />}
+                      icon={<Snowflake className="h-4 w-4" />}
                       title="Freeze CorporatePay"
                       desc="Pause CorporatePay at checkout"
                       shortcut={operatorMode ? "A F" : undefined}
@@ -1382,7 +1382,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
             <div className="rounded-3xl border border-slate-200 bg-white p-4">
               <div className="text-sm font-semibold text-slate-900">Raw data</div>
               <pre className="mt-3 max-h-[360px] overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
-{JSON.stringify(detail.raw, null, 2)}
+                {JSON.stringify(detail.raw, null, 2)}
               </pre>
               <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
                 In production, this panel respects role permissions and redacts sensitive fields.
@@ -1438,12 +1438,12 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
           actionKind === "rfq"
             ? "Create RFQ"
             : actionKind === "budget"
-            ? "Issue budget"
-            : actionKind === "freeze"
-            ? "Freeze CorporatePay"
-            : actionKind === "export"
-            ? "Export month report"
-            : "Action"
+              ? "Issue budget"
+              : actionKind === "freeze"
+                ? "Freeze CorporatePay"
+                : actionKind === "export"
+                  ? "Export month report"
+                  : "Action"
         }
         subtitle="Audit-friendly confirmation and reason prompt"
         onClose={() => setActionOpen(false)}
@@ -1568,24 +1568,24 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
                 <Pill label="Preview" tone="info" />
               </div>
               <pre className="mt-3 max-h-[360px] overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
-{JSON.stringify(
-  {
-    action: actionKind,
-    actorRole: role,
-    at: new Date().toISOString(),
-    reason,
-    draft:
-      actionKind === "rfq"
-        ? rfqDraft
-        : actionKind === "budget"
-        ? budgetDraft
-        : actionKind === "freeze"
-        ? freezeDraft
-        : exportDraft,
-  },
-  null,
-  2
-)}
+                {JSON.stringify(
+                  {
+                    action: actionKind,
+                    actorRole: role,
+                    at: new Date().toISOString(),
+                    reason,
+                    draft:
+                      actionKind === "rfq"
+                        ? rfqDraft
+                        : actionKind === "budget"
+                          ? budgetDraft
+                          : actionKind === "freeze"
+                            ? freezeDraft
+                            : exportDraft,
+                  },
+                  null,
+                  2
+                )}
               </pre>
               <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
                 Premium: map this to immutable audit log IDs and include policy version.

@@ -252,8 +252,8 @@ function Button({
     variant === "primary"
       ? { background: EVZ.green }
       : variant === "accent"
-      ? { background: EVZ.orange }
-      : undefined;
+        ? { background: EVZ.orange }
+        : undefined;
 
   return (
     <button
@@ -344,12 +344,14 @@ function Select({
   onChange,
   options,
   hint,
+  disabled,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: string[];
   hint?: string;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -360,7 +362,8 @@ function Select({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+        disabled={disabled}
+        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-500"
       >
         {options.map((o) => (
           <option key={o} value={o}>
@@ -929,8 +932,8 @@ export default function CorporatePayApprovalsInboxV2() {
           actionKind === "Approve"
             ? "Approved"
             : actionKind === "Reject"
-            ? "Rejected"
-            : "Changes requested";
+              ? "Rejected"
+              : "Changes requested";
 
         return {
           ...it,
@@ -972,10 +975,10 @@ export default function CorporatePayApprovalsInboxV2() {
       prev.map((it) =>
         it.id === attachItemId
           ? {
-              ...it,
-              hasAttachment: true,
-              history: [...it.history, { at: nowTs, by: "You", action: "Attachment added", why: attachNote }],
-            }
+            ...it,
+            hasAttachment: true,
+            history: [...it.history, { at: nowTs, by: "You", action: "Attachment added", why: attachNote }],
+          }
           : it
       )
     );
@@ -1004,11 +1007,11 @@ export default function CorporatePayApprovalsInboxV2() {
       prev.map((it) =>
         it.id === delegateItemId
           ? {
-              ...it,
-              assignedTo: delegateTo,
-              status: it.status === "Breached" ? "Escalated" : it.status,
-              history: [...it.history, { at: nowTs, by: "You", action: `Delegated to ${delegateTo}`, why }],
-            }
+            ...it,
+            assignedTo: delegateTo,
+            status: it.status === "Breached" ? "Escalated" : it.status,
+            history: [...it.history, { at: nowTs, by: "You", action: `Delegated to ${delegateTo}`, why }],
+          }
           : it
       )
     );

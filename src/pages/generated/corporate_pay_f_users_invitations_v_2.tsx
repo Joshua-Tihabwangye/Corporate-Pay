@@ -41,16 +41,16 @@ function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
 }
 
-function clamp(n, min, max) {
+function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-function formatUGX(n) {
+function formatUGX(n: number) {
   const v = Math.round(Number(n || 0));
   return `UGX ${v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 }
 
-function timeAgo(ts) {
+function timeAgo(ts: number | null) {
   if (!ts) return "-";
   const d = Date.now() - ts;
   const m = Math.floor(d / 60000);
@@ -62,7 +62,7 @@ function timeAgo(ts) {
   return `${days}d ago`;
 }
 
-function formatDateTime(ts) {
+function formatDateTime(ts: number) {
   return new Date(ts).toLocaleString(undefined, {
     year: "numeric",
     month: "short",
@@ -72,8 +72,8 @@ function formatDateTime(ts) {
   });
 }
 
-function Pill({ label, tone = "neutral" }) {
-  const map = {
+function Pill({ label, tone = "neutral" }: { label: string; tone?: "good" | "warn" | "bad" | "info" | "neutral" }) {
+  const map: Record<string, string> = {
     good: "bg-emerald-50 text-emerald-700 ring-emerald-200",
     warn: "bg-amber-50 text-amber-800 ring-amber-200",
     bad: "bg-rose-50 text-rose-700 ring-rose-200",
@@ -87,9 +87,9 @@ function Pill({ label, tone = "neutral" }) {
   );
 }
 
-function Button({ variant = "outline", className, children, onClick, disabled, title }) {
+function Button({ variant = "outline", className, children, onClick, disabled, title }: { variant?: "primary" | "accent" | "outline" | "ghost" | "danger"; className?: string; children: React.ReactNode; onClick?: () => void; disabled?: boolean; title?: string }) {
   const base = "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-4";
-  const variants = {
+  const variants: Record<string, string> = {
     primary: "text-white shadow-[0_12px_24px_rgba(3,205,140,0.22)] hover:opacity-95 focus:ring-emerald-200",
     accent: "text-white shadow-[0_12px_24px_rgba(247,127,0,0.22)] hover:opacity-95 focus:ring-orange-200",
     outline: "border border-slate-200 bg-white text-slate-800 shadow-sm hover:bg-slate-50 focus:ring-slate-200",
@@ -113,7 +113,7 @@ function Button({ variant = "outline", className, children, onClick, disabled, t
   );
 }
 
-function Toggle({ enabled, onChange, label, description, disabled }) {
+function Toggle({ enabled, onChange, label, description, disabled }: { enabled: boolean; onChange: (v: boolean) => void; label: string; description?: string; disabled?: boolean }) {
   return (
     <div className={cn("flex items-start justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4", disabled && "opacity-60")}>
       <div>
@@ -142,7 +142,7 @@ function Toggle({ enabled, onChange, label, description, disabled }) {
   );
 }
 
-function Field({ label, value, onChange, placeholder, hint, type = "text", required, disabled }) {
+function Field({ label, value, onChange, placeholder, hint, type = "text", required, disabled }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string; type?: string; required?: boolean; disabled?: boolean }) {
   const bad = !!required && !String(value || "").trim();
   return (
     <div className={cn(disabled && "opacity-70")}>
@@ -164,8 +164,8 @@ function Field({ label, value, onChange, placeholder, hint, type = "text", requi
           disabled
             ? "border-slate-200 bg-slate-50 text-slate-500"
             : bad
-            ? "border-rose-300 bg-white text-slate-900 focus:ring-rose-100"
-            : "border-slate-200 bg-white text-slate-900 focus:ring-emerald-100"
+              ? "border-rose-300 bg-white text-slate-900 focus:ring-rose-100"
+              : "border-slate-200 bg-white text-slate-900 focus:ring-emerald-100"
         )}
       />
       {bad ? <div className="mt-1 text-xs text-rose-600">Required</div> : null}
@@ -173,7 +173,7 @@ function Field({ label, value, onChange, placeholder, hint, type = "text", requi
   );
 }
 
-function NumberField({ label, value, onChange, hint, disabled }) {
+function NumberField({ label, value, onChange, hint, disabled }: { label: string; value: number; onChange: (v: number) => void; hint?: string; disabled?: boolean }) {
   return (
     <div className={cn(disabled && "opacity-70")}>
       <div className="flex items-center justify-between gap-3">
@@ -194,7 +194,7 @@ function NumberField({ label, value, onChange, hint, disabled }) {
   );
 }
 
-function TextArea({ label, value, onChange, placeholder, rows = 4, hint }) {
+function TextArea({ label, value, onChange, placeholder, rows = 4, hint }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; rows?: number; hint?: string }) {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
@@ -212,7 +212,7 @@ function TextArea({ label, value, onChange, placeholder, rows = 4, hint }) {
   );
 }
 
-function Select({ label, value, onChange, options, hint, disabled }) {
+function Select({ label, value, onChange, options, hint, disabled }: { label: string; value: string; onChange: (v: string) => void; options: Array<{ value: string; label: string }>; hint?: string; disabled?: boolean }) {
   return (
     <div className={cn(disabled && "opacity-70")}>
       <div className="flex items-center justify-between gap-3">
@@ -238,9 +238,9 @@ function Select({ label, value, onChange, options, hint, disabled }) {
   );
 }
 
-function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px" }) {
+function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px" }: { open: boolean; title: string; subtitle?: string; children: React.ReactNode; onClose: () => void; footer?: React.ReactNode; maxW?: string }) {
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
@@ -278,9 +278,9 @@ function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px
   );
 }
 
-function Drawer({ open, title, subtitle, children, onClose, footer }) {
+function Drawer({ open, title, subtitle, children, onClose, footer }: { open: boolean; title: string; subtitle?: string; children: React.ReactNode; onClose: () => void; footer?: React.ReactNode }) {
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
@@ -321,7 +321,7 @@ function Drawer({ open, title, subtitle, children, onClose, footer }) {
   );
 }
 
-function ToastStack({ toasts, onDismiss }) {
+function ToastStack({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: string) => void }) {
   return (
     <div className="pointer-events-none fixed right-4 top-4 z-50 w-[min(460px,calc(100vw-2rem))] space-y-2">
       <AnimatePresence initial={false}>
@@ -363,13 +363,13 @@ function ToastStack({ toasts, onDismiss }) {
   );
 }
 
-function riskLabel(score) {
-  if (score >= 70) return { label: "High", tone: "bad" };
-  if (score >= 40) return { label: "Medium", tone: "warn" };
-  return { label: "Low", tone: "good" };
+function riskLabel(score: number) {
+  if (score >= 70) return { label: "High", tone: "bad" as const };
+  if (score >= 40) return { label: "Medium", tone: "warn" as const };
+  return { label: "Low", tone: "good" as const };
 }
 
-function computeRisk(u) {
+function computeRisk(u: { policyBreaches?: number; anomalySignals?: number; spendMonth?: number; limitMonth?: number; role?: string; daysSinceApprovalAction?: number; status?: string }) {
   // Simple, explainable risk model (logic-based)
   const breaches = Number(u.policyBreaches || 0);
   const anomaly = Number(u.anomalySignals || 0);
@@ -381,7 +381,7 @@ function computeRisk(u) {
   score += breaches * 10;
   score += anomaly * 15;
   score += utilization > 1 ? 35 : utilization > 0.85 ? 20 : utilization > 0.6 ? 10 : 0;
-  if (u.role === "Approver" && u.daysSinceApprovalAction >= 14) score += 25;
+  if (u.role === "Approver" && (u.daysSinceApprovalAction || 0) >= 14) score += 25;
   if (u.status === "Suspended") score += 10;
 
   score = clamp(score, 0, 100);
@@ -389,7 +389,7 @@ function computeRisk(u) {
   return { score, ...l };
 }
 
-function suggestionForLimits(u) {
+function suggestionForLimits(u: { spendMonth?: number; limitMonth?: number }) {
   const spend = Number(u.spendMonth || 0);
   const limit = Math.max(1, Number(u.limitMonth || 1));
   const utilization = spend / limit;
@@ -398,7 +398,7 @@ function suggestionForLimits(u) {
     return {
       title: "Consider raising monthly cap",
       body: "User consistently near cap. If legitimate, raise cap or enforce approvals above threshold.",
-      tone: "warn",
+      tone: "warn" as const,
       suggestedLimit: Math.round(limit * 1.25),
     };
   }
@@ -407,7 +407,7 @@ function suggestionForLimits(u) {
     return {
       title: "Consider lowering monthly cap",
       body: "Low utilization. You can tighten cap or move budget to higher-need users.",
-      tone: "info",
+      tone: "info" as const,
       suggestedLimit: Math.round(limit * 0.7),
     };
   }
@@ -415,12 +415,12 @@ function suggestionForLimits(u) {
   return {
     title: "Limits look reasonable",
     body: "No recommendation based on current patterns.",
-    tone: "good",
+    tone: "good" as const,
     suggestedLimit: null,
   };
 }
 
-function parseCSV(text) {
+function parseCSV(text: string) {
   // Very simple CSV parser: header row with name,email,phone,role,group,costCenter
   const lines = text
     .split(/\r?\n/)
@@ -431,12 +431,51 @@ function parseCSV(text) {
   const headers = lines[0].split(",").map((h) => h.trim());
   const rows = lines.slice(1).map((line) => {
     const cols = line.split(",").map((c) => c.trim());
-    const obj = {};
+    const obj: Record<string, string> = {};
     headers.forEach((h, i) => (obj[h] = cols[i] || ""));
     return obj;
   });
 
   return { headers, rows };
+}
+
+interface AuditLog {
+  ts: number;
+  actor: string;
+  action: string;
+  detail: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  role: string;
+  group: string;
+  costCenter: string;
+  autoApproval: boolean;
+  autoApproveUnder: number;
+  limitDay: number;
+  limitWeek: number;
+  limitMonth: number;
+  spendDay: number;
+  spendWeek: number;
+  spendMonth: number;
+  policyBreaches: number;
+  anomalySignals: number;
+  daysSinceApprovalAction: number;
+  lastActiveAt: number | null;
+  createdAt: number;
+  audit: AuditLog[];
+}
+
+interface Toast {
+  id: string;
+  title: string;
+  message: string;
+  kind?: "success" | "warn" | "error" | "info" | "neutral";
 }
 
 export default function CorporatePayUsersInvitationsV2() {
@@ -450,7 +489,7 @@ export default function CorporatePayUsersInvitationsV2() {
     { id: "PROC-001", group: "Procurement", name: "Procurement" },
   ];
 
-  const [toasts, setToasts] = useState([]);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const toast = (t) => {
     const id = uid("toast");
     setToasts((p) => [{ id, ...t }, ...p].slice(0, 4));
@@ -463,7 +502,7 @@ export default function CorporatePayUsersInvitationsV2() {
   const [roleFilter, setRoleFilter] = useState("All");
   const [riskFilter, setRiskFilter] = useState("All");
 
-  const [users, setUsers] = useState(() => {
+  const [users, setUsers] = useState<User[]>(() => {
     const now = Date.now();
     return [
       {
@@ -758,10 +797,10 @@ export default function CorporatePayUsersInvitationsV2() {
   };
 
   // Bulk import
-  const fileRef = useRef(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState("");
-  const [bulkPreview, setBulkPreview] = useState({ headers: [], rows: [] });
+  const [bulkPreview, setBulkPreview] = useState<{ headers: string[]; rows: Record<string, string>[] }>({ headers: [], rows: [] });
 
   const csvTemplate = useMemo(() => {
     return [
@@ -844,7 +883,7 @@ export default function CorporatePayUsersInvitationsV2() {
   const [hrisOpen, setHrisOpen] = useState(false);
 
   // User drawer
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<User | null>(null);
   const selectedRisk = selected ? computeRisk(selected) : null;
 
   const [offboardOpen, setOffboardOpen] = useState(false);
@@ -852,7 +891,7 @@ export default function CorporatePayUsersInvitationsV2() {
   const [offboardRevokeNow, setOffboardRevokeNow] = useState(true);
 
   const [delegateOpen, setDelegateOpen] = useState(false);
-  const [delegateFrom, setDelegateFrom] = useState(null);
+  const [delegateFrom, setDelegateFrom] = useState<User | null>(null);
   const [delegateTo, setDelegateTo] = useState("Finance Desk");
   const [delegateUntil, setDelegateUntil] = useState("2026-01-21");
   const [delegateReason, setDelegateReason] = useState("Approver inactivity coverage");
@@ -1138,8 +1177,8 @@ export default function CorporatePayUsersInvitationsV2() {
                               variant="outline"
                               className="px-3 py-2 text-xs"
                               onClick={() => {
-                                setUsers((prev) => prev.map((u) => (u.id === x.user.id ? { ...u, limitMonth: x.suggestion.suggestedLimit } : u)));
-                                addAudit(x.user.id, { actor: "Org Admin", action: "Limit adjusted", detail: `Monthly cap set to ${formatUGX(x.suggestion.suggestedLimit)}` });
+                                setUsers((prev) => prev.map((u) => (u.id === x.user.id ? { ...u, limitMonth: x.suggestion.suggestedLimit as number } : u)));
+                                addAudit(x.user.id, { actor: "Org Admin", action: "Limit adjusted", detail: `Monthly cap set to ${formatUGX(x.suggestion.suggestedLimit as number)}` });
                                 toast({ title: "Applied", message: "Limit suggestion applied (demo).", kind: "success" });
                               }}
                             >
@@ -1432,20 +1471,20 @@ export default function CorporatePayUsersInvitationsV2() {
             <div className="rounded-3xl border border-slate-200 bg-white p-4">
               <div className="text-sm font-semibold text-slate-900">Audit preview</div>
               <pre className="mt-3 max-h-[260px] overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
-{JSON.stringify(
-  {
-    action: "Create user",
-    actor: "Org Admin",
-    role: addDraft.role,
-    group: addDraft.group,
-    costCenter: addDraft.costCenter,
-    limits: { daily: addDraft.limitDay, weekly: addDraft.limitWeek, monthly: addDraft.limitMonth },
-    autoApproval: addDraft.autoApproval ? { eligible: true, under: addDraft.autoApproveUnder } : { eligible: false },
-    status: addDraft.sendInviteNow ? "Invited" : "Active",
-  },
-  null,
-  2
-)}
+                {JSON.stringify(
+                  {
+                    action: "Create user",
+                    actor: "Org Admin",
+                    role: addDraft.role,
+                    group: addDraft.group,
+                    costCenter: addDraft.costCenter,
+                    limits: { daily: addDraft.limitDay, weekly: addDraft.limitWeek, monthly: addDraft.limitMonth },
+                    autoApproval: addDraft.autoApproval ? { eligible: true, under: addDraft.autoApproveUnder } : { eligible: false },
+                    status: addDraft.sendInviteNow ? "Invited" : "Active",
+                  },
+                  null,
+                  2
+                )}
               </pre>
               <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">This would be stored in the audit log (immutable in production).</div>
             </div>
@@ -1666,7 +1705,7 @@ export default function CorporatePayUsersInvitationsV2() {
                   value={selected.limitDay}
                   onChange={(v) => {
                     setUsers((p) => p.map((u) => (u.id === selected.id ? { ...u, limitDay: v } : u)));
-                    setSelected((p) => ({ ...p, limitDay: v }));
+                    setSelected((p) => (p ? { ...p, limitDay: v } : null));
                   }}
                   hint={formatUGX(selected.limitDay)}
                   disabled={selected.status === "Offboarded"}
@@ -1676,7 +1715,7 @@ export default function CorporatePayUsersInvitationsV2() {
                   value={selected.limitWeek}
                   onChange={(v) => {
                     setUsers((p) => p.map((u) => (u.id === selected.id ? { ...u, limitWeek: v } : u)));
-                    setSelected((p) => ({ ...p, limitWeek: v }));
+                    setSelected((p) => (p ? { ...p, limitWeek: v } : null));
                   }}
                   hint={formatUGX(selected.limitWeek)}
                   disabled={selected.status === "Offboarded"}
@@ -1686,7 +1725,7 @@ export default function CorporatePayUsersInvitationsV2() {
                   value={selected.limitMonth}
                   onChange={(v) => {
                     setUsers((p) => p.map((u) => (u.id === selected.id ? { ...u, limitMonth: v } : u)));
-                    setSelected((p) => ({ ...p, limitMonth: v }));
+                    setSelected((p) => (p ? { ...p, limitMonth: v } : null));
                   }}
                   hint={formatUGX(selected.limitMonth)}
                   disabled={selected.status === "Offboarded"}
@@ -1711,7 +1750,7 @@ export default function CorporatePayUsersInvitationsV2() {
                       return;
                     }
                     setUsers((p) => p.map((u) => (u.id === selected.id ? { ...u, limitMonth: s.suggestedLimit } : u)));
-                    setSelected((p) => ({ ...p, limitMonth: s.suggestedLimit }));
+                    setSelected((p) => (p ? { ...p, limitMonth: s.suggestedLimit } : null));
                     addAudit(selected.id, { actor: "System", action: "Suggestion applied", detail: `Monthly cap set to ${formatUGX(s.suggestedLimit)}` });
                     toast({ title: "Applied", message: "Suggestion applied.", kind: "success" });
                   }}
@@ -1734,7 +1773,7 @@ export default function CorporatePayUsersInvitationsV2() {
                   enabled={!!selected.autoApproval}
                   onChange={(v) => {
                     setUsers((p) => p.map((u) => (u.id === selected.id ? { ...u, autoApproval: v, autoApproveUnder: v ? u.autoApproveUnder : 0 } : u)));
-                    setSelected((p) => ({ ...p, autoApproval: v, autoApproveUnder: v ? p.autoApproveUnder : 0 }));
+                    setSelected((p) => (p ? { ...p, autoApproval: v, autoApproveUnder: v ? p.autoApproveUnder : 0 } : null));
                   }}
                   label="Allow auto-approval"
                   description="Auto-approve under threshold"
@@ -1745,7 +1784,7 @@ export default function CorporatePayUsersInvitationsV2() {
                   value={selected.autoApproveUnder}
                   onChange={(v) => {
                     setUsers((p) => p.map((u) => (u.id === selected.id ? { ...u, autoApproveUnder: v } : u)));
-                    setSelected((p) => ({ ...p, autoApproveUnder: v }));
+                    setSelected((p) => (p ? { ...p, autoApproveUnder: v } : null));
                   }}
                   hint={formatUGX(selected.autoApproveUnder)}
                   disabled={!selected.autoApproval || selected.status === "Offboarded"}
