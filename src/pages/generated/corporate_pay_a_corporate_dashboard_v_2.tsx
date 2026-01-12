@@ -67,11 +67,11 @@ function Pill({
   tone?: "good" | "warn" | "bad" | "info" | "neutral";
 }) {
   const map: Record<string, string> = {
-    good: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    warn: "bg-amber-50 text-amber-800 ring-amber-200",
-    bad: "bg-rose-50 text-rose-700 ring-rose-200",
-    info: "bg-blue-50 text-blue-700 ring-blue-200",
-    neutral: "bg-slate-50 text-slate-700 ring-slate-200",
+    good: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-800",
+    warn: "bg-amber-50 text-amber-800 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:ring-amber-800",
+    bad: "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:ring-rose-800",
+    info: "bg-blue-50 text-blue-700 ring-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:ring-blue-800",
+    neutral: "bg-slate-50 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
   };
   return (
     <span
@@ -104,15 +104,15 @@ function Button({
     "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-4";
   const variants: Record<string, string> = {
     primary:
-      "text-white shadow-[0_12px_24px_rgba(3,205,140,0.22)] hover:opacity-95 focus:ring-emerald-200",
+      "text-white shadow-[0_12px_24px_rgba(3,205,140,0.22)] hover:opacity-95 focus:ring-emerald-200 dark:shadow-none",
     accent:
-      "text-white shadow-[0_12px_24px_rgba(247,127,0,0.22)] hover:opacity-95 focus:ring-orange-200",
+      "text-white shadow-[0_12px_24px_rgba(247,127,0,0.22)] hover:opacity-95 focus:ring-orange-200 dark:shadow-none",
     outline:
-      "border border-slate-200 bg-white text-slate-800 shadow-sm hover:bg-slate-50 focus:ring-slate-200",
+      "border border-slate-200 bg-white text-slate-900 shadow-sm hover:bg-slate-50 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
     ghost:
-      "bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-slate-200",
+      "bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-slate-200 dark:text-slate-300 dark:hover:bg-slate-800",
     danger:
-      "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus:ring-rose-100",
+      "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus:ring-rose-100 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300",
   };
   const style =
     variant === "primary"
@@ -173,20 +173,20 @@ function Modal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-x-0 top-[8vh] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
+            className="fixed inset-x-0 top-[8vh] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
             style={{ maxWidth: maxW }}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
               <div>
-                <div className="text-lg font-semibold text-slate-900">{title}</div>
+                <div className="text-lg font-semibold text-slate-900 dark:text-white">{title}</div>
                 {subtitle ? (
-                  <div className="mt-1 text-sm text-slate-600">{subtitle}</div>
+                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">{subtitle}</div>
                 ) : null}
               </div>
               <button
-                className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
+                className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 onClick={onClose}
                 aria-label="Close"
               >
@@ -197,7 +197,7 @@ function Modal({
               {children}
             </div>
             {footer ? (
-              <div className="border-t border-slate-200 px-5 py-4">{footer}</div>
+              <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-800">{footer}</div>
             ) : null}
           </motion.div>
         </>
@@ -223,7 +223,7 @@ function ToastStack({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="pointer-events-auto rounded-3xl border border-slate-200 bg-white/90 p-3 shadow-[0_18px_45px_rgba(2,8,23,0.18)] backdrop-blur"
+            className="pointer-events-auto rounded-3xl border border-slate-200 bg-white/90 p-3 shadow-[0_18px_45px_rgba(2,8,23,0.18)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-none"
             role="status"
             aria-live="polite"
           >
@@ -231,10 +231,10 @@ function ToastStack({
               <div
                 className={cn(
                   "mt-0.5 grid h-9 w-9 place-items-center rounded-2xl",
-                  t.kind === "success" && "bg-emerald-50 text-emerald-700",
-                  t.kind === "warn" && "bg-amber-50 text-amber-800",
-                  t.kind === "error" && "bg-rose-50 text-rose-700",
-                  t.kind === "info" && "bg-blue-50 text-blue-700"
+                  t.kind === "success" && "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                  t.kind === "warn" && "bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+                  t.kind === "error" && "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+                  t.kind === "info" && "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                 )}
               >
                 {t.kind === "error" || t.kind === "warn" ? (
@@ -244,17 +244,17 @@ function ToastStack({
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
                   {t.title}
                 </div>
                 {t.message ? (
-                  <div className="mt-0.5 text-sm text-slate-600">
+                  <div className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
                     {t.message}
                   </div>
                 ) : null}
               </div>
               <button
-                className="rounded-2xl p-2 text-slate-500 hover:bg-slate-100"
+                className="rounded-2xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 onClick={() => onDismiss(t.id)}
                 aria-label="Dismiss"
               >
@@ -282,16 +282,16 @@ function StatCard({
   trend?: { label: string; tone: "good" | "warn" | "bad" | "info" | "neutral" };
 }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold text-slate-500">{title}</div>
-          <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">{title}</div>
+          <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
             {value}
           </div>
-          <div className="mt-1 text-xs text-slate-600">{sub}</div>
+          <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">{sub}</div>
         </div>
-        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
+        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
           {icon}
         </div>
       </div>
@@ -322,10 +322,10 @@ function ProgressBar({ value, labelLeft, labelRight }: { value: number; labelLef
 function Heatmap({ matrix, rows, cols }: { matrix: number[][]; rows: string[]; cols: string[] }) {
   const max = Math.max(1, ...matrix.flat());
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between">
-        <div className="text-xs font-semibold text-slate-600">Peak ride times</div>
-        <div className="text-xs text-slate-500">Heatmap</div>
+        <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Peak ride times</div>
+        <div className="text-xs text-slate-500 dark:text-slate-500">Heatmap</div>
       </div>
       <div className="mt-3 overflow-auto">
         <div className="min-w-[520px]">
@@ -342,7 +342,7 @@ function Heatmap({ matrix, rows, cols }: { matrix: number[][]; rows: string[]; c
                   return (
                     <div key={`${i}-${j}`} className="px-2 py-2">
                       <div
-                        className="h-7 rounded-xl border border-slate-200"
+                        className="h-7 rounded-xl border border-slate-200 dark:border-slate-700"
                         style={{ background: `rgba(3,205,140,${a.toFixed(2)})` }}
                         title={`${r} • ${cols[j]}: ${v} rides`}
                       />
@@ -375,13 +375,13 @@ function ListCard({
   onAction?: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-slate-600">{icon}</span>
+          <span className="text-slate-600 dark:text-slate-400">{icon}</span>
           <div>
-            <div className="text-xs font-semibold text-slate-900">{title}</div>
-            <div className="mt-0.5 text-xs text-slate-500">{subtitle}</div>
+            <div className="text-xs font-semibold text-slate-900 dark:text-white">{title}</div>
+            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-500">{subtitle}</div>
           </div>
         </div>
         {actionLabel ? (
@@ -396,11 +396,11 @@ function ListCard({
       </div>
       <div className="mt-3 space-y-2">
         {items.map((it) => (
-          <div key={it.title} className="rounded-2xl border border-slate-200 bg-white p-3">
+          <div key={it.title} className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-slate-900">{it.title}</div>
-                <div className="mt-1 text-xs text-slate-500">{it.meta}</div>
+                <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-200">{it.title}</div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{it.meta}</div>
               </div>
               {it.pill ? <Pill label={it.pill.label} tone={it.pill.tone} /> : null}
             </div>
@@ -881,9 +881,9 @@ export default function CorporatePayDashboardV2() {
       />
 
       <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)]">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)] transition-colors dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
           {/* Header */}
-          <div className="border-b border-slate-200 bg-white px-4 py-4 md:px-6">
+          <div className="border-b border-slate-200 bg-white px-4 py-4 transition-colors md:px-6 dark:border-slate-800 dark:bg-slate-900">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-3">
                 <div
@@ -893,8 +893,8 @@ export default function CorporatePayDashboardV2() {
                   <Layers className="h-6 w-6" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">CorporatePay Dashboard</div>
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">CorporatePay Dashboard</div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Organization: {orgName} • {contextLabel}
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -907,26 +907,18 @@ export default function CorporatePayDashboardV2() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2 py-2 shadow-sm">
-                  <span className="text-xs font-semibold text-slate-600">Time</span>
+                <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Time</span>
                   <select
                     value={timeframe}
                     onChange={(e) => setTimeframe(e.target.value as any)}
-                    className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none"
+                    className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                   >
                     <option>Today</option>
                     <option>This week</option>
                     <option>This month</option>
                   </select>
                 </div>
-
-                <Button variant="outline" onClick={() => toast({ title: "Search", message: "Opening global search (Round 1C).", kind: "info" })}>
-                  <Search className="h-4 w-4" /> Search
-                </Button>
-
-                <Button variant="outline" onClick={() => toast({ title: "Notifications", message: "Opening Notifications Center (Round 1B).", kind: "info" })}>
-                  <Bell className="h-4 w-4" /> Notifications
-                </Button>
 
                 <Button variant="primary" onClick={() => setApprovalsOpen(true)}>
                   <BadgeCheck className="h-4 w-4" /> Approvals inbox
@@ -936,12 +928,12 @@ export default function CorporatePayDashboardV2() {
 
             {/* Filters */}
             <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                <div className="text-xs font-semibold text-slate-600">Group</div>
+              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Group</div>
                 <select
                   value={filterGroup}
                   onChange={(e) => setFilterGroup(e.target.value as any)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm font-semibold text-slate-900 outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm font-semibold text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                 >
                   <option value="All">All</option>
                   {GROUPS.map((g) => (
@@ -950,8 +942,8 @@ export default function CorporatePayDashboardV2() {
                 </select>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                <div className="text-xs font-semibold text-slate-600">Service Module</div>
+              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Service Module</div>
                 <select
                   value={filterModule}
                   onChange={(e) => {
@@ -959,7 +951,7 @@ export default function CorporatePayDashboardV2() {
                     setFilterModule(v);
                     if (v !== "All" && v !== "E-Commerce") setFilterMarketplace("All");
                   }}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm font-semibold text-slate-900 outline-none"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm font-semibold text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                 >
                   <option value="All">All</option>
                   {SERVICE_MODULES.map((m) => (
@@ -968,15 +960,15 @@ export default function CorporatePayDashboardV2() {
                 </select>
               </div>
 
-              <div className={cn("rounded-2xl border px-3 py-2", marketplaceEnabled ? "border-slate-200 bg-white" : "border-slate-200 bg-slate-50 opacity-70")}>
-                <div className="text-xs font-semibold text-slate-600">Marketplace</div>
+              <div className={cn("rounded-2xl border px-3 py-2", marketplaceEnabled ? "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800" : "border-slate-200 bg-slate-50 opacity-70 dark:border-slate-700 dark:bg-slate-800/50")}>
+                <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Marketplace</div>
                 <select
                   value={filterMarketplace}
                   disabled={!marketplaceEnabled}
                   onChange={(e) => setFilterMarketplace(e.target.value as any)}
                   className={cn(
                     "mt-1 w-full rounded-xl border px-2 py-2 text-sm font-semibold outline-none",
-                    marketplaceEnabled ? "border-slate-200 bg-white text-slate-900" : "border-slate-200 bg-slate-50 text-slate-500"
+                    marketplaceEnabled ? "border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" : "border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                   )}
                 >
                   <option value="All">All</option>
@@ -984,13 +976,13 @@ export default function CorporatePayDashboardV2() {
                     <option key={m} value={m}>{m}</option>
                   ))}
                 </select>
-                {!marketplaceEnabled ? <div className="mt-1 text-xs text-slate-500">Marketplace filters apply to E-Commerce only.</div> : null}
+                {!marketplaceEnabled ? <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">Marketplace filters apply to E-Commerce only.</div> : null}
               </div>
             </div>
           </div>
 
           {/* Body */}
-          <div className="bg-slate-50 px-4 py-5 md:px-6">
+          <div className="bg-slate-50 px-4 py-5 transition-colors md:px-6 dark:bg-slate-950">
             {/* KPI row */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
               <StatCard
@@ -1039,11 +1031,11 @@ export default function CorporatePayDashboardV2() {
 
             {/* Quick actions */}
             <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">Quick actions</div>
-                    <div className="mt-1 text-xs text-slate-500">Fast paths to high-impact workflows</div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Quick actions</div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">Fast paths to high-impact workflows</div>
                   </div>
                   <Pill label="Admin" tone="neutral" />
                 </div>
@@ -1053,7 +1045,7 @@ export default function CorporatePayDashboardV2() {
                   <ActionButton icon={<BadgeCheck className="h-4 w-4" />} label="Approve queue" onClick={() => setApprovalsOpen(true)} />
                   <ActionButton icon={<FileText className="h-4 w-4" />} label="Create RFQ/Quote" onClick={() => setRfqOpen(true)} />
                 </div>
-                <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                   RFQs support high-value assets that do not fit monthly budgets.
                 </div>
               </div>

@@ -29,6 +29,12 @@ import SupportTools from './generated/corporate_pay_aa_support_evzone_admin_tool
 import AdminSettingsHub from './generated/corporate_pay_admin_settings_hub_v_2';
 import EVCharging from './generated/corporate_pay_ev_charging_scheduling_v_2';
 
+// Auth and public pages
+import Login from './generated/corporate_pay_x_1_login_org_selector_sso_ready_v_2';
+import MFA from './generated/corporate_pay_x_2_mfa_device_trust_v_2';
+import Invite from './generated/corporate_pay_x_3_invite_acceptance_evzone_account_linking_v_2';
+import Landing from './generated/corporate_pay_home_landing_page_v_2_fixed';
+
 export type ConsolePageId =
   | 'dashboard'
   | 'notifications_activity'
@@ -58,6 +64,12 @@ export type ConsolePageId =
   | 'support_tools'
   | 'settings_hub'
   | 'ev_charging';
+
+export type AuthPageId = 'login' | 'mfa' | 'invite';
+
+export type PublicPageId = 'landing';
+
+export type AllPageId = ConsolePageId | AuthPageId | PublicPageId;
 
 export const consolePages: Record<ConsolePageId, ComponentType> = {
   dashboard: Dashboard,
@@ -89,3 +101,21 @@ export const consolePages: Record<ConsolePageId, ComponentType> = {
   settings_hub: AdminSettingsHub,
   ev_charging: EVCharging
 };
+
+export const authPages: Record<AuthPageId, ComponentType> = {
+  login: Login,
+  mfa: MFA,
+  invite: Invite
+};
+
+export const publicPages: Record<PublicPageId, ComponentType> = {
+  landing: Landing
+};
+
+// Combined registry for all pages
+export const allPages: Record<AllPageId, ComponentType> = {
+  ...consolePages,
+  ...authPages,
+  ...publicPages
+};
+
