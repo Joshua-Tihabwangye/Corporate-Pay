@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BadgeCheck,
@@ -283,6 +284,8 @@ function Accordion({ items }: { items: AccordionItem[] }) {
 }
 
 export default function CorporatePayLandingPageV2Fixed() {
+  const navigate = useNavigate();
+
   const modules: ModuleName[] = [
     "E-Commerce",
     "EVs & Charging",
@@ -404,10 +407,10 @@ export default function CorporatePayLandingPageV2Fixed() {
           <ScrollSpyNav active={active} onJump={jumpTo} />
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => jumpTo("product")}>
-              <ChevronRight className="h-4 w-4" /> Launch console
+            <Button variant="primary" onClick={() => navigate("/console/dashboard")}>
+              <LayoutDashboard className="h-4 w-4" /> Launch console
             </Button>
-            <Button variant="primary" onClick={() => jumpTo("faq")}>
+            <Button variant="outline" onClick={() => jumpTo("faq")}>
               <Rocket className="h-4 w-4" /> Request demo
             </Button>
 
@@ -488,8 +491,8 @@ export default function CorporatePayLandingPageV2Fixed() {
               </p>
 
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button variant="primary" onClick={() => jumpTo("faq")}>
-                  <Rocket className="h-4 w-4" /> Request a demo
+                <Button variant="primary" onClick={() => navigate("/console/dashboard")}>
+                  <LayoutDashboard className="h-4 w-4" /> Enter Dashboard
                 </Button>
                 <Button variant="outline" onClick={() => jumpTo("how")}>
                   <ChevronRight className="h-4 w-4" /> See how it works

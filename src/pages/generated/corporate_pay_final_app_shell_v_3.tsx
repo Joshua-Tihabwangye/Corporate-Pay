@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
@@ -34,6 +35,8 @@ import {
   AlertTriangle,
   Check,
   Headphones,
+  Moon,
+  Sun,
 } from "lucide-react";
 
 import { consolePages } from "../pageRegistry";
@@ -218,58 +221,73 @@ function Sidebar({
   active,
   onSelect,
   collapsed,
+  theme,
+  onToggleTheme,
 }: {
   nav: NavItem[];
   active: string;
   onSelect: (id: string) => void;
   collapsed: boolean;
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
 }) {
+  const bg = theme === "dark" ? "bg-slate-900" : "bg-slate-50";
+  const borderColor = theme === "dark" ? "border-slate-800" : "border-slate-200";
+  const textPrimary = theme === "dark" ? "text-white" : "text-slate-900";
+  const textSecondary = theme === "dark" ? "text-slate-400" : "text-slate-500";
+
   return (
-    <div className={cn("h-full w-full", collapsed ? "px-2" : "px-3")}>
-      <div className={cn("mt-4 rounded-3xl border border-slate-200 bg-white shadow-sm", collapsed ? "p-2" : "p-3")}>
-        <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "justify-between")}>
-          <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
-            <div className="grid h-10 w-10 place-items-center rounded-2xl text-white" style={{ background: EVZ.green }}>
-              <Sparkles className="h-5 w-5" />
-            </div>
-            {!collapsed ? (
-              <div>
-                <div className="text-sm font-semibold text-slate-900">CorporatePay</div>
-                <div className="text-xs text-slate-500">Admin Console</div>
-              </div>
-            ) : null}
+    <div className={cn("flex h-full flex-col", collapsed ? "px-1" : "px-2", bg)}>
+      {/* Logo */}
+      <div className={cn("flex items-center gap-2 border-b py-3", borderColor, collapsed ? "justify-center px-1" : "px-2")}>
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white" style={{ background: EVZ.green }}>
+          <Sparkles className="h-4 w-4" />
+        </div>
+        {!collapsed && (
+          <div className="min-w-0">
+            <div className={cn("truncate text-xs font-bold", textPrimary)}>CorporatePay</div>
+            <div className={cn("truncate text-[10px]", textSecondary)}>Console</div>
           </div>
-        </div>
+        )}
+      </div>
 
-        <div className={cn("mt-3 flex items-center", collapsed ? "justify-center" : "justify-between")}>
-          {!collapsed ? <div className="text-xs text-slate-500">Navigation</div> : <div className="sr-only">Navigation</div>}
-          {!collapsed ? <Pill label="Premium" tone="neutral" /> : null}
-        </div>
-
-        <div className="mt-3 space-y-1">
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto py-2">
+        <div className="space-y-0.5">
           {nav.map((item) => (
-            <NavRow key={item.id} item={item} active={active} onSelect={onSelect} collapsed={collapsed} />
+            <NavRow key={item.id} item={item} active={active} onSelect={onSelect} collapsed={collapsed} theme={theme} />
           ))}
         </div>
       </div>
 
-      <div className={cn("mt-4 rounded-3xl border border-slate-200 bg-white shadow-sm", collapsed ? "p-2" : "p-3")}>
-        <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "justify-between")}>
-          <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
-            <div className="grid h-9 w-9 place-items-center rounded-2xl bg-slate-100 text-slate-700">
-              <HelpCircle className="h-5 w-5" />
-            </div>
-            {!collapsed ? (
-              <div>
-                <div className="text-sm font-semibold text-slate-900">Help</div>
-                <div className="text-xs text-slate-500">Docs and support</div>
-              </div>
-            ) : null}
-          </div>
-          {!collapsed ? (
-            <button className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Open</button>
-          ) : null}
-        </div>
+      {/* Bottom section: Theme toggle + Help */}
+      <div className={cn("border-t py-2", borderColor)}>
+        {/* Theme toggle */}
+        <button
+          onClick={onToggleTheme}
+          className={cn(
+            "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors",
+            theme === "dark" ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100",
+            collapsed && "justify-center"
+          )}
+          title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+        >
+          {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          {!collapsed && <span className="text-xs font-medium">{theme === "light" ? "Dark mode" : "Light mode"}</span>}
+        </button>
+
+        {/* Help */}
+        <button
+          onClick={() => onSelect("support_tools")}
+          className={cn(
+            "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors",
+            theme === "dark" ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100",
+            collapsed && "justify-center"
+          )}
+        >
+          <HelpCircle className="h-4 w-4" />
+          {!collapsed && <span className="text-xs font-medium">Help & Support</span>}
+        </button>
       </div>
     </div>
   );
@@ -280,15 +298,25 @@ function NavRow({
   active,
   onSelect,
   collapsed,
+  theme,
 }: {
   item: NavItem;
   active: string;
   onSelect: (id: string) => void;
   collapsed: boolean;
+  theme: "light" | "dark";
 }) {
-  const isActive = active === item.id;
+  const isActive = active === item.id || item.children?.some((c) => c.id === active);
+  const isDirectActive = active === item.id;
   const hasChildren = !!item.children?.length;
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(isActive);
+
+  const textColor = isDirectActive
+    ? "text-white"
+    : theme === "dark"
+      ? "text-slate-300 hover:bg-slate-800"
+      : "text-slate-700 hover:bg-slate-100";
+  const iconColor = isDirectActive ? "text-white" : theme === "dark" ? "text-slate-400" : "text-slate-500";
 
   return (
     <div>
@@ -298,47 +326,65 @@ function NavRow({
           else onSelect(item.id);
         }}
         className={cn(
-          "flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition",
-          isActive ? "text-white" : "text-slate-800 hover:bg-slate-100",
-          collapsed && "justify-center px-2"
+          "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs font-medium transition-all",
+          textColor,
+          collapsed && "justify-center px-1"
         )}
-        style={isActive ? { background: EVZ.green } : undefined}
+        style={isDirectActive ? { background: EVZ.green } : undefined}
       >
-        <div className={cn("shrink-0", isActive ? "text-white" : "text-slate-600")}>{item.icon}</div>
-        {!collapsed ? (
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold">{item.label}</div>
-          </div>
-        ) : null}
-        {!collapsed && item.badge ? (
-          <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700")}>
+        <div className={cn("shrink-0", iconColor)}>{item.icon}</div>
+        {!collapsed && (
+          <div className="min-w-0 flex-1 truncate">{item.label}</div>
+        )}
+        {!collapsed && item.badge && (
+          <span className={cn(
+            "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+            isDirectActive ? "bg-white/20 text-white" : theme === "dark" ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-600"
+          )}>
             {item.badge}
           </span>
-        ) : null}
-        {!collapsed && hasChildren ? <ChevronDown className={cn("h-4 w-4", open ? "rotate-0" : "-rotate-90")} /> : null}
+        )}
+        {!collapsed && hasChildren && (
+          <ChevronDown className={cn("h-3 w-3 transition-transform", open ? "rotate-0" : "-rotate-90")} />
+        )}
       </button>
 
-      {!collapsed && hasChildren ? (
+      {!collapsed && hasChildren && (
         <AnimatePresence initial={false}>
-          {open ? (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.16 }} className="mt-1 space-y-1 pl-3">
+          {open && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="ml-4 mt-0.5 space-y-0.5 border-l border-slate-200 pl-2 dark:border-slate-700"
+            >
               {item.children!.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => onSelect(c.id)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-2xl px-3 py-2 text-left text-sm transition",
-                    active === c.id ? "bg-emerald-50 text-emerald-800" : "text-slate-700 hover:bg-slate-100"
+                    "flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs transition-colors",
+                    active === c.id
+                      ? "bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      : theme === "dark" ? "text-slate-400 hover:bg-slate-800" : "text-slate-600 hover:bg-slate-100"
                   )}
                 >
-                  <span className="truncate font-semibold">{c.label}</span>
-                  {c.badge ? <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-700">{c.badge}</span> : null}
+                  <span className="truncate">{c.label}</span>
+                  {c.badge && (
+                    <span className={cn(
+                      "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                      theme === "dark" ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-600"
+                    )}>
+                      {c.badge}
+                    </span>
+                  )}
                 </button>
               ))}
             </motion.div>
-          ) : null}
+          )}
         </AnimatePresence>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -670,13 +716,15 @@ function AuthLogin({
 
 export default function CorporatePayFinalAppShellV3() {
   const isDesktop = useMedia("(min-width: 1024px)");
+  const { pageId } = useParams<{ pageId?: string }>();
+  const navigate = useNavigate();
 
   const [authed, setAuthed] = useState(true);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawer, setMobileDrawer] = useState(false);
 
-  const [active, setActive] = useState("dashboard");
+  const [active, setActive] = useState(pageId || "dashboard");
   const [health, setHealth] = useState<AccountHealth>("Active");
 
   const [role, setRole] = useState<Role>("Org Admin");
@@ -688,6 +736,24 @@ export default function CorporatePayFinalAppShellV3() {
     setToasts((p) => [{ id, ...t }, ...p].slice(0, 4));
     window.setTimeout(() => setToasts((p) => p.filter((x) => x.id !== id)), 3200);
   };
+
+  // Theme
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme") as "light" | "dark") || "light";
+    }
+    return "light";
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   // Global UI state
   const [query, setQuery] = useState("");
@@ -1004,13 +1070,13 @@ export default function CorporatePayFinalAppShellV3() {
 
   const nav = useMemo<NavItem[]>(
     () => [
-      { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
-      { id: "notifications_activity", label: "Activity", icon: <Bell className="h-5 w-5" />, badge: `${counts.alerts}` },
-      { id: "command_center", label: "Command center", icon: <Search className="h-5 w-5" /> },
+      { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
+      { id: "notifications_activity", label: "Activity", icon: <Bell className="h-4 w-4" />, badge: `${counts.alerts}` },
+      { id: "command_center", label: "Command center", icon: <Search className="h-4 w-4" /> },
       {
         id: "org",
         label: "Organization",
-        icon: <Building2 className="h-5 w-5" />,
+        icon: <Building2 className="h-4 w-4" />,
         children: [
           { id: "org_setup", label: "Setup wizard", icon: <div /> },
           { id: "modules_enablement", label: "Modules and marketplaces", icon: <div />, badge: "MyLiveDealz" },
@@ -1019,7 +1085,7 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "people",
         label: "People",
-        icon: <Users className="h-5 w-5" />,
+        icon: <Users className="h-4 w-4" />,
         badge: `${counts.users}`,
         children: [
           { id: "users", label: "Users and invites", icon: <div /> },
@@ -1030,7 +1096,7 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "controls",
         label: "Controls",
-        icon: <Shield className="h-5 w-5" />,
+        icon: <Shield className="h-4 w-4" />,
         children: [
           { id: "policies", label: "Policies", icon: <div /> },
           { id: "approval_workflows", label: "Approval workflows", icon: <div /> },
@@ -1040,7 +1106,7 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "money",
         label: "Budgets and billing",
-        icon: <Wallet className="h-5 w-5" />,
+        icon: <Wallet className="h-4 w-4" />,
         children: [
           { id: "budgets", label: "Budgets and spend", icon: <div />, badge: "Caps" },
           { id: "wallet_billing", label: "Wallet and funding", icon: <div /> },
@@ -1053,7 +1119,7 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "procurement",
         label: "Procurement",
-        icon: <FileText className="h-5 w-5" />,
+        icon: <FileText className="h-4 w-4" />,
         badge: "RFQ",
         children: [
           { id: "vendors", label: "Vendors and catalog", icon: <div /> },
@@ -1065,7 +1131,7 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "evs_charging",
         label: "EVs & Charging",
-        icon: <Leaf className="h-5 w-5" />,
+        icon: <Leaf className="h-4 w-4" />,
         children: [
           { id: "ev_charging", label: "EV Charging", icon: <div />, badge: "EV" },
         ],
@@ -1073,7 +1139,7 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "reports",
         label: "Reporting",
-        icon: <Activity className="h-5 w-5" />,
+        icon: <Activity className="h-4 w-4" />,
         children: [
           { id: "reporting", label: "Analytics", icon: <div /> },
           { id: "esg", label: "Sustainability and ESG", icon: <div />, badge: "Premium" },
@@ -1082,7 +1148,7 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "integrations",
         label: "Integrations",
-        icon: <Globe className="h-5 w-5" />,
+        icon: <Globe className="h-4 w-4" />,
         children: [
           { id: "integrations", label: "Developer center", icon: <div /> },
         ],
@@ -1090,7 +1156,7 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "security",
         label: "Security",
-        icon: <Lock className="h-5 w-5" />,
+        icon: <Lock className="h-4 w-4" />,
         children: [
           { id: "security", label: "Audit and compliance", icon: <div /> },
         ],
@@ -1098,13 +1164,13 @@ export default function CorporatePayFinalAppShellV3() {
       {
         id: "support",
         label: "Support",
-        icon: <Headphones className="h-5 w-5" />,
+        icon: <Headphones className="h-4 w-4" />,
         badge: `${counts.cases}`,
         children: [
           { id: "support_tools", label: "Support tools", icon: <div /> },
         ],
       },
-      { id: "settings_hub", label: "Settings", icon: <Settings className="h-5 w-5" /> },
+      { id: "settings_hub", label: "Settings", icon: <Settings className="h-4 w-4" /> },
     ],
     [counts]
   );
@@ -1132,6 +1198,20 @@ export default function CorporatePayFinalAppShellV3() {
     if (!q) return base.slice(0, 8);
     return base.filter((s) => s.k.toLowerCase().includes(q)).slice(0, 10);
   }, [query]);
+
+  // Sync active state with URL pageId param
+  useEffect(() => {
+    if (pageId && pageId !== active) {
+      setActive(pageId);
+    }
+  }, [pageId]);
+
+  // Update URL when active page changes (optional - provides shareable URLs)
+  useEffect(() => {
+    if (active && active !== pageId) {
+      navigate(`/console/${active}`, { replace: true });
+    }
+  }, [active, pageId, navigate]);
 
   useEffect(() => {
     if (isDesktop) setMobileDrawer(false);
@@ -1186,281 +1266,7 @@ export default function CorporatePayFinalAppShellV3() {
     const RegistryComp = (consolePages as Record<string, React.ComponentType | undefined>)[active];
     if (RegistryComp) return <RegistryComp />;
 
-    // A: Corporate Dashboard
-    if (active === "dashboard") {
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-            <QuickStat icon={<CircleDollarSign className="h-5 w-5" />} title="Spend today" value="UGX 1,240,000" sub="Rides + purchases" />
-            <QuickStat icon={<ClipboardCheck className="h-5 w-5" />} title="Pending approvals" value={`${counts.approvals}`} sub="SLA target 8h" />
-            <QuickStat icon={<Wallet className="h-5 w-5" />} title="Wallet balance" value="UGX 6,800,000" sub="Pay-as-you-go" />
-            <QuickStat icon={<FileText className="h-5 w-5" />} title="Open RFQs" value={`${counts.rfqs}`} sub="High value assets" />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-            <div className="lg:col-span-8">
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Top issues</div>
-                    <div className="mt-1 text-xs text-slate-500">Action items that can block operations</div>
-                  </div>
-                  <Pill label={health} tone={healthTone} />
-                </div>
-
-                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <IssueCard
-                    tone={health === "Suspended" ? "bad" : health === "Past due" ? "warn" : "neutral"}
-                    title="Payment enforcement"
-                    desc={
-                      health === "Suspended"
-                        ? "Services are suspended due to payment non-compliance."
-                        : health === "Past due"
-                        ? "Account is past due. Reminders are active and grace window applies."
-                        : "Account is healthy."
-                    }
-                    cta="Open collections"
-                    onClick={() => setActive("collections")}
-                  />
-                  <IssueCard
-                    tone="warn"
-                    title="Budgets nearing limits"
-                    desc="2 groups above 80% of cap. Consider exception or enforce."
-                    cta="Open budgets"
-                    onClick={() => setActive("budgets")}
-                  />
-                  <IssueCard
-                    tone="neutral"
-                    title="Webhook retries"
-                    desc="Intermittent 5xx observed on one endpoint."
-                    cta="Open integrations"
-                    onClick={() => setActive("integrations")}
-                  />
-                  <IssueCard
-                    tone="info"
-                    title="Support requests"
-                    desc={`${counts.cases} open case(s). Sessions are auditable and visible.`}
-                    cta="Open support"
-                    onClick={() => setActive("support_tools")}
-                  />
-                </div>
-
-                <div className="mt-4 rounded-2xl bg-slate-50 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <div className="text-xs font-semibold text-slate-700">Quick actions</div>
-                      <div className="mt-1 text-xs text-slate-600">Common admin actions</div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="outline" onClick={() => setActive("approvals_inbox")}>
-                        <ClipboardCheck className="h-4 w-4" /> Approve queue
-                      </Button>
-                      <Button variant="outline" onClick={() => setActive("rfq")}>
-                        <FileText className="h-4 w-4" /> Create RFQ
-                      </Button>
-                      <Button variant="outline" onClick={() => setActive("wallet_billing")}>
-                        <Wallet className="h-4 w-4" /> Add funds
-                      </Button>
-                      <Button variant="primary" onClick={() => setActive("settings_hub")}>
-                        <Settings className="h-4 w-4" /> Settings
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-4 space-y-4">
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Account health</div>
-                    <div className="mt-1 text-xs text-slate-500">Auto enforcement on non-compliance</div>
-                  </div>
-                  <Pill label={health} tone={healthTone} />
-                </div>
-                <div className="mt-3 text-sm text-slate-600">When health is Suspended, checkout and services are stopped until payment is resolved.</div>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <MiniCard title="Enforcement" value={health === "Active" ? "On" : "Strict"} />
-                  <MiniCard title="Reminders" value="Email + WhatsApp" />
-                  <MiniCard title="Audit" value="Always" />
-                  <MiniCard title="Support" value={isSupportRole ? "Support role" : "Org role"} />
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      setHealth((h) => (h === "Active" ? "Past due" : h === "Past due" ? "Suspended" : "Active"))
-                    }
-                    title="Demo toggle"
-                  >
-                    <Activity className="h-4 w-4" /> Toggle
-                  </Button>
-                  <Button variant="outline" onClick={() => setActive("collections")}>
-                    <Bell className="h-4 w-4" /> Collections
-                  </Button>
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Help</div>
-                    <div className="mt-1 text-xs text-slate-500">Support and docs</div>
-                  </div>
-                  <Pill label="SLA 24h" tone="neutral" />
-                </div>
-                <div className="mt-3 space-y-2">
-                  <SupportRow label="Help Center" icon={<HelpCircle className="h-4 w-4" />} onClick={() => toast({ title: "Help", message: "Open help center (demo)", kind: "info" })} />
-                  <SupportRow label="Open a support case" icon={<Ticket className="h-4 w-4" />} onClick={() => setActive("support_tools")} />
-                  <SupportRow label="Security incident" icon={<Lock className="h-4 w-4" />} onClick={() => setActive("security")} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // B: Notifications and activity center
-    if (active === "notifications_activity") {
-      return (
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-semibold text-slate-900">Notifications and Activity Center</div>
-              <div className="mt-1 text-xs text-slate-500">Unified feed: approvals, reminders, budget alerts, policy changes, vendor updates</div>
-            </div>
-            <Button variant="outline" onClick={() => toast({ title: "Digest", message: "Smart digests are configured here (demo)", kind: "info" })}>
-              <Bell className="h-4 w-4" /> Digests
-            </Button>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            {notices.map((n) => (
-              <div key={n.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-slate-900">{n.title}</div>
-                    <div className="mt-1 text-sm text-slate-600">{n.message}</div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <Pill label={n.when} tone="neutral" />
-                      {n.channel ? <ChannelChip channel={n.channel} /> : null}
-                      {n.tone === "success" ? <Pill label="OK" tone="good" /> : n.tone === "warning" ? <Pill label="Attention" tone="warn" /> : n.tone === "danger" ? <Pill label="Action required" tone="bad" /> : <Pill label="Info" tone="info" />}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => toast({ title: "Snoozed", message: "Snoozed (demo)", kind: "info" })}>
-                      Snooze
-                    </Button>
-                    <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => toast({ title: "Resolved", message: "Resolved (demo)", kind: "success" })}>
-                      Resolve
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                  Why did I get this: role-based routing and policy triggers (demo).
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-            Delivery status per channel is logged for audit. Create rule from this event is supported in the full page.
-          </div>
-        </div>
-      );
-    }
-
-    // C: command center
-    if (active === "command_center") {
-      return (
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-semibold text-slate-900">Global Search and Command Center</div>
-              <div className="mt-1 text-xs text-slate-500">Search pages and run quick actions. Shortcut: Ctrl+K</div>
-            </div>
-            <Pill label="Core" tone="neutral" />
-          </div>
-
-          <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm focus-within:ring-4 focus-within:ring-emerald-100">
-              <Search className="h-4 w-4 text-slate-500" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search users, invoices, approvals, vendors, RFQs and settings..."
-                className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
-              />
-              <span className="rounded-xl bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">Ctrl K</span>
-            </div>
-
-            <div className="mt-3 text-xs font-semibold text-slate-600">Suggestions</div>
-            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
-              {suggestions.map((s) => (
-                <button
-                  key={s.k}
-                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left hover:bg-slate-50"
-                  onClick={() => {
-                    setActive(s.id);
-                    toast({ title: "Open", message: s.k, kind: "info" });
-                  }}
-                >
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">{s.k}</div>
-                    <div className="mt-1 text-xs text-slate-500">Jump to page</div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-slate-400" />
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-              Premium: saved searches per role and operator shortcuts.
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Settings hub
-    if (active === "settings_hub") {
-      return (
-        <div className="space-y-4">
-          <PlaceholderPage
-            title={pages.settings_hub.title}
-            subtitle={pages.settings_hub.subtitle}
-            tier={pages.settings_hub.tier}
-            bullets={[
-              "Search and filter all settings",
-              "Role-gated access with request flow",
-              "Pinned shortcuts",
-              "Go-live readiness snapshot",
-            ]}
-          />
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-slate-900">Common settings shortcuts</div>
-                <div className="mt-1 text-xs text-slate-500">Quick links</div>
-              </div>
-              <Pill label="Core" tone="neutral" />
-            </div>
-            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-              <ShortcutCard title="Org setup" desc="Profile, entities, branding, billing" onClick={() => setActive("org_setup")} icon={<Building2 className="h-5 w-5" />} />
-              <ShortcutCard title="Budgets" desc="Caps, alerts, exceptions" onClick={() => setActive("budgets")} icon={<CircleDollarSign className="h-5 w-5" />} />
-              <ShortcutCard title="Integrations" desc="API keys, webhooks, ERP exports" onClick={() => setActive("integrations")} icon={<Globe className="h-5 w-5" />} />
-              <ShortcutCard title="Security" desc="Audit, MFA, retention, compliance" onClick={() => setActive("security")} icon={<Lock className="h-5 w-5" />} />
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Otherwise show placeholder with stored bullets
+    // Otherwise show placeholder with stored bullets (for pages not yet in registry)
     return (
       <PlaceholderPage
         title={p.title}
@@ -1502,7 +1308,7 @@ export default function CorporatePayFinalAppShellV3() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(90%_60%_at_50%_0%,rgba(3,205,140,0.18),rgba(255,255,255,0))]">
+    <div className="min-h-screen bg-white transition-colors duration-300 dark:bg-slate-950">
       <ToastStack toasts={toasts} onDismiss={(id) => setToasts((p) => p.filter((x) => x.id !== id))} />
 
       {/* Support role banner */}
@@ -1531,11 +1337,11 @@ export default function CorporatePayFinalAppShellV3() {
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-[1400px] px-4 py-4 md:px-6">
-        <div className="flex h-[calc(100vh-2rem)] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)]">
+      <div className="flex h-screen">
+        <div className="flex flex-1 overflow-hidden bg-white transition-colors dark:bg-slate-950">
           {/* Desktop sidebar */}
-          <div className={cn("hidden h-full border-r border-slate-200 bg-slate-50 lg:block", sidebarCollapsed ? "w-[88px]" : "w-[320px]")}>
-            <Sidebar nav={nav} active={active} onSelect={setActive} collapsed={sidebarCollapsed} />
+          <div className={cn("hidden h-full border-r border-slate-200 bg-slate-50 transition-colors lg:block dark:border-slate-800 dark:bg-slate-900", sidebarCollapsed ? "w-[56px]" : "w-[200px]")}>
+            <Sidebar nav={nav} active={active} onSelect={setActive} collapsed={sidebarCollapsed} theme={theme} onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))} />
           </div>
 
           {/* Mobile drawer */}
@@ -1565,6 +1371,8 @@ export default function CorporatePayFinalAppShellV3() {
                       setMobileDrawer(false);
                     }}
                     collapsed={false}
+                    theme={theme}
+                    onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
                   />
                 </motion.div>
               </motion.div>
@@ -1574,7 +1382,7 @@ export default function CorporatePayFinalAppShellV3() {
           {/* Main */}
           <div className="flex h-full min-w-0 flex-1 flex-col">
             {/* Top bar */}
-            <div className="border-b border-slate-200 bg-white">
+            <div className="border-b border-slate-200 bg-white transition-colors dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-5">
                 <div className="flex items-center gap-2">
                   <button className="rounded-2xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50 lg:hidden" onClick={() => setMobileDrawer(true)} aria-label="Open menu">
@@ -1731,7 +1539,7 @@ export default function CorporatePayFinalAppShellV3() {
 
                   {/* Sign out */}
                   <button
-                    className="hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-800 shadow-sm hover:bg-slate-50 md:inline-flex"
+                    className="hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-800 shadow-sm hover:bg-slate-50 md:inline-flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                     aria-label="Sign out"
                     onClick={() => {
                       setAuthed(false);

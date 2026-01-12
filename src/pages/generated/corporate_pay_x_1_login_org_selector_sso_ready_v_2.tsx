@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -127,8 +128,8 @@ function Button({
     variant === "primary"
       ? { background: EVZ.green }
       : variant === "accent"
-      ? { background: EVZ.orange }
-      : undefined;
+        ? { background: EVZ.orange }
+        : undefined;
 
   return (
     <button
@@ -227,8 +228,8 @@ function Field({
           disabled
             ? "border-slate-200 bg-slate-50 text-slate-500"
             : bad
-            ? "border-rose-300 focus-within:ring-rose-100"
-            : "border-slate-200 focus-within:ring-emerald-100"
+              ? "border-rose-300 focus-within:ring-rose-100"
+              : "border-slate-200 focus-within:ring-emerald-100"
         )}
       >
         <span className="text-slate-500">{icon}</span>
@@ -411,6 +412,7 @@ type AccessTicket = {
 };
 
 export default function CorporatePayLoginOrgSelectorV2() {
+  const navigate = useNavigate();
   const [toasts, setToasts] = useState<
     Array<{ id: string; title: string; message?: string; kind: string }>
   >([]);
@@ -466,11 +468,11 @@ export default function CorporatePayLoginOrgSelectorV2() {
   const [pendingAuth, setPendingAuth] = useState<
     | null
     | {
-        email: string;
-        role: string;
-        isSupport: boolean;
-        needsOrgSelect: boolean;
-      }
+      email: string;
+      role: string;
+      isSupport: boolean;
+      needsOrgSelect: boolean;
+    }
   >(null);
 
   // Org selection
@@ -1067,7 +1069,10 @@ export default function CorporatePayLoginOrgSelectorV2() {
                     </Button>
                     <Button
                       variant="primary"
-                      onClick={() => toast({ title: "Continue", message: "Routing to Corporate Dashboard (demo).", kind: "success" })}
+                      onClick={() => {
+                        toast({ title: "Continue", message: "Routing to Corporate Dashboard...", kind: "success" });
+                        navigate("/console/dashboard");
+                      }}
                     >
                       <ChevronRight className="h-4 w-4" /> Continue to dashboard
                     </Button>
