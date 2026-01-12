@@ -757,11 +757,12 @@ export default function CorporatePayFinalAppShellV3() {
 
   // Global UI state
   const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [roleOpen, setRoleOpen] = useState(false);
-  const [orgOpen, setOrgOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [roleOpen, setRoleOpen] = useState(false);
+  const [orgOpen, setOrgOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const notifRef = useRef<HTMLButtonElement | null>(null);
   const roleRef = useRef<HTMLButtonElement | null>(null);
@@ -1382,35 +1383,75 @@ export default function CorporatePayFinalAppShellV3() {
           {/* Main */}
           <div className="flex h-full min-w-0 flex-1 flex-col">
             {/* Top bar */}
-            <div className="border-b border-slate-200 bg-white transition-colors dark:border-slate-800 dark:bg-slate-900">
+            <div className="border-b border-emerald-700/30 transition-colors" style={{ background: "linear-gradient(90deg, #03CD8C 0%, #F77F00 100%)" }}>
               <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-5">
                 <div className="flex items-center gap-2">
-                  <button className="rounded-2xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50 lg:hidden" onClick={() => setMobileDrawer(true)} aria-label="Open menu">
+                  <button className="rounded-2xl border border-white/30 bg-white/20 p-2 text-white shadow-sm backdrop-blur hover:bg-white/30 lg:hidden" onClick={() => setMobileDrawer(true)} aria-label="Open menu">
                     <Menu className="h-5 w-5" />
                   </button>
 
                   <button
-                    className="hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:bg-slate-50 lg:inline-flex"
+                    className="hidden rounded-2xl border border-white/30 bg-white/20 p-2 text-white shadow-sm backdrop-blur hover:bg-white/30 lg:inline-flex"
                     onClick={() => setSidebarCollapsed((v) => !v)}
                     aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                   >
                     {sidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
                   </button>
 
-                  <div className="hidden items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 md:flex">
-                    <div className="text-xs font-semibold text-slate-600">Account</div>
-                    <Pill label={health} tone={healthTone} />
+                  {/* Account Dropdown */}
+                  <div className="relative hidden md:block">
                     <button
-                      className="text-xs font-semibold text-slate-700 underline decoration-slate-300 underline-offset-4 hover:decoration-slate-500"
-                      onClick={() => setHealth((h) => (h === "Active" ? "Past due" : h === "Past due" ? "Suspended" : "Active"))}
-                      title="Demo toggle"
+                      className="flex items-center gap-2 rounded-2xl bg-white/20 px-3 py-2 text-xs font-semibold text-white backdrop-blur hover:bg-white/30"
+                      onClick={() => {
+                        setAccountOpen(!accountOpen);
+                        setOrgOpen(false);
+                        setRoleOpen(false);
+                        setCreateOpen(false);
+                        setNotifOpen(false);
+                      }}
                     >
-                      Toggle
+                      <span>Account</span>
+                      <Pill label={health} tone={healthTone} />
+                      <ChevronDown className="h-3 w-3 opacity-70" />
                     </button>
+                    <AnimatePresence>
+                      {accountOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                          className="absolute left-0 top-full z-50 mt-2 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
+                        >
+                          <div className="px-2 py-1.5 text-xs font-semibold text-slate-500">Account status</div>
+                          <button
+                            className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm font-medium hover:bg-slate-50"
+                            onClick={() => setHealth("Active")}
+                          >
+                            <span className="text-emerald-700">Active</span>
+                            {health === "Active" && <Check className="h-4 w-4 text-emerald-600" />}
+                          </button>
+                          <button
+                            className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm font-medium hover:bg-slate-50"
+                            onClick={() => setHealth("Past due")}
+                          >
+                            <span className="text-amber-700">Past due</span>
+                            {health === "Past due" && <Check className="h-4 w-4 text-emerald-600" />}
+                          </button>
+                          <button
+                            className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm font-medium hover:bg-slate-50"
+                            onClick={() => setHealth("Suspended")}
+                          >
+                            <span className="text-rose-700">Suspended</span>
+                            {health === "Suspended" && <Check className="h-4 w-4 text-emerald-600" />}
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div className="relative">
-                    <div className="flex w-[min(560px,52vw)] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm focus-within:ring-4 focus-within:ring-emerald-100">
+
+                    <div className="flex w-[min(320px,35vw)] items-center gap-2 rounded-2xl border border-white/30 bg-white/95 px-3 py-2 shadow-sm focus-within:ring-4 focus-within:ring-white/30">
                       <Search className="h-4 w-4 text-slate-500" />
                       <input
                         value={query}
@@ -1463,7 +1504,7 @@ export default function CorporatePayFinalAppShellV3() {
                   {/* Org switch */}
                   <button
                     ref={orgRef}
-                    className="hidden items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50 md:flex"
+                    className="hidden items-center gap-2 rounded-2xl border border-white/30 bg-white/20 px-3 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur hover:bg-white/30 md:flex"
                     onClick={() => {
                       setOrgOpen((v) => !v);
                       setRoleOpen(false);
@@ -1472,15 +1513,15 @@ export default function CorporatePayFinalAppShellV3() {
                     }}
                     title="Switch organization"
                   >
-                    <Building2 className="h-4 w-4 text-slate-600" />
+                    <Building2 className="h-4 w-4" />
                     <span className="max-w-[200px] truncate">{org}</span>
-                    <ChevronDown className="h-4 w-4 text-slate-500" />
+                    <ChevronDown className="h-4 w-4 opacity-70" />
                   </button>
 
                   {/* Role switch */}
                   <button
                     ref={roleRef}
-                    className="hidden items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50 md:flex"
+                    className="hidden items-center gap-2 rounded-2xl border border-white/30 bg-white/20 px-3 py-2 text-sm font-semibold text-white shadow-sm backdrop-blur hover:bg-white/30 md:flex"
                     onClick={() => {
                       setRoleOpen((v) => !v);
                       setOrgOpen(false);
@@ -1489,16 +1530,15 @@ export default function CorporatePayFinalAppShellV3() {
                     }}
                     title="Switch role"
                   >
-                    <BadgeCheck className="h-4 w-4 text-emerald-600" />
+                    <BadgeCheck className="h-4 w-4" />
                     <span className="max-w-[170px] truncate">{role}</span>
-                    <ChevronDown className="h-4 w-4 text-slate-500" />
+                    <ChevronDown className="h-4 w-4 opacity-70" />
                   </button>
 
                   {/* Quick create */}
                   <button
                     ref={createRef}
-                    className="rounded-2xl p-2 text-white shadow-[0_12px_24px_rgba(3,205,140,0.22)] hover:opacity-95"
-                    style={{ background: EVZ.green }}
+                    className="rounded-2xl border border-white/30 bg-white p-2 text-emerald-600 shadow-lg hover:bg-white/95"
                     onClick={() => {
                       setCreateOpen((v) => !v);
                       setNotifOpen(false);
@@ -1515,7 +1555,7 @@ export default function CorporatePayFinalAppShellV3() {
                   {/* Notifications */}
                   <button
                     ref={notifRef}
-                    className="relative rounded-2xl border border-slate-200 bg-white p-2 text-slate-800 shadow-sm hover:bg-slate-50"
+                    className="relative rounded-2xl border border-white/30 bg-white/20 p-2 text-white shadow-sm backdrop-blur hover:bg-white/30"
                     onClick={() => {
                       setNotifOpen((v) => !v);
                       setCreateOpen(false);
@@ -1525,12 +1565,12 @@ export default function CorporatePayFinalAppShellV3() {
                     aria-label="Notifications"
                   >
                     <Bell className="h-5 w-5" />
-                    <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-xs font-semibold text-white">{notices.length}</span>
+                    <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full text-xs font-semibold text-white" style={{ background: EVZ.orange }}>{notices.length}</span>
                   </button>
 
                   {/* Settings */}
                   <button
-                    className="hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-800 shadow-sm hover:bg-slate-50 md:inline-flex"
+                    className="hidden rounded-2xl border border-white/30 bg-white/20 p-2 text-white shadow-sm backdrop-blur hover:bg-white/30 md:inline-flex"
                     aria-label="Settings"
                     onClick={() => setActive("settings_hub")}
                   >
@@ -1539,7 +1579,7 @@ export default function CorporatePayFinalAppShellV3() {
 
                   {/* Sign out */}
                   <button
-                    className="hidden rounded-2xl border border-slate-200 bg-white p-2 text-slate-800 shadow-sm hover:bg-slate-50 md:inline-flex dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                    className="hidden rounded-2xl border border-white/30 bg-white/20 p-2 text-white shadow-sm backdrop-blur hover:bg-white/30 md:inline-flex"
                     aria-label="Sign out"
                     onClick={() => {
                       setAuthed(false);
@@ -1553,7 +1593,7 @@ export default function CorporatePayFinalAppShellV3() {
 
               <div className="flex items-center justify-between gap-3 px-4 pb-3 md:hidden">
                 <Pill label={`Account: ${health}`} tone={healthTone} />
-                <div className="text-xs font-semibold text-slate-600">Role: {role}</div>
+                <div className="text-xs font-semibold text-white">Role: {role}</div>
               </div>
             </div>
 

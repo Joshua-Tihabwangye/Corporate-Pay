@@ -319,7 +319,7 @@ function Select({
   disabled?: boolean;
 }) {
   return (
-    <div className={cn(disabled && "opacity-70")}> 
+    <div className={cn(disabled && "opacity-70")}>
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs font-semibold text-slate-600">{label}</div>
         {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
@@ -511,12 +511,12 @@ function StatCard({
     tone === "good"
       ? "bg-emerald-50 text-emerald-700"
       : tone === "warn"
-      ? "bg-amber-50 text-amber-800"
-      : tone === "bad"
-      ? "bg-rose-50 text-rose-700"
-      : tone === "info"
-      ? "bg-blue-50 text-blue-700"
-      : "bg-slate-50 text-slate-700";
+        ? "bg-amber-50 text-amber-800"
+        : tone === "bad"
+          ? "bg-rose-50 text-rose-700"
+          : tone === "info"
+            ? "bg-blue-50 text-blue-700"
+            : "bg-slate-50 text-slate-700";
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1526,21 +1526,21 @@ export default function CorporatePayReportingAnalyticsV2() {
   const printHint = "PDF export uses Print to PDF.";
 
   return (
-    <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
+    <div className="min-h-screen bg-slate-50 transition-colors dark:bg-slate-950">
       <ToastStack toasts={toasts} onDismiss={(id) => setToasts((p) => p.filter((x) => x.id !== id))} />
 
-      <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)]">
+      <div className="px-4 py-6 md:px-6 lg:px-8">
+        <div className="bg-white transition-colors dark:bg-slate-900">
           {/* Header */}
-          <div className="border-b border-slate-200 bg-white px-4 py-4 md:px-6">
+          <div className="border-b border-slate-200 bg-white px-4 py-4 transition-colors md:px-6 dark:border-slate-800 dark:bg-slate-900">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-3">
                 <div className="grid h-12 w-12 place-items-center rounded-2xl text-white" style={{ background: EVZ.green }}>
                   <BarChart3 className="h-6 w-6" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900">Reporting and Analytics</div>
-                  <div className="mt-1 text-xs text-slate-500">Spend breakdowns, approvals performance, anomaly dashboards, savings insights, and scheduled reports.</div>
+                  <div className="text-lg font-bold text-slate-900 dark:text-white">Reporting & Analytics</div>
+                  <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">Spend breakdowns, approvals, anomalies, and scheduled reports</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <Pill label={`Approved spend: ${formatUGX(approvedSpend)}`} tone="good" />
                     <Pill label={`Rejected: ${formatUGX(rejectedSpend)}`} tone={rejectedSpend ? "warn" : "good"} />
@@ -1562,7 +1562,7 @@ export default function CorporatePayReportingAnalyticsV2() {
                   <FileText className="h-4 w-4" /> Export PDF
                 </Button>
                 <Button
-                  variant="primary"
+                  variant="accent"
                   onClick={() => {
                     setReportDraft({
                       id: "",
@@ -1610,7 +1610,7 @@ export default function CorporatePayReportingAnalyticsV2() {
             </div>
 
             {/* Global filters */}
-            <div className="mt-4 grid grid-cols-1 gap-3 rounded-3xl border border-slate-200 bg-white p-4 md:grid-cols-12">
+            <div className="mt-4 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-colors md:grid-cols-12 dark:border-slate-700 dark:bg-slate-800">
               <div className="md:col-span-3">
                 <Select
                   label="Time range"
@@ -1631,7 +1631,7 @@ export default function CorporatePayReportingAnalyticsV2() {
               <div className={cn("md:col-span-2", timeRange !== "Custom" && "opacity-60")}>
                 <Field label="To" type="date" value={customTo} onChange={setCustomTo} disabled={timeRange !== "Custom"} />
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-3">
                 <Select
                   label="Module"
                   value={moduleFilter}
@@ -1639,18 +1639,18 @@ export default function CorporatePayReportingAnalyticsV2() {
                   options={[{ value: "All", label: "All" }, ...MODULES.map((m) => ({ value: m, label: m }))]}
                 />
               </div>
-              <div className="md:col-span-3">
-                <div className="text-xs font-semibold text-slate-600">Search</div>
-                <div className="mt-2 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+              <div className="md:col-span-2">
+                <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Search</div>
+                <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
                   <Search className="h-4 w-4 text-slate-500" />
                   <input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="vendor, requester, cost center, tag..."
-                    className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+                    placeholder="vendor, tag..."
+                    className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400 dark:text-white"
                   />
                   {q ? (
-                    <button className="rounded-xl p-1 text-slate-500 hover:bg-slate-100" onClick={() => setQ("")}
+                    <button className="rounded-xl p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => setQ("")}
                       aria-label="Clear">
                       <X className="h-4 w-4" />
                     </button>
