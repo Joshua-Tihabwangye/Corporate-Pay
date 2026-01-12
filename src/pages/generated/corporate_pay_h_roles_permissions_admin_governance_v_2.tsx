@@ -276,8 +276,8 @@ function Button({
     variant === "primary"
       ? { background: EVZ.green }
       : variant === "accent"
-      ? { background: EVZ.orange }
-      : undefined;
+        ? { background: EVZ.orange }
+        : undefined;
 
   return (
     <button
@@ -388,8 +388,8 @@ function Field({
           disabled
             ? "border-slate-200 bg-slate-50 text-slate-500"
             : bad
-            ? "border-rose-300 bg-white text-slate-900 focus:ring-rose-100"
-            : "border-slate-200 bg-white text-slate-900 focus:ring-emerald-100"
+              ? "border-rose-300 bg-white text-slate-900 focus:ring-rose-100"
+              : "border-slate-200 bg-white text-slate-900 focus:ring-emerald-100"
         )}
       />
       {bad ? <div className="mt-1 text-xs text-rose-600">Required</div> : null}
@@ -1591,7 +1591,7 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
       { key: "integrations", label: "Integrations" },
       { key: "reports", label: "Reports" },
       { key: "security", label: "Security" },
-    ];
+    ] as Array<{ key: keyof PermissionAreas; label: string }>;
   }, [simRole]);
 
   const simActions = useMemo(() => {

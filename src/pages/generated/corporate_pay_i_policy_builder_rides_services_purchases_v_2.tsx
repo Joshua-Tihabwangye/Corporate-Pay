@@ -493,31 +493,31 @@ function policyRecommendations(eff: Policy) {
 
 type SimInput =
   | {
-      type: "Ride";
-      rideCategory: "standard" | "premium";
-      day: string;
-      time: string;
-      origin: string;
-      destination: string;
-      purpose: string;
-    }
+    type: "Ride";
+    rideCategory: "standard" | "premium";
+    day: string;
+    time: string;
+    origin: string;
+    destination: string;
+    purpose: string;
+  }
   | {
-      type: "Purchase";
-      module: ServiceModule;
-      marketplace: Marketplace | "-";
-      vendor: string;
-      category: string;
-      total: number;
-      attachmentsProvided: boolean;
-    }
+    type: "Purchase";
+    module: ServiceModule;
+    marketplace: Marketplace | "-";
+    vendor: string;
+    category: string;
+    total: number;
+    attachmentsProvided: boolean;
+  }
   | {
-      type: "Service";
-      module: ServiceModule;
-      vendor: string;
-      category: string;
-      total: number;
-      attachmentsProvided: boolean;
-    };
+    type: "Service";
+    module: ServiceModule;
+    vendor: string;
+    category: string;
+    total: number;
+    attachmentsProvided: boolean;
+  };
 
 function simulateDecision(eff: Policy, input: SimInput) {
   const ok = (reason: string, nextStep: string) => ({ status: "Allowed" as const, reason, nextStep });
@@ -744,7 +744,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
   });
 
   // Partial overrides
-  const [groupOverrides, setGroupOverrides] = useState<Record<Group, PartialPolicy>>(() => ({
+  const [groupOverrides, setGroupOverrides] = useState<Partial<Record<Group, PartialPolicy>>>(() => ({
     Sales: { rides: { categories: { standard: true, premium: false } } },
   }));
 
@@ -753,7 +753,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
   }));
 
   // Published snapshot
-  const publishedRef = useRef<{ orgPolicy: Policy; groupOverrides: Record<Group, PartialPolicy>; userOverrides: Record<string, PartialPolicy>; publishedAt: string; note?: string }>(
+  const publishedRef = useRef<{ orgPolicy: Policy; groupOverrides: Partial<Record<Group, PartialPolicy>>; userOverrides: Record<string, PartialPolicy>; publishedAt: string; note?: string }>(
     {
       orgPolicy: deepClone(orgPolicy),
       groupOverrides: deepClone(groupOverrides),
@@ -1279,9 +1279,9 @@ export default function CorporatePayPolicyBuilderI_V2() {
                                 locked
                                   ? undefined
                                   : () => {
-                                      const next = effective.rides.geofences.filter((_, i) => i !== idx);
-                                      setSectionField("rides", "geofences", next);
-                                    }
+                                    const next = effective.rides.geofences.filter((_, i) => i !== idx);
+                                    setSectionField("rides", "geofences", next);
+                                  }
                               }
                             />
                           );
@@ -1447,9 +1447,9 @@ export default function CorporatePayPolicyBuilderI_V2() {
                                 showOverrideControls && !isOverridden("rides", "purpose")
                                   ? undefined
                                   : () => {
-                                      const next = effective.rides.purpose.tags.filter((_, i) => i !== idx);
-                                      setSectionField("rides", "purpose", { ...effective.rides.purpose, tags: next });
-                                    }
+                                    const next = effective.rides.purpose.tags.filter((_, i) => i !== idx);
+                                    setSectionField("rides", "purpose", { ...effective.rides.purpose, tags: next });
+                                  }
                               }
                             />
                           ))}
@@ -1625,9 +1625,9 @@ export default function CorporatePayPolicyBuilderI_V2() {
                                     locked
                                       ? undefined
                                       : () => {
-                                          const next = effective.purchases.vendorAllow.filter((_, i) => i !== idx);
-                                          setSectionField("purchases", "vendorAllow", next);
-                                        }
+                                        const next = effective.purchases.vendorAllow.filter((_, i) => i !== idx);
+                                        setSectionField("purchases", "vendorAllow", next);
+                                      }
                                   }
                                 />
                               );
@@ -1652,9 +1652,9 @@ export default function CorporatePayPolicyBuilderI_V2() {
                                     locked
                                       ? undefined
                                       : () => {
-                                          const next = effective.purchases.vendorDeny.filter((_, i) => i !== idx);
-                                          setSectionField("purchases", "vendorDeny", next);
-                                        }
+                                        const next = effective.purchases.vendorDeny.filter((_, i) => i !== idx);
+                                        setSectionField("purchases", "vendorDeny", next);
+                                      }
                                   }
                                 />
                               );
@@ -1746,9 +1746,9 @@ export default function CorporatePayPolicyBuilderI_V2() {
                               showOverrideControls && !isOverridden("purchases", "categoriesDeny")
                                 ? undefined
                                 : () => {
-                                    const next = effective.purchases.categoriesDeny.filter((_, i) => i !== idx);
-                                    setSectionField("purchases", "categoriesDeny", next);
-                                  }
+                                  const next = effective.purchases.categoriesDeny.filter((_, i) => i !== idx);
+                                  setSectionField("purchases", "categoriesDeny", next);
+                                }
                             }
                           />
                         ))}

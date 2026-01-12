@@ -156,15 +156,15 @@ type AuditEvent = {
   at: number;
   actor: string;
   action:
-    | "MATCH_CREATED"
-    | "MATCH_REMOVED"
-    | "AUTO_MATCH_RUN"
-    | "EXCEPTION_CREATED"
-    | "EXCEPTION_UPDATED"
-    | "ERP_MAPPING_UPDATED"
-    | "RULE_UPDATED"
-    | "EXPORT"
-    | "TX_STATUS_UPDATED";
+  | "MATCH_CREATED"
+  | "MATCH_REMOVED"
+  | "AUTO_MATCH_RUN"
+  | "EXCEPTION_CREATED"
+  | "EXCEPTION_UPDATED"
+  | "ERP_MAPPING_UPDATED"
+  | "RULE_UPDATED"
+  | "EXPORT"
+  | "TX_STATUS_UPDATED";
   entityRef: string;
   details: string;
 };
@@ -244,7 +244,7 @@ function Button({
   variant?: "primary" | "accent" | "outline" | "ghost" | "danger";
   className?: string;
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
   title?: string;
 }) {
@@ -2751,12 +2751,12 @@ export default function CorporatePayTransactionsReconciliationV2() {
       tone === "good"
         ? "bg-emerald-50 text-emerald-700"
         : tone === "warn"
-        ? "bg-amber-50 text-amber-800"
-        : tone === "bad"
-        ? "bg-rose-50 text-rose-700"
-        : tone === "info"
-        ? "bg-blue-50 text-blue-700"
-        : "bg-slate-50 text-slate-700";
+          ? "bg-amber-50 text-amber-800"
+          : tone === "bad"
+            ? "bg-rose-50 text-rose-700"
+            : tone === "info"
+              ? "bg-blue-50 text-blue-700"
+              : "bg-slate-50 text-slate-700";
 
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-4">

@@ -1655,7 +1655,7 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
                           Effective rule:
                           <ul className="mt-2 space-y-1 text-xs text-slate-600">
                             <li>1) If amount ≤ auto-approve threshold and eligible, approve automatically</li>
-                            <li>2) If amount > approval trigger, route to approval stages</li>
+                            <li>2) If amount &gt; approval trigger, route to approval stages</li>
                             <li>3) Above comment/attachment thresholds, enforce requirements</li>
                           </ul>
                         </div>

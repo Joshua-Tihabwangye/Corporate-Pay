@@ -138,7 +138,7 @@ function Button({
   variant?: "primary" | "accent" | "outline" | "ghost" | "danger";
   className?: string;
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   title?: string;
 }) {
@@ -873,8 +873,8 @@ export default function CorporatePayAdminSettingsHubV2() {
                               <Button
                                 variant={locked ? "outline" : "primary"}
                                 className="px-3 py-2 text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                onClick={(e?: any) => {
+                                  e?.stopPropagation();
                                   openItem(it);
                                 }}
                               >
