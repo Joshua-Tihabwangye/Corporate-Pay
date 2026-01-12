@@ -274,15 +274,31 @@ function StatCard({
   sub,
   icon,
   trend,
+  variant,
 }: {
   title: string;
   value: string;
   sub: string;
   icon: React.ReactNode;
   trend?: { label: string; tone: "good" | "warn" | "bad" | "info" | "neutral" };
+  variant?: "green" | "orange" | "gray";
 }) {
+  const styles = {
+    green: "border-slate-200 bg-white hover:border-emerald-200 hover:shadow-emerald-500/10 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-500/30",
+    orange: "border-slate-200 bg-white hover:border-orange-200 hover:shadow-orange-500/10 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-orange-500/30",
+    gray: "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900",
+  };
+
+  const iconStyles = {
+    green: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    orange: "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    gray: "bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-400",
+  };
+
+  const v = variant || "gray";
+
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+    <div className={cn("rounded-3xl border shadow-sm transition-all hover:shadow-md dark:shadow-none", styles[v])}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">{title}</div>
@@ -291,7 +307,7 @@ function StatCard({
           </div>
           <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">{sub}</div>
         </div>
-        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+        <div className={cn("grid h-10 w-10 place-items-center rounded-2xl", iconStyles[v])}>
           {icon}
         </div>
       </div>
@@ -991,6 +1007,7 @@ export default function CorporatePayDashboardV2() {
                 sub="All modules"
                 icon={<CircleDollarSign className="h-5 w-5" />}
                 trend={{ label: "+12% vs yesterday", tone: "good" }}
+                variant="green"
               />
               <StatCard
                 title="Spend this week"
@@ -998,6 +1015,7 @@ export default function CorporatePayDashboardV2() {
                 sub="Week-to-date"
                 icon={<TrendingUp className="h-5 w-5" />}
                 trend={{ label: "Stable", tone: "neutral" }}
+                variant="orange"
               />
               <StatCard
                 title="Spend this month"
@@ -1005,6 +1023,7 @@ export default function CorporatePayDashboardV2() {
                 sub={`Budget: ${formatUGX(data.budgetMonth)}`}
                 icon={<BarChart3 className="h-5 w-5" />}
                 trend={{ label: `${Math.round(budgetUsedPct)}% used`, tone: budgetUsedPct > 90 ? "bad" : "warn" }}
+                variant="gray"
               />
               <StatCard
                 title="Budget remaining"
@@ -1012,6 +1031,7 @@ export default function CorporatePayDashboardV2() {
                 sub="Available this month"
                 icon={<PiggyBank className="h-5 w-5" />}
                 trend={{ label: data.budgetRemaining < 2000000 ? "Low" : "OK", tone: data.budgetRemaining < 2000000 ? "warn" : "good" }}
+                variant="orange"
               />
               <StatCard
                 title="Approvals pending"
@@ -1019,6 +1039,7 @@ export default function CorporatePayDashboardV2() {
                 sub={approvalsEscalated ? `${approvalsEscalated} escalated` : "No escalations"}
                 icon={<BadgeCheck className="h-5 w-5" />}
                 trend={{ label: approvalsEscalated ? "Escalation" : "On track", tone: approvalsEscalated ? "bad" : "good" }}
+                variant="green"
               />
               <StatCard
                 title="Forecast month-end"
@@ -1026,6 +1047,7 @@ export default function CorporatePayDashboardV2() {
                 sub={data.forecastMonthEnd > data.budgetMonth ? "Over budget" : "Within budget"}
                 icon={<LineChart className="h-5 w-5" />}
                 trend={{ label: data.forecastMonthEnd > data.budgetMonth ? "Risk" : "OK", tone: data.forecastMonthEnd > data.budgetMonth ? "warn" : "good" }}
+                variant="gray"
               />
             </div>
 
