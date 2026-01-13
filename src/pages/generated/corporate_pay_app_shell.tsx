@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../routes/paths";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
@@ -326,7 +327,7 @@ function NavRow({
           else onSelect(item.id);
         }}
         className={cn(
-          "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs font-medium transition-all",
+          "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs font-medium transition-all hover-lift",
           textColor,
           collapsed && "justify-center px-1"
         )}
@@ -364,7 +365,7 @@ function NavRow({
                   key={c.id}
                   onClick={() => onSelect(c.id)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs transition-colors",
+                    "flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs transition-colors hover-lift",
                     active === c.id
                       ? "bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                       : theme === "dark" ? "text-slate-400 hover:bg-slate-800" : "text-slate-600 hover:bg-slate-100"
@@ -1210,7 +1211,7 @@ export default function CorporatePayFinalAppShellV3() {
   // Update URL when active page changes (optional - provides shareable URLs)
   useEffect(() => {
     if (active && active !== pageId) {
-      navigate(`/console/${active}`, { replace: true });
+      navigate(`${ROUTES.CONSOLE.ROOT}/${active}`, { replace: true });
     }
   }, [active, pageId, navigate]);
 

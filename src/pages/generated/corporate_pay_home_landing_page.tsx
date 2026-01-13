@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { ROUTES } from "../../routes/paths";
 import {
   BadgeCheck,
   BarChart3,
@@ -407,7 +408,7 @@ export default function CorporatePayLandingPageV2Fixed() {
           <ScrollSpyNav active={active} onJump={jumpTo} />
 
           <div className="flex items-center gap-2">
-            <Button variant="primary" onClick={() => navigate("/console/dashboard")}>
+            <Button variant="primary" onClick={() => navigate(ROUTES.CONSOLE.DASHBOARD)}>
               <LayoutDashboard className="h-4 w-4" /> Launch console
             </Button>
             <Button variant="outline" onClick={() => jumpTo("faq")}>
@@ -491,7 +492,7 @@ export default function CorporatePayLandingPageV2Fixed() {
               </p>
 
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button variant="primary" onClick={() => navigate("/console/dashboard")}>
+                <Button variant="primary" onClick={() => navigate(ROUTES.CONSOLE.DASHBOARD)}>
                   <LayoutDashboard className="h-4 w-4" /> Enter Dashboard
                 </Button>
                 <Button variant="outline" onClick={() => jumpTo("how")}>
