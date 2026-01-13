@@ -182,9 +182,14 @@ function NumberField({ label, value, onChange, hint, disabled }: { label: string
       </div>
       <input
         type="number"
+        min={0}
+        onKeyDown={(e) => (e.key === "-" || e.key === "e") && e.preventDefault()}
         value={value}
         disabled={disabled}
-        onChange={(e) => onChange(Number(e.target.value || 0))}
+        onChange={(e) => {
+          const v = Number(e.target.value || 0);
+          if (v >= 0) onChange(v);
+        }}
         className={cn(
           "mt-2 w-full rounded-2xl border px-3 py-2.5 text-sm font-semibold shadow-sm outline-none focus:ring-4",
           disabled ? "border-slate-200 bg-slate-50 text-slate-500" : "border-slate-200 bg-white text-slate-900 focus:ring-emerald-100"
@@ -255,12 +260,13 @@ function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-x-0 top-[8vh] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
-            style={{ maxWidth: maxW }}
+            className="fixed inset-x-0 bottom-4 top-4 z-50 mx-auto flex w-[min(980px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
+            style={{ maxWidth: maxW, maxHeight: "92vh" }}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+            {/* Header - rigid */}
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
               <div>
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
@@ -269,8 +275,12 @@ function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
-            {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
+
+            {/* Body - scrollable */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+
+            {/* Footer - rigid */}
+            {footer ? <div className="shrink-0 border-t border-slate-200 px-5 py-4">{footer}</div> : null}
           </motion.div>
         </>
       ) : null}
@@ -296,14 +306,16 @@ function Drawer({ open, title, subtitle, children, onClose, footer }: { open: bo
             exit={{ opacity: 0, x: 16 }}
             transition={{ duration: 0.18 }}
             className={cn(
-              "fixed z-50 overflow-hidden border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]",
-              "left-2 right-2 bottom-2 top-[14vh] rounded-[28px]",
-              "lg:left-auto lg:right-4 lg:top-4 lg:bottom-4 lg:w-[560px]"
+              "fixed z-50 flex flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]",
+              "bottom-2 left-2 right-2 top-2 rounded-[28px]", // Reduced top offset for more space on mobile
+              "lg:bottom-4 lg:left-auto lg:right-4 lg:top-4 lg:w-[560px]"
             )}
+            style={{ maxHeight: "calc(100vh - 32px)" }}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+            {/* Header */}
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
               <div className="min-w-0">
                 <div className="truncate text-base font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-xs text-slate-600">{subtitle}</div> : null}
@@ -312,8 +324,12 @@ function Drawer({ open, title, subtitle, children, onClose, footer }: { open: bo
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="h-full min-h-0 overflow-auto px-5 py-4">{children}</div>
-            {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+
+            {/* Footer */}
+            {footer ? <div className="shrink-0 border-t border-slate-200 px-5 py-4">{footer}</div> : null}
           </motion.div>
         </>
       ) : null}

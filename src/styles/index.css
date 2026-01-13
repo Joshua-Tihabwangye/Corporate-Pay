@@ -3,7 +3,158 @@
 @tailwind utilities;
 
 /* Smooth scrolling for in-page anchors */
-html { scroll-behavior: smooth; }
+html {
+    scroll-behavior: smooth;
+}
 
 /* Better default text rendering */
-body { text-rendering: optimizeLegibility; }
+body {
+    text-rendering: optimizeLegibility;
+}
+
+/* ===========================================
+   EVzone Brand Colors - CSS Custom Properties
+   =========================================== */
+:root {
+    --evz-green: #03CD8C;
+    --evz-orange: #F77F00;
+    --evz-shadow-dark: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --evz-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+/* ===========================================
+   Card Styling - Dark Shadows & 3D Hover
+   =========================================== */
+
+/* All cards with rounded-3xl borders */
+[class*="rounded-3xl"][class*="border"] {
+    box-shadow: var(--evz-shadow-dark) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* All cards with rounded-2xl borders and white/slate background */
+[class*="rounded-2xl"][class*="border"][class*="bg-white"],
+[class*="rounded-2xl"][class*="border"][class*="bg-slate"] {
+    box-shadow: var(--evz-shadow-dark) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Hover effect - specific class for select elements */
+.hover-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hover-lift:hover {
+    box-shadow: var(--evz-shadow-hover) !important;
+    transform: translateY(-4px) scale(1.01) !important;
+}
+
+/* Cards go back inward when cursor leaves - handled by CSS transition */
+
+/* ===========================================
+   Input Field Styling - Orange Ring
+   =========================================== */
+
+/* All input elements - orange-tinted border */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+    border-color: rgba(247, 127, 0, 0.3) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Input focus state - orange ring */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus {
+    border-color: var(--evz-orange) !important;
+    box-shadow: 0 0 0 4px rgba(247, 127, 0, 0.2) !important;
+    outline: none !important;
+}
+
+/* Override Tailwind focus ring colors to orange */
+.focus-within\:ring-emerald-100:focus-within,
+.focus-within\:ring-emerald-200:focus-within,
+.focus-within\:ring-slate-100:focus-within,
+.focus-within\:ring-slate-200:focus-within {
+    --tw-ring-color: rgba(247, 127, 0, 0.25) !important;
+}
+
+/* Focus ring on input containers */
+[class*="focus-within:ring"]:focus-within {
+    --tw-ring-color: rgba(247, 127, 0, 0.25) !important;
+}
+
+/* ===========================================
+   Button Styling - Enhanced Hover Shadows
+   =========================================== */
+
+/* All buttons - smooth transitions */
+button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Button hover - subtle shadow only, no lift unless specified */
+button:not(:disabled):hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Primary buttons (green) - branded shadow */
+button[style*="background: rgb(3, 205, 140)"],
+button[style*="background:#03CD8C"],
+button[style*="rgb(3, 205, 140)"] {
+    box-shadow: 0 8px 24px rgba(3, 205, 140, 0.3) !important;
+}
+
+button[style*="background: rgb(3, 205, 140)"]:hover,
+button[style*="background:#03CD8C"]:hover,
+button[style*="rgb(3, 205, 140)"]:hover {
+    box-shadow: 0 12px 32px rgba(3, 205, 140, 0.4) !important;
+    transform: translateY(-3px) !important;
+}
+
+/* Accent buttons (orange) - branded shadow */
+button[style*="background: rgb(247, 127, 0)"],
+button[style*="background:#F77F00"],
+button[style*="rgb(247, 127, 0)"] {
+    box-shadow: 0 8px 24px rgba(247, 127, 0, 0.3) !important;
+}
+
+button[style*="background: rgb(247, 127, 0)"]:hover,
+button[style*="background:#F77F00"]:hover,
+button[style*="rgb(247, 127, 0)"]:hover {
+    box-shadow: 0 12px 32px rgba(247, 127, 0, 0.4) !important;
+    transform: translateY(-3px) !important;
+}
+
+/* Button active/pressed state - go inward */
+button:not(:disabled):active {
+    transform: translateY(0) scale(0.98) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ===========================================
+   Dark Mode Adjustments
+   =========================================== */
+.dark [class*="rounded-3xl"][class*="border"],
+.dark [class*="rounded-2xl"][class*="border"] {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark [class*="rounded-3xl"][class*="border"]:hover,
+.dark [class*="rounded-2xl"][class*="border"]:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+    border-color: rgba(247, 127, 0, 0.4) !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):focus,
+.dark textarea:focus,
+.dark select:focus {
+    border-color: var(--evz-orange) !important;
+    box-shadow: 0 0 0 4px rgba(247, 127, 0, 0.3) !important;
+}

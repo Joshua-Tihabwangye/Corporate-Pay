@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { ROUTES } from "../../routes/paths";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -1071,7 +1072,7 @@ export default function CorporatePayLoginOrgSelectorV2() {
                       variant="primary"
                       onClick={() => {
                         toast({ title: "Continue", message: "Routing to Corporate Dashboard...", kind: "success" });
-                        navigate("/console/dashboard");
+                        navigate(ROUTES.CONSOLE.DASHBOARD);
                       }}
                     >
                       <ChevronRight className="h-4 w-4" /> Continue to dashboard

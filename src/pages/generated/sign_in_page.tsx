@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { ROUTES } from "../../routes/paths";
 import {
     Building2,
     ChevronDown,
@@ -45,7 +46,7 @@ export default function SignInPage() {
         // Simulate login
         setTimeout(() => {
             setLoading(false);
-            navigate("/console/dashboard");
+            navigate(ROUTES.CONSOLE.DASHBOARD);
         }, 1000);
     };
 
@@ -53,7 +54,7 @@ export default function SignInPage() {
         setLoading(true);
         setTimeout(() => {
             setLoading(false);
-            navigate("/console/dashboard");
+            navigate(ROUTES.CONSOLE.DASHBOARD);
         }, 800);
     };
 
@@ -243,7 +244,7 @@ export default function SignInPage() {
                 <div className="mt-4 text-center">
                     <button
                         type="button"
-                        onClick={() => navigate("/")}
+                        onClick={() => navigate(ROUTES.HOME)}
                         className="text-sm font-medium text-slate-500 hover:text-slate-700"
                     >
                         ← Back to home

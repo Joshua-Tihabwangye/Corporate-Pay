@@ -1,3 +1,3 @@
-import Login from '../generated/corporate_pay_x_1_login_org_selector_sso_ready_v_2';
+import Login from '../generated/corporate_pay_login_org_selector_sso_ready';
 
 export default Login;

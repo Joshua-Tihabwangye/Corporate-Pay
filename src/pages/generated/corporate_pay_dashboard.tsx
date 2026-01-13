@@ -7,6 +7,7 @@ import {
   BarChart3,
   Bell,
   Building2,
+  Calendar,
   CalendarClock,
   Check,
   ChevronDown,
@@ -173,12 +174,13 @@ function Modal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-x-0 top-[8vh] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
-            style={{ maxWidth: maxW }}
+            className="fixed inset-x-0 bottom-4 top-4 z-50 mx-auto flex w-[min(980px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+            style={{ maxWidth: maxW, maxHeight: "92vh" }}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+            {/* Header - rigid */}
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
               <div>
                 <div className="text-lg font-semibold text-slate-900 dark:text-white">{title}</div>
                 {subtitle ? (
@@ -193,11 +195,15 @@ function Modal({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="max-h-[70vh] overflow-auto px-5 py-4">
+
+            {/* Body - scrollable */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
               {children}
             </div>
+
+            {/* Footer - rigid */}
             {footer ? (
-              <div className="border-t border-slate-200 px-5 py-4 dark:border-slate-800">{footer}</div>
+              <div className="shrink-0 border-t border-slate-200 px-5 py-4 dark:border-slate-800">{footer}</div>
             ) : null}
           </motion.div>
         </>
@@ -298,24 +304,29 @@ function StatCard({
   const v = variant || "gray";
 
   return (
-    <div className={cn("rounded-3xl border shadow-sm transition-all hover:shadow-md dark:shadow-none", styles[v])}>
-      <div className="flex items-start justify-between gap-3">
+    <div className={cn("rounded-3xl border p-5 shadow-sm transition-all hover-lift dark:shadow-none", styles[v])}>
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">{title}</div>
+          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            {title}
+          </div>
           <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
             {value}
           </div>
-          <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">{sub}</div>
+          <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            {sub}
+          </div>
+          {trend ? (
+            <div className="mt-3">
+              <Pill label={trend.label} tone={trend.tone} />
+            </div>
+          ) : null}
         </div>
-        <div className={cn("grid h-10 w-10 place-items-center rounded-2xl", iconStyles[v])}>
+
+        <div className={cn("grid h-12 w-12 place-items-center rounded-2xl shrink-0", iconStyles[v])}>
           {icon}
         </div>
       </div>
-      {trend ? (
-        <div className="mt-3">
-          <Pill label={trend.label} tone={trend.tone} />
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -523,7 +534,17 @@ export default function CorporatePayDashboardV2() {
   const GROUPS: Group[] = ["Operations", "Sales", "Finance", "Admin", "Procurement"];
 
   const [orgName] = useState("Acme Group Ltd");
-  const [timeframe, setTimeframe] = useState<"Today" | "This week" | "This month">("This month");
+  const [timeframe, setTimeframe] = useState<"Today" | "This week" | "This month" | "This year" | "Custom">("This month");
+
+  // Custom date range for "Custom" timeframe
+  const [customStartDate, setCustomStartDate] = useState<string>(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().split('T')[0];
+  });
+  const [customEndDate, setCustomEndDate] = useState<string>(() => {
+    return new Date().toISOString().split('T')[0];
+  });
 
   const [filterGroup, setFilterGroup] = useState<Group | "All">("All");
   const [filterModule, setFilterModule] = useState<ServiceModule | "All">("All");
@@ -533,83 +554,126 @@ export default function CorporatePayDashboardV2() {
     return filterModule === "All" || filterModule === "E-Commerce";
   }, [filterModule]);
 
-  // Mock spend model
+  // Mock spend model - DYNAMIC based on timeframe
   const data = useMemo(() => {
-    const spendToday = 1240000;
-    const spendWeek = 6840000;
-    const spendMonth = 32500000;
-    const budgetMonth = 40000000;
+    // Base data (monthly values)
+    const baseSpendMonth = 32500000;
+    const baseBudgetMonth = 40000000;
 
-    const ridesMonth = 14200000;
-    const purchasesMonth = 16800000;
-    const servicesMonth = 1500000;
+    // Calculate multipliers based on timeframe
+    let multiplier = 1;
+    let budgetMultiplier = 1;
+    let periodLabel = "This month";
+
+    switch (timeframe) {
+      case "Today":
+        multiplier = 0.038; // ~1/26 working days
+        budgetMultiplier = 0.038;
+        periodLabel = "Today";
+        break;
+      case "This week":
+        multiplier = 0.21; // ~1/4.5 weeks
+        budgetMultiplier = 0.21;
+        periodLabel = "This week";
+        break;
+      case "This month":
+        multiplier = 1;
+        budgetMultiplier = 1;
+        periodLabel = "This month";
+        break;
+      case "This year":
+        multiplier = 8.5; // ~8.5 months of year elapsed (demo)
+        budgetMultiplier = 12; // Full year budget
+        periodLabel = "This year";
+        break;
+      case "Custom":
+        // Calculate days between custom dates
+        const start = new Date(customStartDate);
+        const end = new Date(customEndDate);
+        const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+        multiplier = days / 30; // Relative to monthly
+        budgetMultiplier = days / 30;
+        periodLabel = `${days} days`;
+        break;
+    }
+
+    const spendToday = Math.round(baseSpendMonth * 0.038);
+    const spendWeek = Math.round(baseSpendMonth * 0.21);
+    const spendMonth = Math.round(baseSpendMonth * multiplier);
+    const spendYear = Math.round(baseSpendMonth * 8.5);
+    const budgetPeriod = Math.round(baseBudgetMonth * budgetMultiplier);
+
+    const ridesMonth = Math.round(14200000 * multiplier);
+    const purchasesMonth = Math.round(16800000 * multiplier);
+    const servicesMonth = Math.round(1500000 * multiplier);
 
     const walletBalance = 6800000;
     const creditLimit = 25000000;
     const creditUsed = 8200000;
     const prepaidRunwayDays = 3;
 
-    const failedPayments = 2;
-    const overdueInvoices = 1;
-    const policyBreaches = 4;
+    const failedPayments = timeframe === "Today" ? 0 : timeframe === "This week" ? 1 : 2;
+    const overdueInvoices = timeframe === "Today" ? 0 : 1;
+    const policyBreaches = Math.round(4 * multiplier);
 
-    const monthDay = 7; // Jan 7 (demo)
+    const monthDay = 7;
     const daysInMonth = 30;
-    const forecastMonthEnd = Math.round((spendMonth / Math.max(1, monthDay)) * daysInMonth);
+    const forecastMonthEnd = Math.round((spendMonth / Math.max(1, monthDay * multiplier)) * daysInMonth * multiplier);
 
-    // breakdowns
+    // breakdowns - scale by multiplier
     const spendByModule: Record<ServiceModule, number> = {
-      "E-Commerce": 16800000,
-      "EVs & Charging": 4200000,
-      "Rides & Logistics": 14200000,
-      "School & E-Learning": 800000,
-      "Medical & Health Care": 650000,
-      "Travel & Tourism": 1200000,
-      "Green Investments": 500000,
-      "FaithHub": 120000,
-      "Virtual Workspace": 900000,
-      "Finance & Payments": 2000000,
+      "E-Commerce": Math.round(16800000 * multiplier),
+      "EVs & Charging": Math.round(4200000 * multiplier),
+      "Rides & Logistics": Math.round(14200000 * multiplier),
+      "School & E-Learning": Math.round(800000 * multiplier),
+      "Medical & Health Care": Math.round(650000 * multiplier),
+      "Travel & Tourism": Math.round(1200000 * multiplier),
+      "Green Investments": Math.round(500000 * multiplier),
+      "FaithHub": Math.round(120000 * multiplier),
+      "Virtual Workspace": Math.round(900000 * multiplier),
+      "Finance & Payments": Math.round(2000000 * multiplier),
       "Other Service Module": 0,
     };
 
     const spendByMarketplace: Record<Marketplace, number> = {
-      MyLiveDealz: 5200000,
-      ServiceMart: 1200000,
-      EVmart: 3400000,
-      GadgetMart: 2200000,
-      LivingMart: 1300000,
-      StyleMart: 900000,
-      EduMart: 600000,
-      HealthMart: 750000,
-      PropertyMart: 400000,
-      GeneratMart: 700000,
-      ExpressMart: 600000,
-      FaithMart: 150000,
+      MyLiveDealz: Math.round(5200000 * multiplier),
+      ServiceMart: Math.round(1200000 * multiplier),
+      EVmart: Math.round(3400000 * multiplier),
+      GadgetMart: Math.round(2200000 * multiplier),
+      LivingMart: Math.round(1300000 * multiplier),
+      StyleMart: Math.round(900000 * multiplier),
+      EduMart: Math.round(600000 * multiplier),
+      HealthMart: Math.round(750000 * multiplier),
+      PropertyMart: Math.round(400000 * multiplier),
+      GeneratMart: Math.round(700000 * multiplier),
+      ExpressMart: Math.round(600000 * multiplier),
+      FaithMart: Math.round(150000 * multiplier),
       "Other Marketplace": 0,
     };
 
     const spendByGroup: Record<Group, number> = {
-      Operations: 12000000,
-      Sales: 9800000,
-      Finance: 5200000,
-      Admin: 4100000,
-      Procurement: 3400000,
+      Operations: Math.round(12000000 * multiplier),
+      Sales: Math.round(9800000 * multiplier),
+      Finance: Math.round(5200000 * multiplier),
+      Admin: Math.round(4100000 * multiplier),
+      Procurement: Math.round(3400000 * multiplier),
     };
 
     const budgetByGroup: Record<Group, number> = {
-      Operations: 15000000,
-      Sales: 12000000,
-      Finance: 6000000,
-      Admin: 5000000,
-      Procurement: 5000000,
+      Operations: Math.round(15000000 * budgetMultiplier),
+      Sales: Math.round(12000000 * budgetMultiplier),
+      Finance: Math.round(6000000 * budgetMultiplier),
+      Admin: Math.round(5000000 * budgetMultiplier),
+      Procurement: Math.round(5000000 * budgetMultiplier),
     };
 
     return {
       spendToday,
       spendWeek,
       spendMonth,
-      budgetMonth,
-      budgetRemaining: Math.max(0, budgetMonth - spendMonth),
+      spendYear,
+      budgetMonth: budgetPeriod,
+      budgetRemaining: Math.max(0, budgetPeriod - spendMonth),
       ridesMonth,
       purchasesMonth,
       servicesMonth,
@@ -627,8 +691,10 @@ export default function CorporatePayDashboardV2() {
       spendByMarketplace,
       spendByGroup,
       budgetByGroup,
+      periodLabel,
+      multiplier,
     };
-  }, []);
+  }, [timeframe, customStartDate, customEndDate]);
 
   // Approvals
   const [approvals, setApprovals] = useState<ApprovalItem[]>(() => [
@@ -933,8 +999,33 @@ export default function CorporatePayDashboardV2() {
                     <option>Today</option>
                     <option>This week</option>
                     <option>This month</option>
+                    <option>This year</option>
+                    <option>Custom</option>
                   </select>
                 </div>
+
+                {/* Custom Date Range Picker */}
+                {timeframe === "Custom" && (
+                  <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-orange-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      />
+                      <span className="text-xs text-slate-500">to</span>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-orange-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      />
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">({data.periodLabel})</span>
+                  </div>
+                )}
 
                 <Button variant="primary" onClick={() => setApprovalsOpen(true)}>
                   <BadgeCheck className="h-4 w-4" /> Approvals inbox
@@ -1000,7 +1091,7 @@ export default function CorporatePayDashboardV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 transition-colors md:px-6 dark:bg-slate-950">
             {/* KPI row */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <StatCard
                 title="Spend today"
                 value={formatUGX(data.spendToday)}
@@ -1412,8 +1503,13 @@ export default function CorporatePayDashboardV2() {
             <div className="text-xs font-semibold text-slate-600">Amount (UGX)</div>
             <input
               type="number"
+              min={0}
+              onKeyDown={(e) => (e.key === "-" || e.key === "e") && e.preventDefault()}
               value={fundDraft.amount}
-              onChange={(e) => setFundDraft((p) => ({ ...p, amount: Number(e.target.value || 0) }))}
+              onChange={(e) => {
+                const v = Number(e.target.value || 0);
+                if (v >= 0) setFundDraft((p) => ({ ...p, amount: v }));
+              }}
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none"
             />
             <div className="mt-2 text-xs text-slate-500">Preview: {formatUGX(fundDraft.amount)}</div>
@@ -1516,8 +1612,13 @@ export default function CorporatePayDashboardV2() {
             <div className="text-xs font-semibold text-slate-600">Amount (UGX)</div>
             <input
               type="number"
+              min={0}
+              onKeyDown={(e) => (e.key === "-" || e.key === "e") && e.preventDefault()}
               value={budgetDraft.amount}
-              onChange={(e) => setBudgetDraft((p) => ({ ...p, amount: Number(e.target.value || 0) }))}
+              onChange={(e) => {
+                const v = Number(e.target.value || 0);
+                if (v >= 0) setBudgetDraft((p) => ({ ...p, amount: v }));
+              }}
               className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none"
             />
           </div>
