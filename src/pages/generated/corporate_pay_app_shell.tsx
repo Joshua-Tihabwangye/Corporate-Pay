@@ -725,7 +725,7 @@ export default function CorporatePayFinalAppShellV3() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawer, setMobileDrawer] = useState(false);
 
-  const [active, setActive] = useState(pageId || "dashboard");
+  const active = pageId || "dashboard";
   const [health, setHealth] = useState<AccountHealth>("Active");
 
   const [role, setRole] = useState<Role>("Org Admin");
@@ -1202,18 +1202,7 @@ export default function CorporatePayFinalAppShellV3() {
   }, [query]);
 
   // Sync active state with URL pageId param
-  useEffect(() => {
-    if (pageId && pageId !== active) {
-      setActive(pageId);
-    }
-  }, [pageId]);
 
-  // Update URL when active page changes (optional - provides shareable URLs)
-  useEffect(() => {
-    if (active && active !== pageId) {
-      navigate(`${ROUTES.CONSOLE.ROOT}/${active}`, { replace: true });
-    }
-  }, [active, pageId, navigate]);
 
   useEffect(() => {
     if (isDesktop) setMobileDrawer(false);
@@ -1225,7 +1214,7 @@ export default function CorporatePayFinalAppShellV3() {
     setOrgOpen(false);
     setNotifOpen(false);
     setCreateOpen(false);
-  }, [active]);
+  }, [pageId]);
 
   // Ctrl+K open command center
   useEffect(() => {
@@ -1233,7 +1222,7 @@ export default function CorporatePayFinalAppShellV3() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen(true);
-        setActive("command_center");
+        navigate(`${ROUTES.CONSOLE.ROOT}/command_center`);
       }
       if (e.key === "Escape") setSearchOpen(false);
     };
@@ -1285,7 +1274,7 @@ export default function CorporatePayFinalAppShellV3() {
     setRole(r);
     toast({ title: "Role switched", message: r, kind: "info" });
     // If current page becomes unauthorized, bounce to dashboard
-    if (!canAccess(active)) setActive("dashboard");
+    if (!canAccess(active)) navigate(`${ROUTES.CONSOLE.ROOT}/dashboard`);
   };
 
   const switchOrg = (o: string) => {
@@ -1300,7 +1289,7 @@ export default function CorporatePayFinalAppShellV3() {
           setOrg(o);
           setRole(r);
           setAuthed(true);
-          setActive("dashboard");
+          navigate(`${ROUTES.CONSOLE.ROOT}/dashboard`);
           toast({ title: "Signed in", message: `${o} - ${r}`, kind: "success" });
         }}
         orgs={["Acme Group Ltd", "EVzone Demo Org", "Kampala Holdings"]}
@@ -1332,7 +1321,7 @@ export default function CorporatePayFinalAppShellV3() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" /> Services are currently suspended due to payment non-compliance.
             </div>
-            <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => setActive("collections")}>
+            <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => navigate(`${ROUTES.CONSOLE.ROOT}/collections`)}>
               <Bell className="h-4 w-4" /> Open collections
             </Button>
           </div>
@@ -1343,7 +1332,7 @@ export default function CorporatePayFinalAppShellV3() {
         <div className="flex flex-1 overflow-hidden bg-white transition-colors dark:bg-slate-950">
           {/* Desktop sidebar */}
           <div className={cn("hidden h-full border-r border-slate-200 bg-slate-50 transition-colors lg:block dark:border-slate-800 dark:bg-slate-900", sidebarCollapsed ? "w-[56px]" : "w-[200px]")}>
-            <Sidebar nav={nav} active={active} onSelect={setActive} collapsed={sidebarCollapsed} theme={theme} onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))} />
+            <Sidebar nav={nav} active={active} onSelect={(id) => navigate(`${ROUTES.CONSOLE.ROOT}/${id}`)} collapsed={sidebarCollapsed} theme={theme} onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))} />
           </div>
 
           {/* Mobile drawer */}
@@ -1369,7 +1358,7 @@ export default function CorporatePayFinalAppShellV3() {
                     nav={nav}
                     active={active}
                     onSelect={(id) => {
-                      setActive(id);
+                      navigate(`${ROUTES.CONSOLE.ROOT}/${id}`);
                       setMobileDrawer(false);
                     }}
                     collapsed={false}
@@ -1480,7 +1469,7 @@ export default function CorporatePayFinalAppShellV3() {
                                 key={s.k}
                                 className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left hover:bg-slate-50"
                                 onClick={() => {
-                                  setActive(s.id);
+                                  navigate(`${ROUTES.CONSOLE.ROOT}/${s.id}`);
                                   setSearchOpen(false);
                                 }}
                               >
@@ -1573,7 +1562,7 @@ export default function CorporatePayFinalAppShellV3() {
                   <button
                     className="hidden rounded-2xl border border-white/30 bg-white/20 p-2 text-white shadow-sm backdrop-blur hover:bg-white/30 md:inline-flex"
                     aria-label="Settings"
-                    onClick={() => setActive("settings_hub")}
+                    onClick={() => navigate(`${ROUTES.CONSOLE.ROOT}/settings_hub`)}
                   >
                     <Settings className="h-5 w-5" />
                   </button>
@@ -1606,7 +1595,7 @@ export default function CorporatePayFinalAppShellV3() {
                   className="rounded-2xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                   onClick={() => {
                     setNotifOpen(false);
-                    setActive("notifications_activity");
+                    navigate(`${ROUTES.CONSOLE.ROOT}/notifications_activity`);
                   }}
                 >
                   View all
@@ -1629,7 +1618,7 @@ export default function CorporatePayFinalAppShellV3() {
                         className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         onClick={() => {
                           setNotifOpen(false);
-                          setActive("notifications_activity");
+                          navigate(`${ROUTES.CONSOLE.ROOT}/notifications_activity`);
                         }}
                       >
                         Open
@@ -1715,7 +1704,7 @@ export default function CorporatePayFinalAppShellV3() {
                     key={x.label}
                     className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-left text-sm hover:bg-slate-50"
                     onClick={() => {
-                      setActive(x.id);
+                      navigate(`${ROUTES.CONSOLE.ROOT}/${x.id}`);
                       setCreateOpen(false);
                     }}
                   >
@@ -1745,7 +1734,7 @@ export default function CorporatePayFinalAppShellV3() {
                       <Pill label={activePage.tier} tone={activePage.tier === "Premium" ? "info" : activePage.tier === "Phase 2" ? "neutral" : "neutral"} />
                       {activePage.status ? <Pill label={activePage.status} tone={activePage.status === "Ready" ? "good" : "warn"} /> : null}
                       {isSupportRole ? <Pill label="Support role" tone="warn" /> : <Pill label="Org role" tone="neutral" />}
-                      <Button variant="outline" onClick={() => setActive("settings_hub")}>
+                      <Button variant="outline" onClick={() => navigate(`${ROUTES.CONSOLE.ROOT}/settings_hub`)}>
                         <Settings className="h-4 w-4" /> Settings
                       </Button>
                     </div>
@@ -1759,10 +1748,10 @@ export default function CorporatePayFinalAppShellV3() {
             {/* Mobile bottom nav */}
             <div className="border-t border-slate-200 bg-white lg:hidden">
               <div className="grid grid-cols-5 gap-2 px-3 py-2">
-                <BottomTab active={active === "dashboard"} label="Home" icon={<LayoutDashboard className="h-5 w-5" />} onClick={() => setActive("dashboard")} />
-                <BottomTab active={active === "approvals_inbox"} label="Approvals" icon={<ClipboardCheck className="h-5 w-5" />} badge={`${counts.approvals}`} onClick={() => setActive("approvals_inbox")} />
-                <BottomTab active={active === "budgets"} label="Spend" icon={<CircleDollarSign className="h-5 w-5" />} onClick={() => setActive("budgets")} />
-                <BottomTab active={active === "wallet_billing"} label="Wallet" icon={<Wallet className="h-5 w-5" />} onClick={() => setActive("wallet_billing")} />
+                <BottomTab active={active === "dashboard"} label="Home" icon={<LayoutDashboard className="h-5 w-5" />} onClick={() => navigate(`${ROUTES.CONSOLE.ROOT}/dashboard`)} />
+                <BottomTab active={active === "approvals_inbox"} label="Approvals" icon={<ClipboardCheck className="h-5 w-5" />} badge={`${counts.approvals}`} onClick={() => navigate(`${ROUTES.CONSOLE.ROOT}/approvals_inbox`)} />
+                <BottomTab active={active === "budgets"} label="Spend" icon={<CircleDollarSign className="h-5 w-5" />} onClick={() => navigate(`${ROUTES.CONSOLE.ROOT}/budgets`)} />
+                <BottomTab active={active === "wallet_billing"} label="Wallet" icon={<Wallet className="h-5 w-5" />} onClick={() => navigate(`${ROUTES.CONSOLE.ROOT}/wallet_billing`)} />
                 <BottomTab active={false} label="More" icon={<Menu className="h-5 w-5" />} onClick={() => setMobileDrawer(true)} />
               </div>
             </div>
