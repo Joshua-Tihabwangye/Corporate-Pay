@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
@@ -13,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
   CircleDollarSign,
+  Download,
   FileText,
   Filter,
   Globe,
@@ -274,6 +276,85 @@ function ToastStack({
   );
 }
 
+function ActionButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-50"
+    >
+      <span className="flex items-center gap-2">
+        <span className="text-slate-600">{icon}</span>
+        {label}
+      </span>
+      <ChevronRight className="h-4 w-4 text-slate-500" />
+    </button>
+  );
+}
+
+function MixBar({
+  title,
+  rows,
+  total,
+}: {
+  title: string;
+  rows: Array<{ label: string; value: number }>;
+  total: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+        <span>{title}</span>
+        <span>{formatUGX(total)}</span>
+      </div>
+      <div className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        {rows.map((row, i) => {
+          const colors = [
+            "bg-emerald-500",
+            "bg-blue-500",
+            "bg-amber-500",
+            "bg-indigo-500",
+            "bg-rose-500",
+            "bg-purple-500",
+          ];
+          const width = total > 0 ? (row.value / total) * 100 : 0;
+          return (
+            <div
+              key={row.label}
+              className={cn("h-full", colors[i % colors.length])}
+              style={{ width: `${width}%` }}
+              title={`${row.label}: ${formatUGX(row.value)}`}
+            />
+          );
+        })}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+        {rows.map((r, i) => (
+          <span key={r.label} className="inline-flex items-center gap-1">
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                ["bg-emerald-500", "bg-blue-500", "bg-amber-500", "bg-indigo-500", "bg-rose-500", "bg-purple-500"][
+                i % 6
+                ]
+              )}
+            />
+            {r.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function StatCard({
   title,
   value,
@@ -492,6 +573,7 @@ type NextAction = {
 };
 
 export default function CorporatePayDashboardV2() {
+  const navigate = useNavigate();
   const [toasts, setToasts] = useState<
     Array<{ id: string; title: string; message?: string; kind: string }>
   >([]);
@@ -545,6 +627,8 @@ export default function CorporatePayDashboardV2() {
   const [customEndDate, setCustomEndDate] = useState<string>(() => {
     return new Date().toISOString().split('T')[0];
   });
+
+  const [walletBalance, setWalletBalance] = useState(6800000);
 
   const [filterGroup, setFilterGroup] = useState<Group | "All">("All");
   const [filterModule, setFilterModule] = useState<ServiceModule | "All">("All");
@@ -607,7 +691,7 @@ export default function CorporatePayDashboardV2() {
     const purchasesMonth = Math.round(16800000 * multiplier);
     const servicesMonth = Math.round(1500000 * multiplier);
 
-    const walletBalance = 6800000;
+    // const walletBalance = 6800000; // Moved to state
     const creditLimit = 25000000;
     const creditUsed = 8200000;
     const prepaidRunwayDays = 3;
@@ -694,7 +778,10 @@ export default function CorporatePayDashboardV2() {
       periodLabel,
       multiplier,
     };
-  }, [timeframe, customStartDate, customEndDate]);
+  }, [timeframe, customStartDate, customEndDate, walletBalance]);
+
+  // Track issued budgets
+  const [issuedBudgets, setIssuedBudgets] = useState<Array<{ id: string; group: string; amount: number; period: string; timestamp: Date }>>([]);
 
   // Approvals
   const [approvals, setApprovals] = useState<ApprovalItem[]>(() => [
@@ -947,7 +1034,12 @@ export default function CorporatePayDashboardV2() {
     if (filterModule !== "All") parts.push(`Module: ${filterModule}`);
     if (filterMarketplace !== "All") parts.push(`Marketplace: ${filterMarketplace}`);
     return parts.length ? parts.join(" • ") : "All spend";
-  }, [filterGroup, filterModule, filterMarketplace]);
+  }, [
+    filterGroup,
+    filterModule,
+    filterMarketplace,
+    walletBalance,
+  ]);
 
   return (
     <div
@@ -1227,6 +1319,43 @@ export default function CorporatePayDashboardV2() {
               </div>
             </div>
 
+            {/* Budget Tracking Section */}
+            {issuedBudgets.length > 0 && (
+              <div className="mt-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Issued Budgets</h3>
+                </div>
+                <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden dark:border-slate-800 dark:bg-slate-900">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase dark:bg-slate-950 dark:text-slate-400">
+                        <tr>
+                          <th className="px-6 py-3">Group</th>
+                          <th className="px-6 py-3">Amount</th>
+                          <th className="px-6 py-3">Period</th>
+                          <th className="px-6 py-3">Time Issued</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                        {issuedBudgets.map((b) => (
+                          <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{b.group}</td>
+                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{formatUGX(b.amount)}</td>
+                            <td className="px-6 py-4">
+                              <Pill label={b.period} tone="info" />
+                            </td>
+                            <td className="px-6 py-4 text-slate-500 text-xs">
+                              {b.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Top issues + premium insights */}
             <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
               <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1250,7 +1379,7 @@ export default function CorporatePayDashboardV2() {
                     </div>
                   ))}
                 </div>
-                <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => toast({ title: "Issues", message: "Opening Notifications & Activity Center (Round 1B).", kind: "info" })}>
+                <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => navigate("/console/notifications_activity")}>
                   <Bell className="h-4 w-4" /> View all
                 </Button>
               </div>
@@ -1285,7 +1414,11 @@ export default function CorporatePayDashboardV2() {
                           </div>
                           <div className="mt-2 flex flex-wrap gap-2">
                             {a.ctas.map((c) => (
-                              <Button key={c} variant="outline" className="px-3 py-2 text-xs" onClick={() => toast({ title: c, message: "Action opened (demo).", kind: "info" })}>
+                              <Button key={c} variant="outline" className="px-3 py-2 text-xs" onClick={() => {
+                                if (c === "Investigate") navigate("/console/reporting");
+                                else if (c === "Create rule") navigate("/console/policies");
+                                else toast({ title: c, message: "Action opened (demo).", kind: "info" });
+                              }}>
                                 <Sparkles className="h-4 w-4" /> {c}
                               </Button>
                             ))}
@@ -1316,7 +1449,7 @@ export default function CorporatePayDashboardV2() {
                         </div>
                       ))}
                     </div>
-                    <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => toast({ title: "Savings", message: "Opening savings dashboard (Round 8V).", kind: "info" })}>
+                    <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => navigate("/console/policies")}>
                       <TrendingDown className="h-4 w-4" /> View all
                     </Button>
                   </div>
@@ -1325,31 +1458,29 @@ export default function CorporatePayDashboardV2() {
                 <div className="mt-3 rounded-3xl border border-slate-200 bg-white p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">Next best actions</div>
-                      <div className="mt-1 text-xs text-slate-500">Smart admin guidance based on signals</div>
+                      <Pill label={`${nextActions.length}`} tone="info" />
                     </div>
-                    <Pill label={`${nextActions.length}`} tone="info" />
-                  </div>
-                  <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
-                    {nextActions.map((a) => (
-                      <div key={a.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">{a.title}</div>
-                            <div className="mt-1 text-xs text-slate-500">{a.why}</div>
+                    <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+                      {nextActions.map((a) => (
+                        <div key={a.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">{a.title}</div>
+                              <div className="mt-1 text-xs text-slate-500">{a.why}</div>
+                            </div>
+                            <Pill label={a.tone === "warn" ? "Now" : a.tone === "info" ? "Soon" : "Tip"} tone={a.tone} />
                           </div>
-                          <Pill label={a.tone === "warn" ? "Now" : a.tone === "info" ? "Soon" : "Tip"} tone={a.tone} />
+                          <div className="mt-2 text-xs text-slate-700">Impact: <span className="font-semibold text-slate-900">{a.impact}</span></div>
+                          <Button variant="primary" className="mt-3 w-full text-xs" onClick={() => {
+                            if (a.cta.includes("RFQ")) setRfqOpen(true);
+                            else if (a.cta.includes("budget")) setIssueBudgetOpen(true);
+                            else toast({ title: a.cta, message: "Opening action (demo).", kind: "info" });
+                          }}>
+                            <ChevronRight className="h-4 w-4" /> {a.cta}
+                          </Button>
                         </div>
-                        <div className="mt-2 text-xs text-slate-700">Impact: <span className="font-semibold text-slate-900">{a.impact}</span></div>
-                        <Button variant="primary" className="mt-3 w-full text-xs" onClick={() => {
-                          if (a.cta.includes("RFQ")) setRfqOpen(true);
-                          else if (a.cta.includes("budget")) setIssueBudgetOpen(true);
-                          else toast({ title: a.cta, message: "Opening action (demo).", kind: "info" });
-                        }}>
-                          <ChevronRight className="h-4 w-4" /> {a.cta}
-                        </Button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1357,7 +1488,15 @@ export default function CorporatePayDashboardV2() {
 
             {/* Heatmaps + leaders */}
             <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 relative">
+                <div className="absolute top-4 right-4 z-10">
+                  <Button variant="outline" className="text-xs h-8" onClick={() => {
+                    // Simulate data update
+                    toast({ title: "Data Updated", message: "Ride records refreshed from source.", kind: "success" });
+                  }}>
+                    <Download className="h-3 w-3 mr-1" /> Import Data
+                  </Button>
+                </div>
                 <Heatmap matrix={heat.matrix} rows={heat.rows} cols={heat.cols} />
               </div>
               <div className="space-y-3">
@@ -1366,7 +1505,7 @@ export default function CorporatePayDashboardV2() {
                   subtitle="Across modules/marketplaces"
                   icon={<Store className="h-4 w-4" />}
                   actionLabel="View"
-                  onAction={() => toast({ title: "Vendors", message: "Opening vendor analytics (Round 7R).", kind: "info" })}
+                  onAction={() => navigate("/console/reporting")}
                   items={[
                     { title: "Shenzhen Store", meta: `Spend: ${formatUGX(5200000)} • Marketplace: MyLiveDealz`, pill: { label: "Anomaly", tone: "warn" } },
                     { title: "Kampala Office Mart", meta: `Spend: ${formatUGX(3100000)} • Preferred vendor`, pill: { label: "Preferred", tone: "good" } },
@@ -1378,7 +1517,7 @@ export default function CorporatePayDashboardV2() {
                   subtitle="Most frequent rides"
                   icon={<MapPin className="h-4 w-4" />}
                   actionLabel="View"
-                  onAction={() => toast({ title: "Routes", message: "Opening route analytics (Round 8U).", kind: "info" })}
+                  onAction={() => navigate("/console/travel")}
                   items={[
                     { title: "Office → Airport", meta: "36 trips • Avg fare UGX 82k", pill: { label: "Peak", tone: "warn" } },
                     { title: "Office → Client HQ", meta: "29 trips • Avg fare UGX 41k", pill: { label: "OK", tone: "neutral" } },
@@ -1451,7 +1590,7 @@ export default function CorporatePayDashboardV2() {
                   />
                 </div>
 
-                <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => toast({ title: "Analytics", message: "Opening Reporting & Analytics (Round 8V).", kind: "info" })}>
+                <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => navigate("/console/reporting")}>
                   <BarChart3 className="h-4 w-4" /> Open analytics
                 </Button>
               </div>
@@ -1477,6 +1616,7 @@ export default function CorporatePayDashboardV2() {
               variant="primary"
               onClick={() => {
                 setAddFundsOpen(false);
+                setWalletBalance((prev) => prev + fundDraft.amount);
                 toast({ title: "Funds added", message: `${fundDraft.method}: ${formatUGX(fundDraft.amount)}`, kind: "success" });
               }}
             >
@@ -1542,6 +1682,13 @@ export default function CorporatePayDashboardV2() {
               variant="primary"
               onClick={() => {
                 setIssueBudgetOpen(false);
+                setIssuedBudgets(curr => [{
+                  id: uid('budget'),
+                  group: budgetDraft.group,
+                  amount: Number(budgetDraft.amount),
+                  period: budgetDraft.period,
+                  timestamp: new Date()
+                }, ...curr]);
                 toast({ title: "Budget issued", message: `${budgetDraft.group}: ${formatUGX(budgetDraft.amount)} (${budgetDraft.period})`, kind: "success" });
               }}
             >
@@ -1727,27 +1874,22 @@ export default function CorporatePayDashboardV2() {
             <div className="mt-2 text-xs text-slate-500">This can be paid via milestones after quote approval.</div>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2">
               <div>
                 <div className="text-sm font-semibold text-slate-900">Attachments</div>
                 <div className="mt-1 text-xs text-slate-600">Specs, PDFs, drawings</div>
               </div>
-              <button
-                type="button"
-                className={cn(
-                  "relative h-7 w-12 rounded-full border transition",
-                  rfqDraft.attachments ? "border-emerald-300 bg-emerald-200" : "border-slate-200 bg-white"
-                )}
-                onClick={() => setRfqDraft((p) => ({ ...p, attachments: !p.attachments }))}
-                aria-label="Toggle attachments"
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition",
-                    rfqDraft.attachments ? "left-[22px]" : "left-1"
-                  )}
-                />
-              </button>
+              <input
+                type="file"
+                multiple
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+                onChange={(e) => {
+                  // In a real app, we would upload these
+                  if (e.target.files?.length) {
+                    setRfqDraft((p) => ({ ...p, attachments: true }));
+                  }
+                }}
+              />
             </div>
           </div>
           <div className="md:col-span-2">
@@ -1860,62 +2002,6 @@ export default function CorporatePayDashboardV2() {
   );
 }
 
-function ActionButton({
-  icon,
-  label,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-50"
-    >
-      <span className="flex items-center gap-2">
-        <span className="text-slate-600">{icon}</span>
-        {label}
-      </span>
-      <ChevronRight className="h-4 w-4 text-slate-500" />
-    </button>
-  );
-}
 
-function MixBar({
-  title,
-  total,
-  rows,
-}: {
-  title: string;
-  total: number;
-  rows: Array<{ label: string; value: number }>;
-}) {
-  const safeTotal = Math.max(1, total);
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-semibold text-slate-600">{title}</div>
-        <div className="text-xs text-slate-500">Top {rows.length}</div>
-      </div>
-      <div className="mt-3 space-y-2">
-        {rows.map((r) => {
-          const pct = clamp((r.value / safeTotal) * 100, 0, 100);
-          return (
-            <div key={r.label} className="rounded-2xl border border-slate-200 bg-white p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-semibold text-slate-800">{r.label}</div>
-                <div className="text-xs font-semibold text-slate-900">{formatUGX(r.value)}</div>
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: EVZ.green }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+
+
