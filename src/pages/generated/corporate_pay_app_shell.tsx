@@ -1416,21 +1416,21 @@ export default function CorporatePayFinalAppShellV3() {
                           <div className="px-2 py-1.5 text-xs font-semibold text-slate-500">Account status</div>
                           <button
                             className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm font-medium hover:bg-slate-50"
-                            onClick={() => setHealth("Active")}
+                            onClick={() => { setHealth("Active"); setAccountOpen(false); }}
                           >
                             <span className="text-emerald-700">Active</span>
                             {health === "Active" && <Check className="h-4 w-4 text-emerald-600" />}
                           </button>
                           <button
                             className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm font-medium hover:bg-slate-50"
-                            onClick={() => setHealth("Past due")}
+                            onClick={() => { setHealth("Past due"); setAccountOpen(false); }}
                           >
                             <span className="text-amber-700">Past due</span>
                             {health === "Past due" && <Check className="h-4 w-4 text-emerald-600" />}
                           </button>
                           <button
                             className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm font-medium hover:bg-slate-50"
-                            onClick={() => setHealth("Suspended")}
+                            onClick={() => { setHealth("Suspended"); setAccountOpen(false); }}
                           >
                             <span className="text-rose-700">Suspended</span>
                             {health === "Suspended" && <Check className="h-4 w-4 text-emerald-600" />}
