@@ -1129,48 +1129,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
               {/* Left rail */}
               <div className="lg:col-span-4 space-y-4">
-                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Quick actions</div>
-                      <div className="mt-1 text-xs text-slate-500">Audit-friendly confirmation and reason prompts.</div>
-                    </div>
-                    <Pill label="Audited" tone="info" />
-                  </div>
-                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                    <QuickActionCard
-                      icon={<Ticket className="h-4 w-4" />}
-                      title="Create RFQ"
-                      desc="High-value assets and quotes"
-                      shortcut={operatorMode ? "A R" : undefined}
-                      onClick={() => openAction("rfq")}
-                    />
-                    <QuickActionCard
-                      icon={<PiggyBank className="h-4 w-4" />}
-                      title="Issue budget"
-                      desc="Allocate group budget"
-                      shortcut={operatorMode ? "A B" : undefined}
-                      onClick={() => openAction("budget")}
-                    />
-                    <QuickActionCard
-                      icon={<Snowflake className="h-4 w-4" />}
-                      title="Freeze CorporatePay"
-                      desc="Pause CorporatePay at checkout"
-                      shortcut={operatorMode ? "A F" : undefined}
-                      onClick={() => openAction("freeze")}
-                    />
-                    <QuickActionCard
-                      icon={<Download className="h-4 w-4" />}
-                      title="Export month report"
-                      desc="CSV, PDF, JSON"
-                      shortcut={operatorMode ? "A E" : undefined}
-                      onClick={() => openAction("export")}
-                    />
-                  </div>
-                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                    Premium: actions include reason prompts and audit preview. Sensitive actions can require dual approval.
-                  </div>
-                </div>
+
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
@@ -1222,26 +1181,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Operator shortcuts</div>
-                      <div className="mt-1 text-xs text-slate-500">Premium: power-user shortcuts.</div>
-                    </div>
-                    <Pill label={operatorMode ? "On" : "Off"} tone={operatorMode ? "warn" : "neutral"} />
-                  </div>
-                  <div className="mt-3 space-y-2 text-sm">
-                    <ShortcutRow k="Ctrl+K" v="Open commands" />
-                    <ShortcutRow k="/" v="Focus search" />
-                    <ShortcutRow k="A R" v="Create RFQ" />
-                    <ShortcutRow k="A B" v="Issue budget" />
-                    <ShortcutRow k="A F" v="Freeze CorporatePay" />
-                    <ShortcutRow k="A E" v="Export month report" />
-                  </div>
-                  <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                    Operator shortcuts are shown in the command palette. Run actions with audit prompts.
-                  </div>
-                </div>
+
               </div>
 
               {/* Main */}

@@ -1181,9 +1181,9 @@ export default function CorporatePayDashboardV2() {
           </div>
 
           {/* Body */}
-          <div className="bg-slate-50 px-4 py-5 transition-colors md:px-6 dark:bg-slate-950">
+          <div className="bg-slate-50 px-4 py-8 transition-colors md:px-8 dark:bg-slate-950">
             {/* KPI row */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               <StatCard
                 title="Spend today"
                 value={formatUGX(data.spendToday)}
@@ -1234,371 +1234,265 @@ export default function CorporatePayDashboardV2() {
               />
             </div>
 
-            {/* Quick actions */}
-            <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Quick actions</div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">Fast paths to high-impact workflows</div>
-                  </div>
-                  <Pill label="Admin" tone="neutral" />
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <ActionButton icon={<Wallet className="h-4 w-4" />} label="Add funds" onClick={() => setAddFundsOpen(true)} />
-                  <ActionButton icon={<PiggyBank className="h-4 w-4" />} label="Issue budget" onClick={() => setIssueBudgetOpen(true)} />
-                  <ActionButton icon={<BadgeCheck className="h-4 w-4" />} label="Approve queue" onClick={() => setApprovalsOpen(true)} />
-                  <ActionButton icon={<FileText className="h-4 w-4" />} label="Create RFQ/Quote" onClick={() => setRfqOpen(true)} />
-                </div>
-                <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                  RFQs support high-value assets that do not fit monthly budgets.
-                </div>
-              </div>
 
-              {/* Account health */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Account health</div>
-                    <div className="mt-1 text-xs text-slate-500">Wallet, credit, prepaid runway, and service status</div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Pill label={`Wallet: ${formatUGX(data.walletBalance)}`} tone={data.walletBalance < 1000000 ? "bad" : "good"} />
-                    <Pill label={`Credit: ${Math.round(creditUsedPct)}% used`} tone={creditUsedPct > 80 ? "warn" : "neutral"} />
-                    <Pill label={`Prepaid runway: ${data.prepaidRunwayDays} days`} tone={data.prepaidRunwayDays <= 3 ? "warn" : "good"} />
-                  </div>
+
+            {/* Quick Actions Bar */}
+            <div className="mt-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="text-lg font-bold text-slate-900 dark:text-white">Quick Actions</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Fast paths to high-impact workflows</div>
                 </div>
-
-                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                    <div className="text-xs font-semibold text-slate-600">Wallet balance</div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900">{formatUGX(data.walletBalance)}</div>
-                    <div className="mt-2">
-                      <Button variant="outline" className="w-full text-xs" onClick={() => setAddFundsOpen(true)}>
-                        <HandCoins className="h-4 w-4" /> Add funds
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                    <div className="text-xs font-semibold text-slate-600">Credit usage</div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900">{formatUGX(data.creditUsed)} / {formatUGX(data.creditLimit)}</div>
-                    <div className="mt-2">
-                      <ProgressBar value={creditUsedPct} labelLeft="Used" labelRight={`${Math.round(creditUsedPct)}%`} />
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                    <div className="text-xs font-semibold text-slate-600">Service status</div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {SERVICE_MODULES.slice(0, 6).map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          className={cn(
-                            "rounded-full px-3 py-2 text-xs font-semibold ring-1",
-                            serviceStatus[m] ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
-                          )}
-                          onClick={() => {
-                            setServiceStatus((p) => ({ ...p, [m]: !p[m] }));
-                            toast({ title: "Service status", message: `${m}: ${serviceStatus[m] ? "Paused" : "Active"} (demo).`, kind: "info" });
-                          }}
-                          title="Demo toggle"
-                        >
-                          {m}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-2 text-xs text-slate-500">More modules configured in Setup. Demo toggles only.</div>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                  Auto-enforcement: if agreements are not complied with, CorporatePay is disabled at checkout across apps.
-                </div>
-              </div>
-            </div>
-
-            {/* Budget Tracking Section */}
-            {issuedBudgets.length > 0 && (
-              <div className="mt-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Issued Budgets</h3>
-                </div>
-                <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden dark:border-slate-800 dark:bg-slate-900">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase dark:bg-slate-950 dark:text-slate-400">
-                        <tr>
-                          <th className="px-6 py-3">Group</th>
-                          <th className="px-6 py-3">Amount</th>
-                          <th className="px-6 py-3">Period</th>
-                          <th className="px-6 py-3">Time Issued</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                        {issuedBudgets.map((b) => (
-                          <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">{b.group}</td>
-                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{formatUGX(b.amount)}</td>
-                            <td className="px-6 py-4">
-                              <Pill label={b.period} tone="info" />
-                            </td>
-                            <td className="px-6 py-4 text-slate-500 text-xs">
-                              {b.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Top issues + premium insights */}
-            <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Top issues</div>
-                    <div className="mt-1 text-xs text-slate-500">What needs attention now</div>
-                  </div>
-                  <Pill label={`${issues.length}`} tone={issues.some((x) => x.pill.tone === "bad") ? "bad" : "warn"} />
-                </div>
-                <div className="mt-3 space-y-2">
-                  {issues.map((x) => (
-                    <div key={x.title} className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">{x.title}</div>
-                          <div className="mt-1 text-xs text-slate-500">{x.meta}</div>
-                        </div>
-                        <Pill label={x.pill.label} tone={x.pill.tone} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => navigate("/console/notifications_activity")}>
-                  <Bell className="h-4 w-4" /> View all
-                </Button>
-              </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Premium insights</div>
-                    <div className="mt-1 text-xs text-slate-500">Anomalies, savings, forecasts, and next-best actions</div>
-                  </div>
-                  <Pill label="Premium" tone="info" />
-                </div>
-
-                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">Anomalies</div>
-                        <div className="mt-1 text-xs text-slate-500">Unusual patterns detected</div>
-                      </div>
-                      <Pill label={`${anomalies.length}`} tone="warn" />
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {anomalies.map((a) => (
-                        <div key={a.title} className="rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">{a.title}</div>
-                              <div className="mt-1 text-xs text-slate-500">{a.body}</div>
-                            </div>
-                            <Pill label={a.severity === "warn" ? "Anomaly" : "Info"} tone={a.severity} />
-                          </div>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {a.ctas.map((c) => (
-                              <Button key={c} variant="outline" className="px-3 py-2 text-xs" onClick={() => {
-                                if (c === "Investigate") navigate("/console/reporting");
-                                else if (c === "Create rule") navigate("/console/policies");
-                                else toast({ title: c, message: "Action opened (demo).", kind: "info" });
-                              }}>
-                                <Sparkles className="h-4 w-4" /> {c}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">Savings suggestions</div>
-                        <div className="mt-1 text-xs text-slate-500">Negotiated pricing and policy tuning</div>
-                      </div>
-                      <Pill label={`${savings.length}`} tone="good" />
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {savings.map((s) => (
-                        <div key={s.title} className="rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">{s.title}</div>
-                              <div className="mt-1 text-xs text-slate-500">{s.body}</div>
-                            </div>
-                            <Pill label={s.tag} tone="neutral" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => navigate("/console/policies")}>
-                      <TrendingDown className="h-4 w-4" /> View all
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="mt-3 rounded-3xl border border-slate-200 bg-white p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <Pill label={`${nextActions.length}`} tone="info" />
-                    </div>
-                    <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
-                      {nextActions.map((a) => (
-                        <div key={a.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">{a.title}</div>
-                              <div className="mt-1 text-xs text-slate-500">{a.why}</div>
-                            </div>
-                            <Pill label={a.tone === "warn" ? "Now" : a.tone === "info" ? "Soon" : "Tip"} tone={a.tone} />
-                          </div>
-                          <div className="mt-2 text-xs text-slate-700">Impact: <span className="font-semibold text-slate-900">{a.impact}</span></div>
-                          <Button variant="primary" className="mt-3 w-full text-xs" onClick={() => {
-                            if (a.cta.includes("RFQ")) setRfqOpen(true);
-                            else if (a.cta.includes("budget")) setIssueBudgetOpen(true);
-                            else toast({ title: a.cta, message: "Opening action (demo).", kind: "info" });
-                          }}>
-                            <ChevronRight className="h-4 w-4" /> {a.cta}
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Heatmaps + leaders */}
-            <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="lg:col-span-2 relative">
-                <div className="absolute top-4 right-4 z-10">
-                  <Button variant="outline" className="text-xs h-8" onClick={() => {
-                    // Simulate data update
-                    toast({ title: "Data Updated", message: "Ride records refreshed from source.", kind: "success" });
-                  }}>
-                    <Download className="h-3 w-3 mr-1" /> Import Data
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="primary" onClick={() => setAddFundsOpen(true)} className="shadow-lg shadow-emerald-500/10">
+                    <Wallet className="h-4 w-4" /> Add funds
+                  </Button>
+                  <Button variant="outline" onClick={() => setIssueBudgetOpen(true)}>
+                    <PiggyBank className="h-4 w-4" /> Issue budget
+                  </Button>
+                  <Button variant="outline" onClick={() => setApprovalsOpen(true)}>
+                    <BadgeCheck className="h-4 w-4" /> Approve queue
+                  </Button>
+                  <Button variant="outline" onClick={() => setRfqOpen(true)}>
+                    <FileText className="h-4 w-4" /> Create RFQ
                   </Button>
                 </div>
-                <Heatmap matrix={heat.matrix} rows={heat.rows} cols={heat.cols} />
-              </div>
-              <div className="space-y-3">
-                <ListCard
-                  title="Top vendors"
-                  subtitle="Across modules/marketplaces"
-                  icon={<Store className="h-4 w-4" />}
-                  actionLabel="View"
-                  onAction={() => navigate("/console/reporting")}
-                  items={[
-                    { title: "Shenzhen Store", meta: `Spend: ${formatUGX(5200000)} • Marketplace: MyLiveDealz`, pill: { label: "Anomaly", tone: "warn" } },
-                    { title: "Kampala Office Mart", meta: `Spend: ${formatUGX(3100000)} • Preferred vendor`, pill: { label: "Preferred", tone: "good" } },
-                    { title: "City Courier", meta: `Spend: ${formatUGX(820000)} • SLA OK`, pill: { label: "OK", tone: "neutral" } },
-                  ]}
-                />
-                <ListCard
-                  title="Top routes"
-                  subtitle="Most frequent rides"
-                  icon={<MapPin className="h-4 w-4" />}
-                  actionLabel="View"
-                  onAction={() => navigate("/console/travel")}
-                  items={[
-                    { title: "Office → Airport", meta: "36 trips • Avg fare UGX 82k", pill: { label: "Peak", tone: "warn" } },
-                    { title: "Office → Client HQ", meta: "29 trips • Avg fare UGX 41k", pill: { label: "OK", tone: "neutral" } },
-                    { title: "Office → Warehouse", meta: "18 trips • Avg fare UGX 35k", pill: { label: "OK", tone: "neutral" } },
-                  ]}
-                />
               </div>
             </div>
 
-            {/* Forecast table */}
-            <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Forecast to month-end</div>
-                    <div className="mt-1 text-xs text-slate-500">By group and module (Marketplaces shown separately)</div>
+            {/* Account Health - Full Width */}
+            <div className="mt-8 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Account Health</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Wallet, credit, and service status overview</p>
+                </div>
+                <div className="flex gap-2">
+                  <Pill label={`Wallet: ${formatUGX(data.walletBalance)}`} tone={data.walletBalance < 1000000 ? "bad" : "good"} />
+                  <Pill label={`Credit: ${Math.round(creditUsedPct)}% used`} tone={creditUsedPct > 80 ? "warn" : "neutral"} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {/* Wallet */}
+                <div className="rounded-3xl bg-slate-50 p-5 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      <Wallet className="h-5 w-5" />
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Wallet Balance</div>
                   </div>
-                  <Pill label={`Day ${data.monthDay}/${data.daysInMonth}`} tone="neutral" />
-                </div>
-
-                <div className="mt-4 overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-xs text-slate-600">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold">Group</th>
-                        <th className="px-4 py-3 font-semibold">MTD</th>
-                        <th className="px-4 py-3 font-semibold">Forecast</th>
-                        <th className="px-4 py-3 font-semibold">Budget</th>
-                        <th className="px-4 py-3 font-semibold">Risk</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {forecastByGroup.map((r) => (
-                        <tr key={r.group} className="border-t border-slate-100 hover:bg-slate-50/60">
-                          <td className="px-4 py-3 font-semibold text-slate-900">{r.group}</td>
-                          <td className="px-4 py-3 text-slate-700">{formatUGX(r.mtd)}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(r.forecast)}</td>
-                          <td className="px-4 py-3 text-slate-700">{formatUGX(r.budget)}</td>
-                          <td className="px-4 py-3"><Pill label={r.risk === "bad" ? "Over" : r.risk === "warn" ? "At risk" : "OK"} tone={r.risk} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                  Premium: forecast uses real historical patterns per group/module/marketplace in production.
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Module and marketplace mix</div>
-                    <div className="mt-1 text-xs text-slate-500">Month-to-date distribution</div>
+                  <div className="text-3xl font-bold text-slate-900 dark:text-white">{formatUGX(data.walletBalance)}</div>
+                  <div className="mt-4">
+                    <Button variant="outline" className="w-full justify-center bg-white dark:bg-slate-800" onClick={() => setAddFundsOpen(true)}>Top up</Button>
                   </div>
-                  <Pill label="MTD" tone="neutral" />
                 </div>
 
-                <div className="mt-3 space-y-3">
-                  <MixBar
-                    title="Service modules"
-                    total={moduleSpendTotal}
-                    rows={forecastByModule.slice(0, 6).map((m) => ({ label: m.module, value: m.mtd }))}
-                  />
-                  <MixBar
-                    title="Marketplaces"
-                    total={marketplaceSpendTotal}
-                    rows={forecastByMarketplace.slice(0, 6).map((m) => ({ label: m.marketplace, value: m.mtd }))}
-                  />
+                {/* Credit */}
+                <div className="rounded-3xl bg-slate-50 p-5 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                      <Activity className="h-5 w-5" />
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Credit Usage</div>
+                  </div>
+                  <div className="text-3xl font-bold text-slate-900 dark:text-white">{formatUGX(data.creditUsed)} <span className="text-sm font-normal text-slate-500">/ {formatUGX(data.creditLimit)}</span></div>
+                  <div className="mt-4">
+                    <ProgressBar value={creditUsedPct} labelLeft="Used" labelRight={`${Math.round(creditUsedPct)}%`} />
+                  </div>
                 </div>
 
-                <Button variant="outline" className="mt-3 w-full text-xs" onClick={() => navigate("/console/reporting")}>
-                  <BarChart3 className="h-4 w-4" /> Open analytics
-                </Button>
+                {/* Services */}
+                <div className="rounded-3xl bg-slate-50 p-5 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                      <Layers className="h-5 w-5" />
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">Active Modules</div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {SERVICE_MODULES.slice(0, 5).map(m => (
+                      <span key={m} className={cn("inline-flex items-center rounded-lg px-2 py-1 text-xs font-medium transition-colors cursor-pointer", serviceStatus[m] ? "bg-white text-slate-700 shadow-sm dark:bg-slate-800 dark:text-slate-300" : "bg-transparent text-slate-400")} onClick={() => {
+                        setServiceStatus(p => ({ ...p, [m]: !p[m] }));
+                        toast({ title: "Module toggle", message: `${m} ${!serviceStatus[m] ? "enabled" : "disabled"}`, kind: "info" });
+                      }}>
+                        {m}
+                      </span>
+                    ))}
+                    <span className="inline-flex items-center px-2 py-1 text-xs text-slate-400">+More</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 text-xs text-slate-500">
-              A) Corporate Dashboard v2: incorporates EVzone Service Modules and Marketplaces (including Other slots), premium forecasting by group/module/marketplace, anomaly detection, savings suggestions, and next-best actions.
-            </div>
+            {/* Main Content Grid */}
+            <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
+              {/* Top issues + premium insights */}
+              <div className="lg:col-span-4 space-y-8">
+                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Top Issues</h3>
+                    <Pill label={`${issues.length}`} tone={issues.some(x => x.pill.tone === "bad") ? "bad" : "warn"} />
+                  </div>
+                  <div className="space-y-3">
+                    {issues.map((x) => (
+                      <div key={x.title} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-semibold text-slate-900 dark:text-white">{x.title}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{x.meta}</div>
+                          </div>
+                          <Pill label={x.pill.label} tone={x.pill.tone} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="ghost" className="mt-4 w-full text-xs" onClick={() => navigate("/console/notifications_activity")}>
+                    View all notifications
+                  </Button>
+                </div>
+
+                {/* Premium Insights List */}
+                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Premium Insights</h3>
+                    <Pill label="Premium" tone="info" />
+                  </div>
+                  <div className="space-y-4">
+                    {nextActions.map(a => (
+                      <div key={a.id} className="group relative rounded-2xl bg-slate-50 p-4 transition-all hover:bg-white hover:shadow-md hover:ring-1 hover:ring-slate-200 dark:bg-slate-800/50 dark:hover:bg-slate-800 dark:hover:ring-slate-700">
+                        <div className="flex justify-between items-start">
+                          <div className="font-semibold text-slate-900 dark:text-white">{a.title}</div>
+                          <Pill label={a.tone === "warn" ? "Urgent" : "Tip"} tone={a.tone} />
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{a.why}</div>
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Impact: {a.impact}</span>
+                          <button className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 dark:text-emerald-400" onClick={() => {
+                            if (a.cta.includes("RFQ")) setRfqOpen(true);
+                            else if (a.cta.includes("budget")) setIssueBudgetOpen(true);
+                            else toast({ title: a.cta, message: "Opening action...", kind: "info" });
+                          }}>
+                            {a.cta} <ChevronRight className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Heatmaps & Leaders - Center/Right */}
+              <div className="lg:col-span-8 flex flex-col gap-8">
+                {/* Heatmap */}
+                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">Peak Ride Times</h3>
+                      <p className="text-sm text-slate-500">Ride volume heat distribution</p>
+                    </div>
+                    <Button variant="outline" className="h-8 text-xs" onClick={() => toast({ title: "Updated", message: "Data refreshed", kind: "success" })}>
+                      <Download className="h-3 w-3 mr-2" />
+                      Import Data
+                    </Button>
+                  </div>
+                  <div className="overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <Heatmap matrix={heat.matrix} rows={heat.rows} cols={heat.cols} />
+                  </div>
+                </div>
+
+                {/* Leaders Lists - Side by Side internal */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ListCard
+                    title="Top Vendors"
+                    subtitle="By spend volume"
+                    icon={<Store className="h-4 w-4" />}
+                    actionLabel="View All"
+                    onAction={() => navigate("/console/reporting")}
+                    items={[
+                      { title: "Shenzhen Store", meta: `UGX ${formatUGX(5200000)}`, pill: { label: "Anomaly", tone: "warn" } },
+                      { title: "Kampala Office Mart", meta: `UGX ${formatUGX(3100000)}`, pill: { label: "Preferred", tone: "good" } },
+                      { title: "City Courier", meta: `UGX ${formatUGX(820000)}`, pill: { label: "OK", tone: "neutral" } },
+                    ]}
+                  />
+                  <ListCard
+                    title="Top Routes"
+                    subtitle="Most frequent trips"
+                    icon={<MapPin className="h-4 w-4" />}
+                    actionLabel="View All"
+                    onAction={() => navigate("/console/travel")}
+                    items={[
+                      { title: "Office → Airport", meta: "36 trips • Avg UGX 82k", pill: { label: "Peak", tone: "warn" } },
+                      { title: "Office → Client HQ", meta: "29 trips • Avg UGX 41k", pill: { label: "OK", tone: "neutral" } },
+                      { title: "Office → Warehouse", meta: "18 trips • Avg UGX 35k", pill: { label: "OK", tone: "neutral" } },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Forecast table - Full Width */}
+              <div className="lg:col-span-12 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Budget Forecast</h3>
+                    <p className="text-sm text-slate-500">Projected month-end spend vs budget</p>
+                  </div>
+                  <Pill label={`Day ${data.monthDay} of ${data.daysInMonth}`} tone="neutral" />
+                </div>
+
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                  <div className="lg:col-span-2">
+                    <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50 text-xs font-semibold text-slate-600 dark:bg-slate-950 dark:text-slate-400">
+                          <tr>
+                            <th className="px-5 py-3">Group</th>
+                            <th className="px-5 py-3 text-right">MTD Spend</th>
+                            <th className="px-5 py-3 text-right">Forecast</th>
+                            <th className="px-5 py-3 text-right">Budget</th>
+                            <th className="px-5 py-3 text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {forecastByGroup.map(r => (
+                            <tr key={r.group} className="hover:bg-slate-50/50">
+                              <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">{r.group}</td>
+                              <td className="px-5 py-3 text-right text-slate-600 dark:text-slate-300">{formatUGX(r.mtd)}</td>
+                              <td className="px-5 py-3 text-right font-medium text-slate-900 dark:text-white">{formatUGX(r.forecast)}</td>
+                              <td className="px-5 py-3 text-right text-slate-500">{formatUGX(r.budget)}</td>
+                              <td className="px-5 py-3 text-center">
+                                <Pill label={r.risk === "bad" ? "Over" : r.risk === "warn" ? "Risk" : "OK"} tone={r.risk} />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="space-y-4">
+                      <MixBar
+                        title="Service Modules"
+                        total={moduleSpendTotal}
+                        rows={forecastByModule.slice(0, 5).map(m => ({ label: m.module, value: m.mtd }))}
+                      />
+                      <MixBar
+                        title="Marketplaces"
+                        total={marketplaceSpendTotal}
+                        rows={forecastByMarketplace.slice(0, 5).map(m => ({ label: m.marketplace, value: m.mtd }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 text-center lg:col-span-12">
+                <div className="inline-block rounded-full bg-slate-100 px-4 py-2 text-xs text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                  CorporatePay v2.4 • Everything is up to date
+                </div>
+              </div>
+
+            </div> {/* Close grid-cols-12 */}
           </div>
         </div>
       </div>
@@ -1907,7 +1801,6 @@ export default function CorporatePayDashboardV2() {
         </div>
       </Modal>
 
-      {/* Approvals modal */}
       <Modal
         open={approvalsOpen}
         title="Approvals inbox"
@@ -1918,8 +1811,9 @@ export default function CorporatePayDashboardV2() {
             <Button variant="outline" onClick={() => setApprovalsOpen(false)}>Close</Button>
           </div>
         }
+        maxW="95vw"
       >
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-md p-4"> {/* Added shadow and padding */}
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs text-slate-600">
               <tr>
@@ -1998,10 +1892,6 @@ export default function CorporatePayDashboardV2() {
           A Corporate Dashboard v2: KPIs, account health, issues, heatmaps, quick actions, and premium insights with forecasts by group/module/marketplace.
         </div>
       </footer>
-    </div>
+    </div >
   );
 }
-
-
-
-
