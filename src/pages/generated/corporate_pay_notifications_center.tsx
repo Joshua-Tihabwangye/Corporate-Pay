@@ -191,12 +191,12 @@ function Modal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-x-0 top-[8vh] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
-            style={{ maxWidth: maxW }}
+            className="fixed inset-0 z-50 m-auto flex w-[min(980px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
+            style={{ maxWidth: maxW, maxHeight: "90vh" }}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+            <div className="flex flex-none items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
               <div>
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? (
@@ -211,9 +211,9 @@ function Modal({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
+            <div className="flex-1 overflow-auto px-5 py-4">{children}</div>
             {footer ? (
-              <div className="border-t border-slate-200 px-5 py-4">{footer}</div>
+              <div className="flex-none border-t border-slate-200 px-5 py-4">{footer}</div>
             ) : null}
           </motion.div>
         </>
@@ -1290,16 +1290,17 @@ export default function CorporatePayNotificationsCenterV2() {
                 <button
                   type="button"
                   className={cn(
-                    "relative h-7 w-12 rounded-full border transition",
-                    d.enabled ? "border-emerald-300 bg-emerald-200" : "border-slate-200 bg-white"
+                    "relative h-7 w-12 rounded-full transition",
+                    d.enabled ? "border-emerald-300 bg-emerald-200" : "border-amber-300 bg-white"
                   )}
                   onClick={() => toggleDigestEnabled(d.id)}
                   aria-label="Toggle digest"
+                  style={{ border: d.enabled ? "none" : "2px solid #F77F00" }} // Orange ring when off
                 >
                   <span
                     className={cn(
                       "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition",
-                      d.enabled ? "left-[22px]" : "left-1"
+                      d.enabled ? "left-[22px]" : "left-1 ring-1 ring-slate-200"
                     )}
                   />
                 </button>
@@ -1311,6 +1312,7 @@ export default function CorporatePayNotificationsCenterV2() {
           ))}
         </div>
       </Modal>
+
 
       {/* Routing rules modal */}
       <Modal
@@ -1355,11 +1357,12 @@ export default function CorporatePayNotificationsCenterV2() {
                   )}
                   onClick={() => toggleRoutingEnabled(r.id)}
                   aria-label="Toggle routing rule"
+                  style={!r.enabled ? { border: "2px solid #F77F00" } : undefined}
                 >
                   <span
                     className={cn(
                       "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition",
-                      r.enabled ? "left-[22px]" : "left-1"
+                      r.enabled ? "left-[22px]" : "left-1 ring-1 ring-slate-200"
                     )}
                   />
                 </button>
