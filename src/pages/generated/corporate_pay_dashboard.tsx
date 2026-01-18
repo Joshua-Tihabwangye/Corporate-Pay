@@ -36,6 +36,7 @@ import {
   Users,
   Wallet,
   X,
+  MoreVertical,
 } from "lucide-react";
 
 const EVZ = {
@@ -385,16 +386,16 @@ function StatCard({
   const v = variant || "gray";
 
   return (
-    <div className={cn("rounded-3xl border p-5 shadow-sm transition-all hover-lift dark:shadow-none", styles[v])}>
+    <div className={cn("rounded-3xl border p-6 shadow-sm transition-all hover-lift dark:shadow-none", styles[v])}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <div className="text-sm font-semibold text-slate-500 dark:text-slate-400">
             {title}
           </div>
-          <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+          <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
             {value}
           </div>
-          <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             {sub}
           </div>
           {trend ? (
@@ -427,42 +428,73 @@ function ProgressBar({ value, labelLeft, labelRight }: { value: number; labelLef
   );
 }
 
-function Heatmap({ matrix, rows, cols }: { matrix: number[][]; rows: string[]; cols: string[] }) {
-  const max = Math.max(1, ...matrix.flat());
+function SimpleLineChart({ data, height = 240 }: { data: { label: string; value: number }[]; height?: number }) {
+  if (!data?.length) return null;
+
+  const max = Math.max(...data.map((d) => d.value)) || 1;
+  const chartH = height - 40;
+
+  const points = data.map((d, i) => {
+    const x = (i / (data.length - 1)) * 100;
+    const y = 100 - (d.value / max) * 100;
+    return [x, y];
+  });
+
+  const getPath = (pts: number[][]) => {
+    if (pts.length === 0) return "";
+    let d = `M ${pts[0][0]},${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i];
+      const p1 = pts[i + 1];
+      const c1x = p0[0] + (p1[0] - p0[0]) * 0.5;
+      const c1y = p0[1];
+      const c2x = p0[0] + (p1[0] - p0[0]) * 0.5;
+      const c2y = p1[1];
+      d += ` C ${c1x},${c1y} ${c2x},${c2y} ${p1[0]},${p1[1]}`;
+    }
+    return d;
+  };
+
+  const linePath = getPath(points);
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">Peak ride times</div>
-        <div className="text-xs text-slate-500 dark:text-slate-500">Heatmap</div>
-      </div>
-      <div className="mt-3 overflow-auto">
-        <div className="min-w-[520px]">
-          <div className="grid" style={{ gridTemplateColumns: `120px repeat(${cols.length}, minmax(0, 1fr))` }}>
-            <div className="px-2 py-2 text-xs font-semibold text-slate-500">Day</div>
-            {cols.map((c) => (
-              <div key={c} className="px-2 py-2 text-xs font-semibold text-slate-500">{c}</div>
-            ))}
-            {rows.map((r, i) => (
-              <React.Fragment key={r}>
-                <div className="px-2 py-2 text-xs font-semibold text-slate-700">{r}</div>
-                {matrix[i].map((v, j) => {
-                  const a = 0.10 + (v / max) * 0.70;
-                  return (
-                    <div key={`${i}-${j}`} className="px-2 py-2">
-                      <div
-                        className="h-7 rounded-xl border border-slate-200 dark:border-slate-700"
-                        style={{ background: `rgba(3,205,140,${a.toFixed(2)})` }}
-                        title={`${r} • ${cols[j]}: ${v} rides`}
-                      />
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            ))}
-          </div>
+    <div className="rounded-2xl border border-slate-800 bg-[#0B1120] p-4 text-white shadow-sm overflow-hidden relative">
+      <div className="flex items-center justify-between mb-4 z-10 relative">
+        <h3 className="text-sm font-semibold text-white">Trip Trends</h3>
+        <div className="flex rounded-lg bg-slate-800 p-0.5">
+          <span className="px-2 py-1 text-[10px] font-semibold text-slate-400">RIDES</span>
+          <span className="px-2 py-1 text-[10px] font-semibold text-slate-400">DELIVERY</span>
+          <span className="px-2 py-1 text-[10px] font-semibold text-slate-900 bg-[#03CD8C] rounded shadow">BOTH</span>
         </div>
       </div>
-      <div className="mt-2 text-xs text-slate-600">Use this to plan commute programs and staffing.</div>
+
+      <div className="relative" style={{ height: chartH }}>
+        {[0, 25, 50, 75, 100].map(p => (
+          <div key={p} className="absolute left-0 right-0 border-t border-dashed border-slate-700/50" style={{ top: `${p}%` }} />
+        ))}
+        <div className="absolute inset-0 flex justify-between pointer-events-none">
+          {data.map((_, i) => (
+            <div key={i} className="h-full border-r border-dashed border-slate-700/50 w-px first:border-l" />
+          ))}
+        </div>
+
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
+          <defs>
+            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#03CD8C" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#03CD8C" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={`${linePath} L 100,100 L 0,100 Z`} fill="url(#chartGradient)" />
+          <path d={linePath} fill="none" stroke="#03CD8C" strokeWidth="1.5" className="drop-shadow-[0_0_6px_rgba(3,205,140,0.5)]" />
+        </svg>
+      </div>
+
+      <div className="mt-2 flex justify-between text-[10px] text-slate-400 font-medium">
+        {data.map((d, i) => (
+          (i % 2 === 0 || i === data.length - 1) ? <div key={i}>{d.label}</div> : null
+        ))}
+      </div>
     </div>
   );
 }
@@ -692,7 +724,7 @@ export default function CorporatePayDashboardV2() {
     const servicesMonth = Math.round(1500000 * multiplier);
 
     // const walletBalance = 6800000; // Moved to state
-    const creditLimit = 25000000;
+    const creditLimit = walletBalance; // Linked to capital/wallet balance as requested
     const creditUsed = 8200000;
     const prepaidRunwayDays = 3;
 
@@ -838,6 +870,8 @@ export default function CorporatePayDashboardV2() {
       needsAttachment: false,
     },
   ]);
+
+  const [openActionId, setOpenActionId] = useState<string | null>(null);
 
   const approvalsPending = approvals.filter((a) => a.status !== "Escalated").length;
   const approvalsEscalated = approvals.filter((a) => a.status === "Escalated").length;
@@ -1183,7 +1217,7 @@ export default function CorporatePayDashboardV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-8 transition-colors md:px-8 dark:bg-slate-950">
             {/* KPI row */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <StatCard
                 title="Spend today"
                 value={formatUGX(data.spendToday)}
@@ -1236,29 +1270,7 @@ export default function CorporatePayDashboardV2() {
 
 
 
-            {/* Quick Actions Bar */}
-            <div className="mt-8">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="text-lg font-bold text-slate-900 dark:text-white">Quick Actions</div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">Fast paths to high-impact workflows</div>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="primary" onClick={() => setAddFundsOpen(true)} className="shadow-lg shadow-emerald-500/10">
-                    <Wallet className="h-4 w-4" /> Add funds
-                  </Button>
-                  <Button variant="outline" onClick={() => setIssueBudgetOpen(true)}>
-                    <PiggyBank className="h-4 w-4" /> Issue budget
-                  </Button>
-                  <Button variant="outline" onClick={() => setApprovalsOpen(true)}>
-                    <BadgeCheck className="h-4 w-4" /> Approve queue
-                  </Button>
-                  <Button variant="outline" onClick={() => setRfqOpen(true)}>
-                    <FileText className="h-4 w-4" /> Create RFQ
-                  </Button>
-                </div>
-              </div>
-            </div>
+
 
             {/* Account Health - Full Width */}
             <div className="mt-8 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -1310,16 +1322,25 @@ export default function CorporatePayDashboardV2() {
                     </div>
                     <div className="text-sm font-semibold text-slate-900 dark:text-white">Active Modules</div>
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {SERVICE_MODULES.slice(0, 5).map(m => (
-                      <span key={m} className={cn("inline-flex items-center rounded-lg px-2 py-1 text-xs font-medium transition-colors cursor-pointer", serviceStatus[m] ? "bg-white text-slate-700 shadow-sm dark:bg-slate-800 dark:text-slate-300" : "bg-transparent text-slate-400")} onClick={() => {
-                        setServiceStatus(p => ({ ...p, [m]: !p[m] }));
-                        toast({ title: "Module toggle", message: `${m} ${!serviceStatus[m] ? "enabled" : "disabled"}`, kind: "info" });
-                      }}>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {SERVICE_MODULES.map(m => (
+                      <button
+                        key={m}
+                        type="button"
+                        className={cn(
+                          "inline-flex items-center justify-center rounded-lg px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer border",
+                          serviceStatus[m]
+                            ? "bg-[#064e3b] text-emerald-100 border-[#065f46] hover:bg-[#065f46] shadow-sm"
+                            : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700"
+                        )}
+                        onClick={() => {
+                          setServiceStatus(p => ({ ...p, [m]: !p[m] }));
+                          toast({ title: "Module toggle", message: `${m} ${!serviceStatus[m] ? "enabled" : "disabled"}`, kind: "info" });
+                        }}
+                      >
                         {m}
-                      </span>
+                      </button>
                     ))}
-                    <span className="inline-flex items-center px-2 py-1 text-xs text-slate-400">+More</span>
                   </div>
                 </div>
               </div>
@@ -1336,15 +1357,19 @@ export default function CorporatePayDashboardV2() {
                   </div>
                   <div className="space-y-3">
                     {issues.map((x) => (
-                      <div key={x.title} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                      <button
+                        key={x.title}
+                        onClick={() => navigate("/console/notifications_activity")}
+                        className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left transition-all hover:bg-white hover:shadow-md hover:ring-1 hover:ring-slate-200 dark:border-slate-800 dark:bg-slate-800/50 dark:hover:bg-slate-800 dark:hover:ring-slate-700"
+                      >
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="font-semibold text-slate-900 dark:text-white">{x.title}</div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{x.meta}</div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{x.meta}</div>
                           </div>
                           <Pill label={x.pill.label} tone={x.pill.tone} />
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                   <Button variant="ghost" className="mt-4 w-full text-xs" onClick={() => navigate("/console/notifications_activity")}>
@@ -1352,34 +1377,7 @@ export default function CorporatePayDashboardV2() {
                   </Button>
                 </div>
 
-                {/* Premium Insights List */}
-                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Premium Insights</h3>
-                    <Pill label="Premium" tone="info" />
-                  </div>
-                  <div className="space-y-4">
-                    {nextActions.map(a => (
-                      <div key={a.id} className="group relative rounded-2xl bg-slate-50 p-4 transition-all hover:bg-white hover:shadow-md hover:ring-1 hover:ring-slate-200 dark:bg-slate-800/50 dark:hover:bg-slate-800 dark:hover:ring-slate-700">
-                        <div className="flex justify-between items-start">
-                          <div className="font-semibold text-slate-900 dark:text-white">{a.title}</div>
-                          <Pill label={a.tone === "warn" ? "Urgent" : "Tip"} tone={a.tone} />
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{a.why}</div>
-                        <div className="mt-3 flex items-center justify-between">
-                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Impact: {a.impact}</span>
-                          <button className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 dark:text-emerald-400" onClick={() => {
-                            if (a.cta.includes("RFQ")) setRfqOpen(true);
-                            else if (a.cta.includes("budget")) setIssueBudgetOpen(true);
-                            else toast({ title: a.cta, message: "Opening action...", kind: "info" });
-                          }}>
-                            {a.cta} <ChevronRight className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+
               </div>
 
               {/* Heatmaps & Leaders - Center/Right */}
@@ -1397,7 +1395,15 @@ export default function CorporatePayDashboardV2() {
                     </Button>
                   </div>
                   <div className="overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <Heatmap matrix={heat.matrix} rows={heat.rows} cols={heat.cols} />
+                    <div className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <SimpleLineChart
+                        data={heat.cols.map((col, i) => {
+                          // Aggregate rows for each column
+                          const total = heat.matrix.reduce((sum, row) => sum + row[i], 0);
+                          return { label: col, value: total };
+                        })}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1488,7 +1494,33 @@ export default function CorporatePayDashboardV2() {
 
               <div className="mt-8 text-center lg:col-span-12">
                 <div className="inline-block rounded-full bg-slate-100 px-4 py-2 text-xs text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-                  CorporatePay v2.4 • Everything is up to date
+                  CorporatePay v2.5 • Everything is up to date
+                </div>
+              </div>
+
+              {/* Quick Actions Bar - Moved to bottom */}
+              <div className="mt-8 lg:col-span-12">
+                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="text-lg font-bold text-slate-900 dark:text-white">Quick Actions</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Fast paths to high-impact workflows</div>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <Button variant="primary" onClick={() => setAddFundsOpen(true)} className="shadow-lg shadow-emerald-500/10">
+                        <Wallet className="h-4 w-4" /> Add funds
+                      </Button>
+                      <Button variant="outline" onClick={() => setIssueBudgetOpen(true)}>
+                        <PiggyBank className="h-4 w-4" /> Issue budget
+                      </Button>
+                      <Button variant="outline" onClick={() => setApprovalsOpen(true)}>
+                        <BadgeCheck className="h-4 w-4" /> Approve queue
+                      </Button>
+                      <Button variant="outline" onClick={() => setRfqOpen(true)}>
+                        <FileText className="h-4 w-4" /> Create RFQ
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1843,32 +1875,59 @@ export default function CorporatePayDashboardV2() {
                   <td className="px-4 py-3">
                     {a.needsAttachment ? <Pill label="Attachment" tone="warn" /> : <Pill label="OK" tone="good" />}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => toast({ title: "Open", message: `Opening ${a.id} (demo).`, kind: "info" })}>
-                        Open
-                      </Button>
-                      <Button
-                        variant="primary"
-                        className="px-3 py-2 text-xs"
-                        onClick={() => {
-                          setApprovals((p) => p.filter((x) => x.id !== a.id));
-                          toast({ title: "Approved", message: `${a.id} approved.`, kind: "success" });
-                        }}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        variant="danger"
-                        className="px-3 py-2 text-xs"
-                        onClick={() => {
-                          setApprovals((p) => p.filter((x) => x.id !== a.id));
-                          toast({ title: "Rejected", message: `${a.id} rejected.`, kind: "warn" });
-                        }}
-                      >
-                        Reject
-                      </Button>
-                    </div>
+                  <td className="px-4 py-3 relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenActionId(openActionId === a.id ? null : a.id);
+                      }}
+                      className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                    <AnimatePresence>
+                      {openActionId === a.id && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setOpenActionId(null)} />
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                            className="absolute right-8 top-1/2 -translate-y-1/2 z-20 w-32 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"
+                          >
+                            <button
+                              className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              onClick={() => {
+                                toast({ title: "Open", message: `Opening ${a.id}...`, kind: "info" });
+                                setOpenActionId(null);
+                              }}
+                            >
+                              Open details
+                            </button>
+                            <button
+                              className="w-full text-left px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50"
+                              onClick={() => {
+                                setApprovals((p) => p.filter((x) => x.id !== a.id));
+                                toast({ title: "Approved", message: `${a.id} approved.`, kind: "success" });
+                                setOpenActionId(null);
+                              }}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              className="w-full text-left px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                              onClick={() => {
+                                setApprovals((p) => p.filter((x) => x.id !== a.id));
+                                toast({ title: "Rejected", message: `${a.id} rejected.`, kind: "warn" });
+                                setOpenActionId(null);
+                              }}
+                            >
+                              Reject
+                            </button>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </td>
                 </tr>
               ))}
