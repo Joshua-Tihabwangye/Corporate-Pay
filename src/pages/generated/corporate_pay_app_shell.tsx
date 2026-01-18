@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ROUTES } from "../../routes/paths";
 import { AnimatePresence, motion } from "framer-motion";
+
 import {
   Activity,
   BadgeCheck,
