@@ -13,6 +13,7 @@ import {
   FileText,
   KeyRound,
   Mail,
+  MoreVertical,
   Phone,
   Plus,
   Search,
@@ -517,6 +518,7 @@ export default function CorporatePayUsersInvitationsV2() {
   const [groupFilter, setGroupFilter] = useState("All");
   const [roleFilter, setRoleFilter] = useState("All");
   const [riskFilter, setRiskFilter] = useState("All");
+  const [openActionId, setOpenActionId] = useState<string | null>(null);
 
   const [users, setUsers] = useState<User[]>(() => {
     const now = Date.now();
@@ -1116,253 +1118,296 @@ export default function CorporatePayUsersInvitationsV2() {
 
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              {/* Left rail */}
-              <div className="space-y-4">
-                {/* Delegation prompt */}
-                {inactiveApprovers.length ? (
-                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">Delegation needed</div>
-                        <div className="mt-1 text-xs text-slate-700">Approver inactivity detected. Set a delegate to avoid approval bottlenecks.</div>
-                      </div>
-                      <Pill label="Premium" tone="info" />
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {inactiveApprovers.slice(0, 2).map((x) => (
-                        <div key={x.user.id} className="rounded-2xl border border-amber-200 bg-white p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">{x.user.name}</div>
-                              <div className="mt-1 text-xs text-slate-600">Inactive approvals: {x.user.daysSinceApprovalAction} days • Risk: {x.risk.label}</div>
+            {/* Main Users list - Full width at top */}
+            <div className="mb-6">
+              <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Users</div>
+                    <div className="mt-1 text-xs text-slate-500">Click a row to open details and audit history.</div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" className="text-xs" onClick={() => { setQ(""); setGroupFilter("All"); setRoleFilter("All"); setRiskFilter("All"); toast({ title: "Reset", message: "Filters reset.", kind: "info" }); }}>
+                      <X className="h-4 w-4" /> Reset filters
+                    </Button>
+                    <Button variant="primary" className="text-xs" onClick={openAdd}>
+                      <UserPlus className="h-4 w-4" /> Add user
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block">
+                  <table className="w-full text-left text-sm table-fixed">
+                    <thead className="bg-slate-50 text-xs text-slate-600">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold w-[18%]">User</th>
+                        <th className="px-4 py-3 font-semibold w-[10%]">Status</th>
+                        <th className="px-4 py-3 font-semibold w-[10%]">Role</th>
+                        <th className="px-4 py-3 font-semibold w-[10%]">Group</th>
+                        <th className="px-4 py-3 font-semibold w-[10%]">Risk</th>
+                        <th className="px-4 py-3 font-semibold w-[16%]">Spend MTD</th>
+                        <th className="px-4 py-3 font-semibold w-[10%]">Auto-approve</th>
+                        <th className="px-4 py-3 font-semibold w-[10%]">Last active</th>
+                        <th className="px-4 py-3 font-semibold w-[6%]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUsers.map(({ user: u, risk }) => (
+                        <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                          <td className="px-4 py-3">
+                            <button className="text-left truncate max-w-full" onClick={() => openUser(u)}>
+                              <div className="font-semibold text-slate-900 truncate">{u.name}</div>
+                              <div className="mt-1 text-xs text-slate-500 truncate">{u.email}</div>
+                            </button>
+                          </td>
+                          <td className="px-4 py-3"><Pill label={u.status} tone={u.status === "Active" ? "good" : u.status === "Invited" ? "info" : u.status === "Suspended" ? "warn" : "neutral"} /></td>
+                          <td className="px-4 py-3 text-slate-700 truncate">{u.role}</td>
+                          <td className="px-4 py-3 text-slate-700 truncate">{u.group}</td>
+                          <td className="px-4 py-3"><Pill label={`${risk.label}`} tone={risk.tone} /></td>
+                          <td className="px-4 py-3 text-slate-700 text-xs">{formatUGX(u.spendMonth)} / {formatUGX(u.limitMonth)}</td>
+                          <td className="px-4 py-3">
+                            {u.autoApproval ? <Pill label="Yes" tone="info" /> : <Pill label="No" tone="neutral" />}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700 text-xs">{u.lastActiveAt ? timeAgo(u.lastActiveAt) : "-"}</td>
+                          <td className="px-4 py-3 relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenActionId(openActionId === u.id ? null : u.id);
+                              }}
+                              className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                            <AnimatePresence>
+                              {openActionId === u.id && (
+                                <>
+                                  <div className="fixed inset-0 z-10" onClick={() => setOpenActionId(null)} />
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                    className="absolute right-8 top-1/2 -translate-y-1/2 z-20 w-36 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"
+                                  >
+                                    <button
+                                      className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                      onClick={() => {
+                                        openUser(u);
+                                        setOpenActionId(null);
+                                      }}
+                                    >
+                                      <ChevronRight className="h-3 w-3" /> Open details
+                                    </button>
+                                    {u.status === "Invited" && (
+                                      <button
+                                        className="w-full text-left px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                                        onClick={() => {
+                                          resendInvite(u);
+                                          setOpenActionId(null);
+                                        }}
+                                      >
+                                        <Mail className="h-3 w-3" /> Resend invite
+                                      </button>
+                                    )}
+                                    {u.status === "Active" && (
+                                      <button
+                                        className="w-full text-left px-3 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 flex items-center gap-2"
+                                        onClick={() => {
+                                          suspendUser(u);
+                                          setOpenActionId(null);
+                                        }}
+                                      >
+                                        <Shield className="h-3 w-3" /> Suspend
+                                      </button>
+                                    )}
+                                    {u.status === "Suspended" && (
+                                      <button
+                                        className="w-full text-left px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+                                        onClick={() => {
+                                          reactivateUser(u);
+                                          setOpenActionId(null);
+                                        }}
+                                      >
+                                        <Check className="h-3 w-3" /> Reactivate
+                                      </button>
+                                    )}
+                                  </motion.div>
+                                </>
+                              )}
+                            </AnimatePresence>
+                          </td>
+                        </tr>
+                      ))}
+                      {!filteredUsers.length ? (
+                        <tr>
+                          <td colSpan={9} className="px-4 py-12">
+                            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
+                              <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
+                                <Users className="h-6 w-6" />
+                              </div>
+                              <div className="mt-3 text-sm font-semibold text-slate-900">No users found</div>
+                              <div className="mt-1 text-sm text-slate-600">Try adjusting filters or search.</div>
                             </div>
-                            <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openDelegationFor(x.user)}>
-                              <ChevronRight className="h-4 w-4" /> Set delegate
-                            </Button>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile cards */}
+                <div className="space-y-3 p-4 md:hidden">
+                  {filteredUsers.map(({ user: u, risk }) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => openUser(u)}
+                      className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-slate-900">{u.name}</div>
+                          <div className="mt-1 text-xs text-slate-500">{u.email}</div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <Pill label={u.status} tone={u.status === "Active" ? "good" : u.status === "Invited" ? "info" : u.status === "Suspended" ? "warn" : "neutral"} />
+                            <Pill label={u.group} tone="neutral" />
+                            <Pill label={u.role} tone="neutral" />
+                            <Pill label={`${risk.label} (${risk.score})`} tone={risk.tone} />
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 text-xs text-slate-700">This creates an audit log entry and routes approvals to a delegate.</div>
-                  </div>
-                ) : (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">Approvals health</div>
-                        <div className="mt-1 text-xs text-slate-500">No inactive approvers detected in this demo.</div>
+                        <ChevronRight className="h-5 w-5 text-slate-400" />
                       </div>
-                      <Pill label="OK" tone="good" />
+                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                        Spend: {formatUGX(u.spendMonth)} / {formatUGX(u.limitMonth)}
+                      </div>
+                    </button>
+                  ))}
+                  {!filteredUsers.length ? (
+                    <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
+                      <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
+                        <Users className="h-6 w-6" />
+                      </div>
+                      <div className="mt-3 text-sm font-semibold text-slate-900">No users found</div>
+                      <div className="mt-1 text-sm text-slate-600">Try adjusting filters or add a user.</div>
                     </div>
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Premium: delegation prompts appear when an approver is inactive or SLA breaches spike.
-                    </div>
-                  </div>
-                )}
+                  ) : null}
+                </div>
 
-                {/* Top spenders */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
+                  Premium: risk scoring is explainable and based on policy breaches, anomalies, utilization, and approver inactivity.
+                </div>
+              </div>
+            </div>
+
+            {/* Insight cards - Below users */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {/* Delegation prompt */}
+              {inactiveApprovers.length ? (
+                <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">Top spenders</div>
-                      <div className="mt-1 text-xs text-slate-500">Premium insights and limit suggestions</div>
+                      <div className="text-sm font-semibold text-slate-900">Delegation needed</div>
+                      <div className="mt-1 text-xs text-slate-700">Approver inactivity detected. Set a delegate to avoid approval bottlenecks.</div>
                     </div>
                     <Pill label="Premium" tone="info" />
                   </div>
                   <div className="mt-3 space-y-2">
-                    {topSpenders.map((x) => (
-                      <div key={x.user.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                    {inactiveApprovers.slice(0, 2).map((x) => (
+                      <div key={x.user.id} className="rounded-2xl border border-amber-200 bg-white p-3">
                         <div className="flex items-start justify-between gap-3">
-                          <button className="min-w-0 text-left" onClick={() => openUser(x.user)}>
-                            <div className="truncate text-sm font-semibold text-slate-900">{x.user.name}</div>
-                            <div className="mt-1 text-xs text-slate-500">{x.user.group} • {x.user.role}</div>
-                            <div className="mt-2 text-xs text-slate-700">Spend: <span className="font-semibold text-slate-900">{formatUGX(x.user.spendMonth)}</span> / {formatUGX(x.user.limitMonth)}</div>
-                          </button>
-                          <div className="flex flex-col items-end gap-2">
-                            <Pill label={x.risk.label} tone={x.risk.tone} />
-                            <Pill label={x.suggestion.title} tone={x.suggestion.tone} />
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">{x.user.name}</div>
+                            <div className="mt-1 text-xs text-slate-600">Inactive approvals: {x.user.daysSinceApprovalAction} days • Risk: {x.risk.label}</div>
                           </div>
+                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openDelegationFor(x.user)}>
+                            <ChevronRight className="h-4 w-4" /> Set delegate
+                          </Button>
                         </div>
-                        {x.suggestion.suggestedLimit ? (
-                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                            <div>
-                              Suggested monthly cap: <span className="font-semibold text-slate-900">{formatUGX(x.suggestion.suggestedLimit)}</span>
-                            </div>
-                            <Button
-                              variant="outline"
-                              className="px-3 py-2 text-xs"
-                              onClick={() => {
-                                setUsers((prev) => prev.map((u) => (u.id === x.user.id ? { ...u, limitMonth: x.suggestion.suggestedLimit as number } : u)));
-                                addAudit(x.user.id, { actor: "Org Admin", action: "Limit adjusted", detail: `Monthly cap set to ${formatUGX(x.suggestion.suggestedLimit as number)}` });
-                                toast({ title: "Applied", message: "Limit suggestion applied (demo).", kind: "success" });
-                              }}
-                            >
-                              <Sparkles className="h-4 w-4" /> Apply
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="mt-2 text-xs text-slate-600">{x.suggestion.body}</div>
-                        )}
                       </div>
                     ))}
                   </div>
+                  <div className="mt-3 text-xs text-slate-700">This creates an audit log entry and routes approvals to a delegate.</div>
                 </div>
-
-                {/* Bulk/HRIS summary */}
+              ) : (
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">Onboarding tools</div>
-                      <div className="mt-1 text-xs text-slate-500">CSV bulk import and HRIS (Phase 2)</div>
+                      <div className="text-sm font-semibold text-slate-900">Approvals health</div>
+                      <div className="mt-1 text-xs text-slate-500">No inactive approvers detected in this demo.</div>
                     </div>
-                    <Pill label="Core" tone="neutral" />
+                    <Pill label="OK" tone="good" />
                   </div>
-                  <div className="mt-3 grid grid-cols-1 gap-2">
-                    <Button variant="outline" onClick={openBulk}>
-                      <ClipboardList className="h-4 w-4" /> Bulk import CSV
-                    </Button>
-                    <Button variant="outline" onClick={() => setHrisOpen(true)}>
-                      <Building2 className="h-4 w-4" /> HRIS import (Phase 2)
-                    </Button>
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Premium: delegation prompts appear when an approver is inactive or SLA breaches spike.
                   </div>
+                </div>
+              )}
+
+              {/* Top spenders */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Top spenders</div>
+                    <div className="mt-1 text-xs text-slate-500">Premium insights and limit suggestions</div>
+                  </div>
+                  <Pill label="Premium" tone="info" />
+                </div>
+                <div className="mt-3 space-y-2">
+                  {topSpenders.map((x) => (
+                    <div key={x.user.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <button className="min-w-0 text-left" onClick={() => openUser(x.user)}>
+                          <div className="truncate text-sm font-semibold text-slate-900">{x.user.name}</div>
+                          <div className="mt-1 text-xs text-slate-500">{x.user.group} • {x.user.role}</div>
+                          <div className="mt-2 text-xs text-slate-700">Spend: <span className="font-semibold text-slate-900">{formatUGX(x.user.spendMonth)}</span> / {formatUGX(x.user.limitMonth)}</div>
+                        </button>
+                        <div className="flex flex-col items-end gap-2">
+                          <Pill label={x.risk.label} tone={x.risk.tone} />
+                          <Pill label={x.suggestion.title} tone={x.suggestion.tone} />
+                        </div>
+                      </div>
+                      {x.suggestion.suggestedLimit ? (
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                          <div>
+                            Suggested monthly cap: <span className="font-semibold text-slate-900">{formatUGX(x.suggestion.suggestedLimit)}</span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            className="px-3 py-2 text-xs"
+                            onClick={() => {
+                              setUsers((prev) => prev.map((u) => (u.id === x.user.id ? { ...u, limitMonth: x.suggestion.suggestedLimit as number } : u)));
+                              addAudit(x.user.id, { actor: "Org Admin", action: "Limit adjusted", detail: `Monthly cap set to ${formatUGX(x.suggestion.suggestedLimit as number)}` });
+                              toast({ title: "Applied", message: "Limit suggestion applied (demo).", kind: "success" });
+                            }}
+                          >
+                            <Sparkles className="h-4 w-4" /> Apply
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-xs text-slate-600">{x.suggestion.body}</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Main list */}
-              <div className="lg:col-span-2">
-                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                  <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Users</div>
-                      <div className="mt-1 text-xs text-slate-500">Click a row to open details and audit history.</div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="outline" className="text-xs" onClick={() => { setQ(""); setGroupFilter("All"); setRoleFilter("All"); setRiskFilter("All"); toast({ title: "Reset", message: "Filters reset.", kind: "info" }); }}>
-                        <X className="h-4 w-4" /> Reset filters
-                      </Button>
-                      <Button variant="primary" className="text-xs" onClick={openAdd}>
-                        <UserPlus className="h-4 w-4" /> Add user
-                      </Button>
-                    </div>
+              {/* Bulk/HRIS summary */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Onboarding tools</div>
+                    <div className="mt-1 text-xs text-slate-500">CSV bulk import and HRIS (Phase 2)</div>
                   </div>
-
-                  {/* Desktop table */}
-                  <div className="hidden overflow-x-auto md:block">
-                    <table className="min-w-full text-left text-sm">
-                      <thead className="bg-slate-50 text-xs text-slate-600">
-                        <tr>
-                          <th className="px-4 py-3 font-semibold">User</th>
-                          <th className="px-4 py-3 font-semibold">Status</th>
-                          <th className="px-4 py-3 font-semibold">Role</th>
-                          <th className="px-4 py-3 font-semibold">Group</th>
-                          <th className="px-4 py-3 font-semibold">Risk</th>
-                          <th className="px-4 py-3 font-semibold">Spend MTD</th>
-                          <th className="px-4 py-3 font-semibold">Auto-approve</th>
-                          <th className="px-4 py-3 font-semibold">Last active</th>
-                          <th className="px-4 py-3 font-semibold">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredUsers.map(({ user: u, risk }) => (
-                          <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                            <td className="px-4 py-3">
-                              <button className="text-left" onClick={() => openUser(u)}>
-                                <div className="font-semibold text-slate-900">{u.name}</div>
-                                <div className="mt-1 text-xs text-slate-500">{u.email} • {u.id}</div>
-                              </button>
-                            </td>
-                            <td className="px-4 py-3"><Pill label={u.status} tone={u.status === "Active" ? "good" : u.status === "Invited" ? "info" : u.status === "Suspended" ? "warn" : "neutral"} /></td>
-                            <td className="px-4 py-3 text-slate-700">{u.role}</td>
-                            <td className="px-4 py-3 text-slate-700">{u.group}</td>
-                            <td className="px-4 py-3"><Pill label={`${risk.label} (${risk.score})`} tone={risk.tone} /></td>
-                            <td className="px-4 py-3 text-slate-700">{formatUGX(u.spendMonth)} / {formatUGX(u.limitMonth)}</td>
-                            <td className="px-4 py-3">
-                              {u.autoApproval ? <Pill label={`Yes ≤ ${formatUGX(u.autoApproveUnder)}`} tone="info" /> : <Pill label="No" tone="neutral" />}
-                            </td>
-                            <td className="px-4 py-3 text-slate-700">{u.lastActiveAt ? timeAgo(u.lastActiveAt) : "-"}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap items-center gap-2">
-                                {u.status === "Invited" ? (
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => resendInvite(u)}>
-                                    <Mail className="h-4 w-4" /> Resend
-                                  </Button>
-                                ) : null}
-                                {u.status === "Active" ? (
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => suspendUser(u)}>
-                                    <Shield className="h-4 w-4" /> Suspend
-                                  </Button>
-                                ) : null}
-                                {u.status === "Suspended" ? (
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => reactivateUser(u)}>
-                                    <Check className="h-4 w-4" /> Reactivate
-                                  </Button>
-                                ) : null}
-                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openUser(u)}>
-                                  <ChevronRight className="h-4 w-4" /> Open
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                        {!filteredUsers.length ? (
-                          <tr>
-                            <td colSpan={9} className="px-4 py-12">
-                              <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
-                                <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
-                                  <Users className="h-6 w-6" />
-                                </div>
-                                <div className="mt-3 text-sm font-semibold text-slate-900">No users found</div>
-                                <div className="mt-1 text-sm text-slate-600">Try adjusting filters or search.</div>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : null}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile cards */}
-                  <div className="space-y-3 p-4 md:hidden">
-                    {filteredUsers.map(({ user: u, risk }) => (
-                      <button
-                        key={u.id}
-                        type="button"
-                        onClick={() => openUser(u)}
-                        className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-slate-900">{u.name}</div>
-                            <div className="mt-1 text-xs text-slate-500">{u.email}</div>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <Pill label={u.status} tone={u.status === "Active" ? "good" : u.status === "Invited" ? "info" : u.status === "Suspended" ? "warn" : "neutral"} />
-                              <Pill label={u.group} tone="neutral" />
-                              <Pill label={u.role} tone="neutral" />
-                              <Pill label={`${risk.label} (${risk.score})`} tone={risk.tone} />
-                            </div>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-slate-400" />
-                        </div>
-                        <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                          Spend: {formatUGX(u.spendMonth)} / {formatUGX(u.limitMonth)}
-                        </div>
-                      </button>
-                    ))}
-                    {!filteredUsers.length ? (
-                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
-                        <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
-                          <Users className="h-6 w-6" />
-                        </div>
-                        <div className="mt-3 text-sm font-semibold text-slate-900">No users found</div>
-                        <div className="mt-1 text-sm text-slate-600">Try adjusting filters or add a user.</div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
-                    Premium: risk scoring is explainable and based on policy breaches, anomalies, utilization, and approver inactivity.
-                  </div>
+                  <Pill label="Core" tone="neutral" />
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-2">
+                  <Button variant="outline" onClick={openBulk}>
+                    <ClipboardList className="h-4 w-4" /> Bulk import CSV
+                  </Button>
+                  <Button variant="outline" onClick={() => setHrisOpen(true)}>
+                    <Building2 className="h-4 w-4" /> HRIS import (Phase 2)
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1917,7 +1962,7 @@ export default function CorporatePayUsersInvitationsV2() {
           F Users & Invitations v2: users list, add user, bulk import, HRIS placeholder, offboarding workflow, risk scoring, top spenders insights, and delegation prompts.
         </div>
       </footer>
-    </div>
+    </div >
   );
 }
 
