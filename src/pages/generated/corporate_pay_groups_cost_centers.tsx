@@ -987,39 +987,40 @@ export default function CorporatePayGroupsCostCentersV2() {
             <AnimatePresence mode="wait">
               {tab === "Groups" ? (
                 <motion.div key="groups" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Groups and budgets</div>
-                          <div className="mt-1 text-xs text-slate-500">Groups are departments. Each group has a budget and enforcement priority.</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-[260px]">
-                            <div className="text-xs font-semibold text-slate-600">Search</div>
-                            <input
-                              value={qGroup}
-                              onChange={(e) => setQGroup(e.target.value)}
-                              placeholder="Operations, Sales..."
-                              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                            />
-                          </div>
+                  {/* Main Groups and budgets card - Full width */}
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">Groups and budgets</div>
+                        <div className="mt-1 text-xs text-slate-500">Groups are departments. Each group has a budget and enforcement priority.</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-[260px]">
+                          <div className="text-xs font-semibold text-slate-600">Search</div>
+                          <input
+                            value={qGroup}
+                            onChange={(e) => setQGroup(e.target.value)}
+                            placeholder="Operations, Sales..."
+                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                          />
                         </div>
                       </div>
+                    </div>
 
-                      <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                        <table className="min-w-full text-left text-sm">
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
                           <thead className="bg-slate-50 text-xs text-slate-600">
                             <tr>
-                              <th className="px-4 py-3 font-semibold">Priority</th>
-                              <th className="px-4 py-3 font-semibold">Group</th>
-                              <th className="px-4 py-3 font-semibold">Manager</th>
-                              <th className="px-4 py-3 font-semibold">Budget</th>
-                              <th className="px-4 py-3 font-semibold">Spend MTD</th>
-                              <th className="px-4 py-3 font-semibold">Forecast</th>
-                              <th className="px-4 py-3 font-semibold">Cap</th>
-                              <th className="px-4 py-3 font-semibold">Updated</th>
-                              <th className="px-4 py-3 font-semibold">Actions</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Priority</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Group</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Manager</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Budget</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Spend MTD</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Forecast</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Cap</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Updated</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1041,20 +1042,20 @@ export default function CorporatePayGroupsCostCentersV2() {
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-4 py-3 font-semibold text-slate-900">{g.id}</td>
-                                  <td className="px-4 py-3 text-slate-700">{g.manager}</td>
-                                  <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(g.budgetMonth)}</td>
-                                  <td className="px-4 py-3 text-slate-700">{formatUGX(g.spendMTD)}</td>
+                                  <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">{g.id}</td>
+                                  <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{g.manager}</td>
+                                  <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">{formatUGX(g.budgetMonth)}</td>
+                                  <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{formatUGX(g.spendMTD)}</td>
                                   <td className="px-4 py-3">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <span className="font-semibold text-slate-900">{formatUGX(forecast)}</span>
+                                      <span className="font-semibold text-slate-900 whitespace-nowrap">{formatUGX(forecast)}</span>
                                       <Pill label={ft.label} tone={ft.tone} />
                                     </div>
                                   </td>
                                   <td className="px-4 py-3">
                                     <Pill label={g.hardCap ? "Hard" : "Soft"} tone={g.hardCap ? "warn" : "neutral"} />
                                   </td>
-                                  <td className="px-4 py-3 text-slate-600">{timeAgo(g.updatedAt)}</td>
+                                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{timeAgo(g.updatedAt)}</td>
                                   <td className="px-4 py-3">
                                     <div className="flex flex-wrap items-center gap-2">
                                       <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openGroup(g)}>
@@ -1071,71 +1072,72 @@ export default function CorporatePayGroupsCostCentersV2() {
                           </tbody>
                         </table>
                       </div>
+                    </div>
 
-                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                        Enforcement priority decides which group budget applies first when rules overlap (chargeback or multi-tag mapping).
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                      Enforcement priority decides which group budget applies first when rules overlap (chargeback or multi-tag mapping).
+                    </div>
+                  </div>
+
+                  {/* Budget forecasting and What changed cards - Side by side grid */}
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">Budget forecasting</div>
+                          <div className="mt-1 text-xs text-slate-500">Premium: month-end forecast per group</div>
+                        </div>
+                        <Pill label="Premium" tone="info" />
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {filteredGroups.slice(0, 5).map((g) => {
+                          const forecast = calcForecast(g.spendMTD, DAY_OF_MONTH, DAYS_IN_MONTH);
+                          const ft = forecastTone(forecast, g.budgetMonth);
+                          return (
+                            <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <div className="text-sm font-semibold text-slate-900">{g.id}</div>
+                                  <div className="mt-1 text-xs text-slate-500">Forecast: {formatUGX(forecast)} / Budget: {formatUGX(g.budgetMonth)}</div>
+                                </div>
+                                <Pill label={ft.label} tone={ft.tone} />
+                              </div>
+                              <div className="mt-2">
+                                <MiniBar label="Forecast vs budget" value={forecast} total={Math.max(1, g.budgetMonth)} hint={`${Math.round((forecast / Math.max(1, g.budgetMonth)) * 100)}%`} />
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Budget forecasting</div>
-                            <div className="mt-1 text-xs text-slate-500">Premium: month-end forecast per group</div>
-                          </div>
-                          <Pill label="Premium" tone="info" />
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">What changed?</div>
+                          <div className="mt-1 text-xs text-slate-500">Premium: trend explanations</div>
                         </div>
-                        <div className="mt-3 space-y-2">
-                          {filteredGroups.slice(0, 5).map((g) => {
-                            const forecast = calcForecast(g.spendMTD, DAY_OF_MONTH, DAYS_IN_MONTH);
-                            const ft = forecastTone(forecast, g.budgetMonth);
-                            return (
-                              <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div>
-                                    <div className="text-sm font-semibold text-slate-900">{g.id}</div>
-                                    <div className="mt-1 text-xs text-slate-500">Forecast: {formatUGX(forecast)} / Budget: {formatUGX(g.budgetMonth)}</div>
-                                  </div>
-                                  <Pill label={ft.label} tone={ft.tone} />
-                                </div>
-                                <div className="mt-2">
-                                  <MiniBar label="Forecast vs budget" value={forecast} total={Math.max(1, g.budgetMonth)} hint={`${Math.round((forecast / Math.max(1, g.budgetMonth)) * 100)}%`} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <Pill label="Premium" tone="info" />
                       </div>
-
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">What changed?</div>
-                            <div className="mt-1 text-xs text-slate-500">Premium: trend explanations</div>
-                          </div>
-                          <Pill label="Premium" tone="info" />
-                        </div>
-                        <div className="mt-3 space-y-2">
-                          {filteredGroups.slice(0, 4).map((g) => {
-                            const ex = topDriverExplanation(g);
-                            return (
-                              <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <div className="text-sm font-semibold text-slate-900">{g.id}</div>
-                                    <div className="mt-1 text-xs text-slate-500">{ex.title}</div>
-                                  </div>
-                                  <Pill label="Trend" tone={ex.tone as any} />
+                      <div className="mt-3 space-y-2">
+                        {filteredGroups.slice(0, 4).map((g) => {
+                          const ex = topDriverExplanation(g);
+                          return (
+                            <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-slate-900">{g.id}</div>
+                                  <div className="mt-1 text-xs text-slate-500">{ex.title}</div>
                                 </div>
-                                <div className="mt-2 text-xs text-slate-700">{ex.body}</div>
-                                <div className="mt-2">
-                                  <Sparkline values={g.weeklySeries} />
-                                </div>
+                                <Pill label="Trend" tone={ex.tone as any} />
                               </div>
-                            );
-                          })}
-                        </div>
+                              <div className="mt-2 text-xs text-slate-700">{ex.body}</div>
+                              <div className="mt-2">
+                                <Sparkline values={g.weeklySeries} />
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -1144,50 +1146,51 @@ export default function CorporatePayGroupsCostCentersV2() {
 
               {tab === "Cost centers" ? (
                 <motion.div key="cc" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Cost centers</div>
-                          <div className="mt-1 text-xs text-slate-500">Cost centers connect spending to invoices, AP codes, and chargeback rules.</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-[260px]">
-                            <div className="text-xs font-semibold text-slate-600">Search</div>
-                            <input
-                              value={qCC}
-                              onChange={(e) => setQCC(e.target.value)}
-                              placeholder="OPS-CORE, SALES-TRAVEL..."
-                              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                            />
-                          </div>
-                          <Button variant="primary" onClick={() => openCC()}>
-                            <Plus className="h-4 w-4" /> Add
-                          </Button>
-                        </div>
+                  {/* Main Cost centers card - Full width */}
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">Cost centers</div>
+                        <div className="mt-1 text-xs text-slate-500">Cost centers connect spending to invoices, AP codes, and chargeback rules.</div>
                       </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="w-[260px]">
+                          <div className="text-xs font-semibold text-slate-600">Search</div>
+                          <input
+                            value={qCC}
+                            onChange={(e) => setQCC(e.target.value)}
+                            placeholder="OPS-CORE, SALES-TRAVEL..."
+                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                          />
+                        </div>
+                        <Button variant="primary" onClick={() => openCC()}>
+                          <Plus className="h-4 w-4" /> Add
+                        </Button>
+                      </div>
+                    </div>
 
-                      <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                        <table className="min-w-full text-left text-sm">
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
                           <thead className="bg-slate-50 text-xs text-slate-600">
                             <tr>
-                              <th className="px-4 py-3 font-semibold">Code</th>
-                              <th className="px-4 py-3 font-semibold">Name</th>
-                              <th className="px-4 py-3 font-semibold">Group</th>
-                              <th className="px-4 py-3 font-semibold">Invoice group</th>
-                              <th className="px-4 py-3 font-semibold">Default tags</th>
-                              <th className="px-4 py-3 font-semibold">Status</th>
-                              <th className="px-4 py-3 font-semibold">Updated</th>
-                              <th className="px-4 py-3 font-semibold">Actions</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Code</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Name</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Group</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Invoice group</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Default tags</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Status</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Updated</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
                             {filteredCC.map((c) => (
                               <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                <td className="px-4 py-3 font-semibold text-slate-900">{c.code}</td>
-                                <td className="px-4 py-3 text-slate-700">{c.name}</td>
+                                <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">{c.code}</td>
+                                <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{c.name}</td>
                                 <td className="px-4 py-3"><Pill label={c.group} tone="neutral" /></td>
-                                <td className="px-4 py-3 text-slate-700">{c.invoiceGroup}</td>
+                                <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{c.invoiceGroup}</td>
                                 <td className="px-4 py-3">
                                   <div className="flex flex-wrap gap-2">
                                     {(c.defaultTags || []).slice(0, 3).map((t) => (
@@ -1197,7 +1200,7 @@ export default function CorporatePayGroupsCostCentersV2() {
                                   </div>
                                 </td>
                                 <td className="px-4 py-3"><Pill label={c.active ? "Active" : "Inactive"} tone={c.active ? "good" : "neutral"} /></td>
-                                <td className="px-4 py-3 text-slate-600">{timeAgo(c.updatedAt)}</td>
+                                <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{timeAgo(c.updatedAt)}</td>
                                 <td className="px-4 py-3">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openCC(c)}>
@@ -1213,74 +1216,75 @@ export default function CorporatePayGroupsCostCentersV2() {
                           </tbody>
                         </table>
                       </div>
+                    </div>
+
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                      Chargeback rules can split billing across cost centers using tag mapping.
+                    </div>
+                  </div>
+
+                  {/* Project tags and Premium note - Side by side grid */}
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">Project tags</div>
+                          <div className="mt-1 text-xs text-slate-500">Client, event, campaign, project</div>
+                        </div>
+                        <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => openTag()}>
+                          <Plus className="h-4 w-4" /> Add
+                        </Button>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="text-xs font-semibold text-slate-600">Search</div>
+                        <input
+                          value={qTag}
+                          onChange={(e) => setQTag(e.target.value)}
+                          placeholder="Client ABC, Expo2026..."
+                          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                        />
+                      </div>
+
+                      <div className="mt-3 space-y-2 max-h-[400px] overflow-y-auto">
+                        {filteredTags.slice(0, 8).map((t) => (
+                          <div key={t.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div className="text-sm font-semibold text-slate-900">{t.label}</div>
+                                <div className="mt-1 text-xs text-slate-500">{t.type}: {t.key}</div>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  <Pill label={t.active ? "Active" : "Inactive"} tone={t.active ? "good" : "neutral"} />
+                                  <Pill label={timeAgo(t.updatedAt)} tone="neutral" />
+                                </div>
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openTag(t)}>
+                                  <Settings className="h-4 w-4" />
+                                </Button>
+                                <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteTag(t.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {!filteredTags.length ? <div className="text-sm text-slate-600">No tags found.</div> : null}
+                      </div>
 
                       <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                        Chargeback rules can split billing across cost centers using tag mapping.
+                        Tags are used in chargeback rules and for reporting.
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Project tags</div>
-                            <div className="mt-1 text-xs text-slate-500">Client, event, campaign, project</div>
-                          </div>
-                          <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => openTag()}>
-                            <Plus className="h-4 w-4" /> Add
-                          </Button>
+                    <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm h-fit">
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-amber-800 ring-1 ring-amber-200">
+                          <Sparkles className="h-5 w-5" />
                         </div>
-
-                        <div className="mt-3">
-                          <div className="text-xs font-semibold text-slate-600">Search</div>
-                          <input
-                            value={qTag}
-                            onChange={(e) => setQTag(e.target.value)}
-                            placeholder="Client ABC, Expo2026..."
-                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                          />
-                        </div>
-
-                        <div className="mt-3 space-y-2">
-                          {filteredTags.slice(0, 8).map((t) => (
-                            <div key={t.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <div className="text-sm font-semibold text-slate-900">{t.label}</div>
-                                  <div className="mt-1 text-xs text-slate-500">{t.type}: {t.key}</div>
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    <Pill label={t.active ? "Active" : "Inactive"} tone={t.active ? "good" : "neutral"} />
-                                    <Pill label={timeAgo(t.updatedAt)} tone="neutral" />
-                                  </div>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openTag(t)}>
-                                    <Settings className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteTag(t.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          {!filteredTags.length ? <div className="text-sm text-slate-600">No tags found.</div> : null}
-                        </div>
-
-                        <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                          Tags are used in chargeback rules and for reporting.
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-                        <div className="flex items-start gap-3">
-                          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-amber-800 ring-1 ring-amber-200">
-                            <Sparkles className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Premium note</div>
-                            <div className="mt-1 text-sm text-slate-700">Chargeback rules can split billing by tag and route to invoice groups automatically.</div>
-                          </div>
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">Premium note</div>
+                          <div className="mt-1 text-sm text-slate-700">Chargeback rules can split billing by tag and route to invoice groups automatically.</div>
                         </div>
                       </div>
                     </div>
@@ -1290,40 +1294,41 @@ export default function CorporatePayGroupsCostCentersV2() {
 
               {tab === "Chargeback" ? (
                 <motion.div key="chargeback" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Chargeback rules</div>
-                          <div className="mt-1 text-xs text-slate-500">Split billing by tag mapping. Rules are evaluated by priority.</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-[260px]">
-                            <div className="text-xs font-semibold text-slate-600">Search</div>
-                            <input
-                              value={qRule}
-                              onChange={(e) => setQRule(e.target.value)}
-                              placeholder="Client ABC, Expo..."
-                              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                            />
-                          </div>
-                          <Button variant="primary" onClick={() => openRule()}>
-                            <Plus className="h-4 w-4" /> Add
-                          </Button>
-                        </div>
+                  {/* Main Chargeback rules card - Full width */}
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">Chargeback rules</div>
+                        <div className="mt-1 text-xs text-slate-500">Split billing by tag mapping. Rules are evaluated by priority.</div>
                       </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="w-[260px]">
+                          <div className="text-xs font-semibold text-slate-600">Search</div>
+                          <input
+                            value={qRule}
+                            onChange={(e) => setQRule(e.target.value)}
+                            placeholder="Client ABC, Expo..."
+                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                          />
+                        </div>
+                        <Button variant="primary" onClick={() => openRule()}>
+                          <Plus className="h-4 w-4" /> Add
+                        </Button>
+                      </div>
+                    </div>
 
-                      <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                        <table className="min-w-full text-left text-sm">
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
                           <thead className="bg-slate-50 text-xs text-slate-600">
                             <tr>
-                              <th className="px-4 py-3 font-semibold">Priority</th>
-                              <th className="px-4 py-3 font-semibold">Rule</th>
-                              <th className="px-4 py-3 font-semibold">Match</th>
-                              <th className="px-4 py-3 font-semibold">Split</th>
-                              <th className="px-4 py-3 font-semibold">Status</th>
-                              <th className="px-4 py-3 font-semibold">Updated</th>
-                              <th className="px-4 py-3 font-semibold">Actions</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Priority</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Rule</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Match</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Split</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Status</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Updated</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1333,10 +1338,10 @@ export default function CorporatePayGroupsCostCentersV2() {
                                 <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50/60">
                                   <td className="px-4 py-3"><Pill label={`#${r.priority}`} tone="neutral" /></td>
                                   <td className="px-4 py-3">
-                                    <div className="font-semibold text-slate-900">{r.name}</div>
+                                    <div className="font-semibold text-slate-900 whitespace-nowrap">{r.name}</div>
                                     <div className="mt-1 text-xs text-slate-500">{r.id}</div>
                                   </td>
-                                  <td className="px-4 py-3 text-slate-700">{r.match.type}: {r.match.key}</td>
+                                  <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{r.match.type}: {r.match.key}</td>
                                   <td className="px-4 py-3">
                                     <div className="flex flex-wrap gap-2">
                                       <Pill label={`${sum}%`} tone={sum === 100 ? "good" : "warn"} />
@@ -1350,7 +1355,7 @@ export default function CorporatePayGroupsCostCentersV2() {
                                     </div>
                                   </td>
                                   <td className="px-4 py-3"><Pill label={r.enabled ? "Enabled" : "Off"} tone={r.enabled ? "good" : "neutral"} /></td>
-                                  <td className="px-4 py-3 text-slate-600">{timeAgo(r.updatedAt)}</td>
+                                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{timeAgo(r.updatedAt)}</td>
                                   <td className="px-4 py-3">
                                     <div className="flex flex-wrap items-center gap-2">
                                       <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openRule(r)}>
@@ -1373,37 +1378,38 @@ export default function CorporatePayGroupsCostCentersV2() {
                           </tbody>
                         </table>
                       </div>
+                    </div>
 
-                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                        Chargeback enforcement is applied at invoicing time. Splits can also be shown live during checkout (Premium).
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                      Chargeback enforcement is applied at invoicing time. Splits can also be shown live during checkout (Premium).
+                    </div>
+                  </div>
+
+                  {/* Simulation and Best practices cards - Side by side grid */}
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">Simulation</div>
+                          <div className="mt-1 text-xs text-slate-500">Test a transaction against chargeback rules.</div>
+                        </div>
+                        <Pill label="Premium" tone="info" />
+                      </div>
+                      <Button variant="primary" className="mt-3 w-full" onClick={() => setSimulateOpen(true)}>
+                        <Sparkles className="h-4 w-4" /> Open simulator
+                      </Button>
+                      <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                        Tip: if multiple rules match, the lowest priority number wins.
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Simulation</div>
-                            <div className="mt-1 text-xs text-slate-500">Test a transaction against chargeback rules.</div>
-                          </div>
-                          <Pill label="Premium" tone="info" />
-                        </div>
-                        <Button variant="primary" className="mt-3 w-full" onClick={() => setSimulateOpen(true)}>
-                          <Sparkles className="h-4 w-4" /> Open simulator
-                        </Button>
-                        <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                          Tip: if multiple rules match, the lowest priority number wins.
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="text-sm font-semibold text-slate-900">Chargeback best practices</div>
-                        <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                          <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} /> Keep rules simple and tag-driven.</li>
-                          <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.orange }} /> Use priority to avoid ambiguity.</li>
-                          <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} /> Ensure splits always sum to 100%.</li>
-                        </ul>
-                      </div>
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="text-sm font-semibold text-slate-900">Chargeback best practices</div>
+                      <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                        <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} /> Keep rules simple and tag-driven.</li>
+                        <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.orange }} /> Use priority to avoid ambiguity.</li>
+                        <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} /> Ensure splits always sum to 100%.</li>
+                      </ul>
                     </div>
                   </div>
                 </motion.div>
@@ -1411,26 +1417,27 @@ export default function CorporatePayGroupsCostCentersV2() {
 
               {tab === "Forecast" ? (
                 <motion.div key="forecast" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Budget forecasting per group</div>
-                          <div className="mt-1 text-xs text-slate-500">Premium: forecast to month-end using MTD spend.</div>
-                        </div>
-                        <Pill label={`Day ${DAY_OF_MONTH}/${DAYS_IN_MONTH}`} tone="neutral" />
+                  {/* Main Budget forecasting card - Full width */}
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">Budget forecasting per group</div>
+                        <div className="mt-1 text-xs text-slate-500">Premium: forecast to month-end using MTD spend.</div>
                       </div>
+                      <Pill label={`Day ${DAY_OF_MONTH}/${DAYS_IN_MONTH}`} tone="neutral" />
+                    </div>
 
-                      <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                        <table className="min-w-full text-left text-sm">
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
                           <thead className="bg-slate-50 text-xs text-slate-600">
                             <tr>
-                              <th className="px-4 py-3 font-semibold">Group</th>
-                              <th className="px-4 py-3 font-semibold">Budget</th>
-                              <th className="px-4 py-3 font-semibold">Spend MTD</th>
-                              <th className="px-4 py-3 font-semibold">Forecast</th>
-                              <th className="px-4 py-3 font-semibold">Status</th>
-                              <th className="px-4 py-3 font-semibold">Trend</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Group</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Budget</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Spend MTD</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Forecast</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Status</th>
+                              <th className="px-4 py-3 font-semibold whitespace-nowrap">Trend</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1443,10 +1450,10 @@ export default function CorporatePayGroupsCostCentersV2() {
                                 const ex = topDriverExplanation(g);
                                 return (
                                   <tr key={g.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                    <td className="px-4 py-3 font-semibold text-slate-900">{g.id}</td>
-                                    <td className="px-4 py-3 text-slate-700">{formatUGX(g.budgetMonth)}</td>
-                                    <td className="px-4 py-3 text-slate-700">{formatUGX(g.spendMTD)}</td>
-                                    <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(forecast)}</td>
+                                    <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">{g.id}</td>
+                                    <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{formatUGX(g.budgetMonth)}</td>
+                                    <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{formatUGX(g.spendMTD)}</td>
+                                    <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">{formatUGX(forecast)}</td>
                                     <td className="px-4 py-3"><Pill label={ft.label} tone={ft.tone} /></td>
                                     <td className="px-4 py-3">
                                       <div className="flex items-center justify-between gap-2">
@@ -1460,118 +1467,119 @@ export default function CorporatePayGroupsCostCentersV2() {
                           </tbody>
                         </table>
                       </div>
+                    </div>
 
-                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                        Forecasting is a simple extrapolation in this demo. In production, it uses historical patterns per group and seasonality.
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                      Forecasting is a simple extrapolation in this demo. In production, it uses historical patterns per group and seasonality.
+                    </div>
+                  </div>
+
+                  {/* Scenario planner and What changed cards - Side by side grid */}
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">Scenario planner</div>
+                          <div className="mt-1 text-xs text-slate-500">If we lower cap by X%, savings estimate</div>
+                        </div>
+                        <Pill label="Premium" tone="info" />
+                      </div>
+
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <div className="text-xs font-semibold text-slate-600">Group</div>
+                          <select
+                            value={scenarioGroup}
+                            onChange={(e) => setScenarioGroup(e.target.value as GroupId)}
+                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                          >
+                            {groups
+                              .slice()
+                              .sort((a, b) => a.priority - b.priority)
+                              .map((g) => (
+                                <option key={g.id} value={g.id}>
+                                  {g.id}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs font-semibold text-slate-600">Lower cap by</div>
+                            <Pill label={`${scenarioPct}%`} tone="neutral" />
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={40}
+                            step={5}
+                            value={scenarioPct}
+                            onChange={(e) => setScenarioPct(Number(e.target.value))}
+                            className="mt-2 w-full"
+                          />
+                          <div className="mt-1 text-xs text-slate-500">This estimates savings as forecast minus new cap (if forecast exceeds cap).</div>
+                        </div>
+
+                        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                          <div className="text-xs font-semibold text-slate-600">Current</div>
+                          <div className="mt-2 grid grid-cols-1 gap-2">
+                            <MiniBar label="Budget" value={scenario.g.budgetMonth} total={scenario.g.budgetMonth} hint={formatUGX(scenario.g.budgetMonth)} />
+                            <MiniBar label="Forecast" value={scenario.forecast} total={Math.max(1, scenario.g.budgetMonth)} hint={formatUGX(scenario.forecast)} />
+                          </div>
+                          <div className="mt-3 flex items-center justify-between">
+                            <Pill label={`Status: ${scenario.tone.label}`} tone={scenario.tone.tone} />
+                            <Pill label={`Hard cap: ${scenario.g.hardCap ? "Yes" : "No"}`} tone={scenario.g.hardCap ? "warn" : "neutral"} />
+                          </div>
+                        </div>
+
+                        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+                          <div className="text-xs font-semibold text-emerald-900">Scenario</div>
+                          <div className="mt-2 text-sm font-semibold text-slate-900">New cap: {formatUGX(scenario.newBudget)}</div>
+                          <div className="mt-1 text-sm text-slate-700">Potential savings: <span className="font-semibold text-slate-900">{formatUGX(scenario.potentialSavings)}</span></div>
+                          <div className="mt-2 flex items-center justify-between">
+                            <Pill label={`New status: ${scenario.newTone.label}`} tone={scenario.newTone.tone} />
+                            <Button
+                              variant="outline"
+                              className="px-3 py-2 text-xs"
+                              onClick={() => {
+                                setGroups((prev) => prev.map((g) => (g.id === scenarioGroup ? { ...g, budgetMonth: scenario.newBudget, updatedAt: Date.now() } : g)));
+                                toast({ title: "Applied", message: "Scenario cap applied to group budget (demo).", kind: "success" });
+                              }}
+                            >
+                              <Sparkles className="h-4 w-4" /> Apply
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                          Note: lowering caps can reduce spend but may also block legitimate operations. Consider approvals instead of hard blocks.
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Scenario planner</div>
-                            <div className="mt-1 text-xs text-slate-500">If we lower cap by X%, savings estimate</div>
-                          </div>
-                          <Pill label="Premium" tone="info" />
-                        </div>
-
-                        <div className="mt-3 space-y-3">
-                          <div>
-                            <div className="text-xs font-semibold text-slate-600">Group</div>
-                            <select
-                              value={scenarioGroup}
-                              onChange={(e) => setScenarioGroup(e.target.value as GroupId)}
-                              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                            >
-                              {groups
-                                .slice()
-                                .sort((a, b) => a.priority - b.priority)
-                                .map((g) => (
-                                  <option key={g.id} value={g.id}>
-                                    {g.id}
-                                  </option>
-                                ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <div className="text-xs font-semibold text-slate-600">Lower cap by</div>
-                              <Pill label={`${scenarioPct}%`} tone="neutral" />
-                            </div>
-                            <input
-                              type="range"
-                              min={0}
-                              max={40}
-                              step={5}
-                              value={scenarioPct}
-                              onChange={(e) => setScenarioPct(Number(e.target.value))}
-                              className="mt-2 w-full"
-                            />
-                            <div className="mt-1 text-xs text-slate-500">This estimates savings as forecast minus new cap (if forecast exceeds cap).</div>
-                          </div>
-
-                          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                            <div className="text-xs font-semibold text-slate-600">Current</div>
-                            <div className="mt-2 grid grid-cols-1 gap-2">
-                              <MiniBar label="Budget" value={scenario.g.budgetMonth} total={scenario.g.budgetMonth} hint={formatUGX(scenario.g.budgetMonth)} />
-                              <MiniBar label="Forecast" value={scenario.forecast} total={Math.max(1, scenario.g.budgetMonth)} hint={formatUGX(scenario.forecast)} />
-                            </div>
-                            <div className="mt-3 flex items-center justify-between">
-                              <Pill label={`Status: ${scenario.tone.label}`} tone={scenario.tone.tone} />
-                              <Pill label={`Hard cap: ${scenario.g.hardCap ? "Yes" : "No"}`} tone={scenario.g.hardCap ? "warn" : "neutral"} />
-                            </div>
-                          </div>
-
-                          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
-                            <div className="text-xs font-semibold text-emerald-900">Scenario</div>
-                            <div className="mt-2 text-sm font-semibold text-slate-900">New cap: {formatUGX(scenario.newBudget)}</div>
-                            <div className="mt-1 text-sm text-slate-700">Potential savings: <span className="font-semibold text-slate-900">{formatUGX(scenario.potentialSavings)}</span></div>
-                            <div className="mt-2 flex items-center justify-between">
-                              <Pill label={`New status: ${scenario.newTone.label}`} tone={scenario.newTone.tone} />
-                              <Button
-                                variant="outline"
-                                className="px-3 py-2 text-xs"
-                                onClick={() => {
-                                  setGroups((prev) => prev.map((g) => (g.id === scenarioGroup ? { ...g, budgetMonth: scenario.newBudget, updatedAt: Date.now() } : g)));
-                                  toast({ title: "Applied", message: "Scenario cap applied to group budget (demo).", kind: "success" });
-                                }}
-                              >
-                                <Sparkles className="h-4 w-4" /> Apply
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                            Note: lowering caps can reduce spend but may also block legitimate operations. Consider approvals instead of hard blocks.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="text-sm font-semibold text-slate-900">What changed</div>
-                        <div className="mt-1 text-xs text-slate-500">Premium: driver explanations per group</div>
-                        <div className="mt-3 space-y-2">
-                          {groups
-                            .slice()
-                            .sort((a, b) => a.priority - b.priority)
-                            .slice(0, 3)
-                            .map((g) => {
-                              const ex = topDriverExplanation(g);
-                              return (
-                                <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                      <div className="text-sm font-semibold text-slate-900">{g.id}</div>
-                                      <div className="mt-1 text-xs text-slate-600">{ex.body}</div>
-                                    </div>
-                                    <Pill label="Driver" tone={ex.tone as any} />
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm h-fit">
+                      <div className="text-sm font-semibold text-slate-900">What changed</div>
+                      <div className="mt-1 text-xs text-slate-500">Premium: driver explanations per group</div>
+                      <div className="mt-3 space-y-2">
+                        {groups
+                          .slice()
+                          .sort((a, b) => a.priority - b.priority)
+                          .slice(0, 3)
+                          .map((g) => {
+                            const ex = topDriverExplanation(g);
+                            return (
+                              <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <div className="text-sm font-semibold text-slate-900">{g.id}</div>
+                                    <div className="mt-1 text-xs text-slate-600">{ex.body}</div>
                                   </div>
+                                  <Pill label="Driver" tone={ex.tone as any} />
                                 </div>
-                              );
-                            })}
-                        </div>
+                              </div>
+                            );
+                          })}
                       </div>
                     </div>
                   </div>

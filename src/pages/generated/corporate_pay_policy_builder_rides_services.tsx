@@ -1119,7 +1119,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
             {tab === "builder" ? (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                 {/* Scope */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm h-fit">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-slate-900">Policy scope</div>
