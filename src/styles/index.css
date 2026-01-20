@@ -158,3 +158,43 @@ button:not(:disabled):active {
     border-color: var(--evz-orange) !important;
     box-shadow: 0 0 0 4px rgba(247, 127, 0, 0.3) !important;
 }
+
+/* ===========================================
+   Toggle Switch Styling - Orange Ring OFF, Green ON
+   =========================================== */
+
+/* Toggle switch container - OFF state with orange ring */
+button[class*="rounded-full"][class*="h-7"][class*="w-12"]:not([class*="bg-emerald"]) {
+    border-color: var(--evz-orange) !important;
+    box-shadow: 0 0 0 3px rgba(247, 127, 0, 0.25) !important;
+    background: white !important;
+}
+
+/* Toggle switch container - ON state with green background */
+button[class*="rounded-full"][class*="h-7"][class*="w-12"][class*="bg-emerald"] {
+    border-color: var(--evz-green) !important;
+    background: var(--evz-green) !important;
+    box-shadow: 0 0 0 3px rgba(3, 205, 140, 0.25) !important;
+}
+
+/* Toggle knob - enhanced visibility */
+button[class*="rounded-full"][class*="h-7"][class*="w-12"] > span[class*="rounded-full"] {
+    background: white !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Toggle knob when ON - green tint for extra visibility */
+button[class*="rounded-full"][class*="h-7"][class*="w-12"][class*="bg-emerald"] > span[class*="rounded-full"] {
+    background: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(3, 205, 140, 0.3) !important;
+}
+
+/* Dark mode toggle adjustments */
+.dark button[class*="rounded-full"][class*="h-7"][class*="w-12"]:not([class*="bg-emerald"]) {
+    background: rgba(30, 30, 30, 0.9) !important;
+    box-shadow: 0 0 0 3px rgba(247, 127, 0, 0.35) !important;
+}
+
+.dark button[class*="rounded-full"][class*="h-7"][class*="w-12"][class*="bg-emerald"] {
+    box-shadow: 0 0 0 3px rgba(3, 205, 140, 0.35) !important;
+}
