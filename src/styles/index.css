@@ -178,13 +178,13 @@ button[class*="rounded-full"][class*="h-7"][class*="w-12"][class*="bg-emerald"] 
 }
 
 /* Toggle knob - enhanced visibility */
-button[class*="rounded-full"][class*="h-7"][class*="w-12"] > span[class*="rounded-full"] {
+button[class*="rounded-full"][class*="h-7"][class*="w-12"]>span[class*="rounded-full"] {
     background: white !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Toggle knob when ON - green tint for extra visibility */
-button[class*="rounded-full"][class*="h-7"][class*="w-12"][class*="bg-emerald"] > span[class*="rounded-full"] {
+button[class*="rounded-full"][class*="h-7"][class*="w-12"][class*="bg-emerald"]>span[class*="rounded-full"] {
     background: white !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(3, 205, 140, 0.3) !important;
 }
@@ -197,4 +197,103 @@ button[class*="rounded-full"][class*="h-7"][class*="w-12"][class*="bg-emerald"] 
 
 .dark button[class*="rounded-full"][class*="h-7"][class*="w-12"][class*="bg-emerald"] {
     box-shadow: 0 0 0 3px rgba(3, 205, 140, 0.35) !important;
+}
+
+/* ===========================================
+   Global Dark Theme Overrides
+   =========================================== */
+
+.dark body {
+    background-color: #020617 !important;
+    /* slate-950 */
+    color: #f8fafc !important;
+    /* slate-50 */
+}
+
+/* Invert standard white backgrounds to dark */
+.dark .bg-white,
+.dark .bg-slate-50 {
+    background-color: #0f172a !important;
+    /* slate-900 */
+    border-color: #1e293b !important;
+    /* slate-800 */
+    color: #e2e8f0 !important;
+    /* slate-200 */
+}
+
+/* Darken standard slate-100/200 backgrounds */
+.dark .bg-slate-100,
+.dark .bg-slate-200 {
+    background-color: #1e293b !important;
+    /* slate-800 */
+    border-color: #334155 !important;
+    /* slate-700 */
+}
+
+/* Text color inversions */
+.dark .text-slate-900,
+.dark .text-gray-900 {
+    color: #f8fafc !important;
+    /* slate-50 */
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600,
+.dark .text-gray-700 {
+    color: #cbd5e1 !important;
+    /* slate-300 */
+}
+
+.dark .text-slate-500,
+.dark .text-gray-500 {
+    color: #94a3b8 !important;
+    /* slate-400 */
+}
+
+/* Borders */
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .border-gray-200 {
+    border-color: #1e293b !important;
+    /* slate-800 */
+}
+
+/* Inputs in Dark Mode */
+.dark input,
+.dark textarea,
+.dark select {
+    background-color: #020617 !important;
+    /* slate-950 */
+    border-color: #334155 !important;
+    /* slate-700 */
+    color: #f8fafc !important;
+}
+
+.dark input::placeholder {
+    color: #475569 !important;
+    /* slate-600 */
+}
+
+/* Table headers */
+.dark thead,
+.dark thead th {
+    background-color: #1e293b !important;
+    /* slate-800 */
+    color: #e2e8f0 !important;
+    /* slate-200 */
+}
+
+/* Hover states */
+.dark .hover\:bg-slate-50:hover {
+    background-color: #1e293b !important;
+    /* slate-800 as hover */
+}
+
+/* Modal/Card backgrounds specifically */
+.dark .bg-white.shadow-sm,
+.dark .bg-white.p-4,
+.dark .bg-white.p-5,
+.dark .bg-white.p-6 {
+    background-color: #0f172a !important;
+    /* slate-900 */
 }

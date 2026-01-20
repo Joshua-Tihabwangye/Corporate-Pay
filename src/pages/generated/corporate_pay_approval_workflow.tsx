@@ -26,6 +26,8 @@ import {
   TrendingUp,
   Users,
   X,
+  Bell,
+  Settings,
 } from "lucide-react";
 
 const EVZ = {
@@ -257,24 +259,27 @@ function Button({
   );
 }
 
+// Toggle Component
 function Toggle({ enabled, onChange, label, description }: { enabled: boolean; onChange: (v: boolean) => void; label: string; description?: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4">
+    <div className="flex items-start justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300">
       <div>
         <div className="text-sm font-semibold text-slate-900">{label}</div>
         {description ? <div className="mt-1 text-xs text-slate-600">{description}</div> : null}
       </div>
       <button
         type="button"
-        className={cn("relative h-7 w-12 rounded-full border transition", enabled ? "border-emerald-300 bg-emerald-200" : "border-slate-200 bg-white")}
+        className={cn("relative h-7 w-12 rounded-full border transition-all duration-200 ease-in-out", enabled ? "border-emerald-500 bg-emerald-500 shadow-[0_0_0_3px_rgba(3,205,140,0.2)]" : "border-slate-300 bg-slate-100")}
         onClick={() => onChange(!enabled)}
         aria-label={label}
       >
-        <span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition", enabled ? "left-[22px]" : "left-1")} />
+        <span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-all duration-200", enabled ? "left-[22px]" : "left-1")} />
       </button>
     </div>
   );
 }
+
+
 
 function Field({
   label,
@@ -388,6 +393,21 @@ function Select({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function Card({ title, subtitle, right, children }: { title: string; subtitle?: string; right?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-slate-900">{title}</div>
+          {subtitle ? <div className="mt-1 text-xs text-slate-500">{subtitle}</div> : null}
+        </div>
+        {right}
+      </div>
+      <div className="mt-4">{children}</div>
     </div>
   );
 }
@@ -1737,63 +1757,87 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
                         </div>
                       </Section>
 
-                      <Section
-                        title="SLA alerts and breach handling"
-                        subtitle="Premium: SLA timers, reminders, and breach alerts."
-                        right={<Pill label={selectedFlow.sla.breachAlertsEnabled ? "Enabled" : "Off"} tone={selectedFlow.sla.breachAlertsEnabled ? "warn" : "neutral"} />}
-                      >
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                          <Toggle
-                            enabled={selectedFlow.sla.breachAlertsEnabled}
-                            onChange={(v) => setSelectedFlowPatch((f) => ({ ...f, sla: { ...f.sla, breachAlertsEnabled: v } }))}
-                            label="SLA breach alerts"
-                            description="Notify configured channels when SLA is breached."
-                          />
-                          <NumberField
-                            label="Reminder before (minutes)"
-                            value={selectedFlow.sla.remindBeforeMinutes}
-                            onChange={(v) => setSelectedFlowPatch((f) => ({ ...f, sla: { ...f.sla, remindBeforeMinutes: v } }))}
-                            hint={`Example: ${ms(selectedFlow.sla.remindBeforeMinutes)}`}
-                          />
-                        </div>
+                      {/* SLA & Alerts */}
+                      <div className="mt-6">
+                        <div className="text-lg font-semibold text-slate-900">SLA & Breach Management</div>
+                        <div className="mt-2 grid grid-cols-1 gap-4 lg:grid-cols-3">
+                          <Card title="SLA configuration" subtitle="Breach thresholds and reminders">
+                            <div className="space-y-4">
+                              <Toggle
+                                label="Breach alerts"
+                                description="Notify when approval SLA is breached"
+                                enabled={selectedFlow.sla.breachAlertsEnabled}
+                                onChange={(v) => setSelectedFlowPatch((f) => ({ ...f, sla: { ...f.sla, breachAlertsEnabled: v } }))}
+                              />
+                              <NumberField
+                                label="Remind before (minutes)"
+                                value={selectedFlow.sla.remindBeforeMinutes}
+                                onChange={(v) => setSelectedFlowPatch((f) => ({ ...f, sla: { ...f.sla, remindBeforeMinutes: v } }))}
+                                hint="Send early reminder to approver"
+                              />
+                            </div>
+                          </Card>
 
-                        <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="text-sm font-semibold text-slate-900">Notify channels</div>
-                          <div className="mt-1 text-xs text-slate-500">Email, WhatsApp, WeChat, SMS.</div>
-                          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                            {CHANNELS.map((c) => {
-                              const on = selectedFlow.sla.breachNotifyChannels.includes(c);
-                              return (
-                                <button
-                                  key={c}
-                                  type="button"
-                                  className={cn(
-                                    "flex items-center justify-between gap-2 rounded-2xl border px-3 py-2 text-sm font-semibold",
-                                    on ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-white hover:bg-slate-50"
-                                  )}
-                                  onClick={() => {
-                                    setSelectedFlowPatch((f) => {
-                                      const next = deepClone(f);
-                                      const set = new Set(next.sla.breachNotifyChannels);
-                                      if (set.has(c)) set.delete(c);
-                                      else set.add(c);
-                                      next.sla.breachNotifyChannels = Array.from(set) as Channel[];
-                                      return next;
-                                    });
-                                  }}
-                                  disabled={!selectedFlow.sla.breachAlertsEnabled}
-                                >
-                                  <span className="flex items-center gap-2">
-                                    <span className={cn("text-slate-600", on && "text-emerald-700")}>{channelIcon(c)}</span>
-                                    {c}
-                                  </span>
-                                  <Pill label={on ? "On" : "Off"} tone={on ? "good" : "neutral"} />
-                                </button>
-                              );
-                            })}
+                          <div className="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <div className="text-lg font-semibold text-slate-900">Alert and breaching channels</div>
+                                <div className="mt-1 text-sm text-slate-500">Configure how and where breach notifications are sent.</div>
+                              </div>
+                              <Pill label={`${selectedFlow.sla.breachNotifyChannels.length} active`} tone="warn" />
+                            </div>
+
+                            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="space-y-4">
+                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Channels</div>
+                                <div className="flex flex-wrap gap-2">
+                                  {CHANNELS.map(c => {
+                                    const on = selectedFlow.sla.breachNotifyChannels.includes(c);
+                                    return (
+                                      <button
+                                        key={c}
+                                        onClick={() => {
+                                          setSelectedFlowPatch(f => {
+                                            const next = on ? f.sla.breachNotifyChannels.filter(x => x !== c) : [...f.sla.breachNotifyChannels, c];
+                                            return { ...f, sla: { ...f.sla, breachNotifyChannels: next } };
+                                          });
+                                        }}
+                                        className={cn(
+                                          "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
+                                          on
+                                            ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm"
+                                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                                        )}
+                                      >
+                                        {channelIcon(c)}
+                                        {c}
+                                        {on && <Check className="h-3.5 w-3.5 ml-1" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div className="space-y-4">
+                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Escalation Preview</div>
+                                <div className="rounded-2xl bg-slate-50 p-4 text-xs text-slate-600 leading-relaxed border border-slate-100">
+                                  When an approval breaches the SLA limit (current: <strong>{selectedFlow.stages[0]?.slaHours || 8}h</strong>),
+                                  a notification will be sent via <strong>{selectedFlow.sla.breachNotifyChannels.join(", ") || "no channels"}</strong>.
+                                  Depending on stage settings, the request may auto-escalate to the next approver or Admin.
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="outline" className="w-full text-xs h-9">
+                                    <Bell className="h-3.5 w-3.5 mr-2" /> Send test alert
+                                  </Button>
+                                  <Button variant="outline" className="w-full text-xs h-9">
+                                    <Settings className="h-3.5 w-3.5 mr-2" /> Configure template
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </Section>
+                      </div>
                     </>
                   ) : (
                     <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center">
