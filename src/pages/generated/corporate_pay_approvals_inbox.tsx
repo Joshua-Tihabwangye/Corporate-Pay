@@ -4,17 +4,20 @@ import {
   AlertTriangle,
   BadgeCheck,
   Check,
+  CheckCircle,
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
   Clock,
   Copy,
+  Edit3,
   FileText,
   Filter,
   Flame,
   Group,
   Info,
   ListChecks,
+  MoreVertical,
   Paperclip,
   Search,
   Shield,
@@ -269,39 +272,18 @@ function Button({
   );
 }
 
-function Toggle({
-  enabled,
-  onChange,
-  label,
-  description,
-}: {
-  enabled: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-  description?: string;
-}) {
+function Toggle({ enabled, onChange, label }: { enabled: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4">
-      <div>
-        <div className="text-sm font-semibold text-slate-900">{label}</div>
-        {description ? <div className="mt-1 text-xs text-slate-600">{description}</div> : null}
-      </div>
+    <div className="flex items-center gap-3">
       <button
         type="button"
-        className={cn(
-          "relative h-7 w-12 rounded-full border transition",
-          enabled ? "border-emerald-300 bg-emerald-200" : "border-slate-200 bg-white"
-        )}
+        className={cn("relative h-6 w-11 rounded-full border transition-all duration-200 ease-in-out", enabled ? "border-emerald-500 bg-emerald-500" : "border-slate-300 bg-slate-200")}
         onClick={() => onChange(!enabled)}
         aria-label={label}
       >
-        <span
-          className={cn(
-            "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition",
-            enabled ? "left-[22px]" : "left-1"
-          )}
-        />
+        <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200", enabled ? "left-[22px]" : "left-0.5")} />
       </button>
+      <span className="text-sm font-medium text-slate-700">{label}</span>
     </div>
   );
 }
@@ -1111,57 +1093,58 @@ export default function CorporatePayApprovalsInboxV2() {
             </div>
 
             {/* Filters */}
-            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-6">
-              <div className="md:col-span-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                <div className="text-xs font-semibold text-slate-600">Search</div>
-                <div className="mt-1 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2">
-                  <Search className="h-4 w-4 text-slate-500" />
-                  <input
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="ID, requester, vendor, module..."
-                    className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+            <div className="mt-4 flex flex-col gap-4">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-4 lg:grid-cols-6">
+                <div className="md:col-span-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-xs font-semibold text-slate-600">Search</div>
+                  <div className="mt-1 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2">
+                    <Search className="h-4 w-4 text-slate-500" />
+                    <input
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder="ID, requester, vendor..."
+                      className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                  <Select label="Status" value={status} onChange={(v) => setStatus(v as any)} options={["All", "Pending", "Needs info", "Escalated", "Breached", "Approved", "Rejected", "Changes requested"]} />
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                  <Select label="Risk" value={risk} onChange={(v) => setRisk(v as any)} options={["All", "Low", "Medium", "High"]} />
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                  <Select label="Group" value={group} onChange={(v) => setGroup(v as any)} options={["All", ...GROUPS]} />
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                  <Select
+                    label="Module"
+                    value={module}
+                    onChange={(v) => {
+                      setModule(v as any);
+                      if (v !== "All" && v !== "E-Commerce") setMarketplace("All");
+                    }}
+                    options={["All", ...SERVICE_MODULES]}
                   />
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                <Select label="Status" value={status} onChange={(v) => setStatus(v as any)} options={["All", "Pending", "Needs info", "Escalated", "Breached", "Approved", "Rejected", "Changes requested"]} />
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                <Select label="Risk" value={risk} onChange={(v) => setRisk(v as any)} options={["All", "Low", "Medium", "High"]} />
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                <Select label="Group" value={group} onChange={(v) => setGroup(v as any)} options={["All", ...GROUPS]} />
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                <Select
-                  label="Service Module"
-                  value={module}
-                  onChange={(v) => {
-                    setModule(v as any);
-                    if (v !== "All" && v !== "E-Commerce") setMarketplace("All");
-                  }}
-                  options={["All", ...SERVICE_MODULES]}
-                />
-              </div>
-
-              <div className={cn("rounded-2xl border px-3 py-2", marketplaceEnabled ? "border-slate-200 bg-white" : "border-slate-200 bg-slate-50 opacity-70")}>
-                <Select
-                  label="Marketplace"
-                  value={String(marketplace)}
-                  onChange={(v) => setMarketplace(v as any)}
-                  options={["All", "-", ...MARKETPLACES]}
-                  hint={!marketplaceEnabled ? "E-Commerce only" : undefined}
-                  disabled={!marketplaceEnabled}
-                />
-              </div>
-
-              <div className="md:col-span-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                   <div className={cn("min-w-[140px] rounded-2xl border px-3 py-2", marketplaceEnabled ? "border-slate-200 bg-white" : "border-slate-200 bg-slate-50 opacity-70")}>
                     <Select
-                      label="Sort"
+                      label="Marketplace"
+                      value={String(marketplace)}
+                      onChange={(v) => setMarketplace(v as any)}
+                      options={["All", "-", ...MARKETPLACES]}
+                      disabled={!marketplaceEnabled}
+                    />
+                  </div>
+
+                  <div className="min-w-[180px] rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                    <Select
+                      label="Sort by"
                       value={`${sortKey}:${sortDir}`}
                       onChange={(v) => {
                         const [k, d] = v.split(":");
@@ -1180,19 +1163,10 @@ export default function CorporatePayApprovalsInboxV2() {
                         "marketplace:asc",
                         "marketplace:desc",
                       ]}
-                      hint="SLA, amount, group"
                     />
                   </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                    <Select
-                      label="Grouping"
-                      value={groupMode}
-                      onChange={(v) => setGroupMode(v as GroupMode)}
-                      options={["None", "Vendor", "Requester", "Pattern"]}
-                      hint="Premium"
-                    />
-                  </div>
+                  <div className="hidden h-8 w-px bg-slate-200 md:block" />
 
                   <Button
                     variant="outline"
@@ -1223,77 +1197,148 @@ export default function CorporatePayApprovalsInboxV2() {
                   ) : null}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Pill label="Core" tone="neutral" />
-                  <Pill label="Premium grouping" tone="info" />
+                <div className="flex items-center gap-2">
+                   <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1">
+                      <button
+                        onClick={() => setGroupMode("None")}
+                        className={cn("rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors", groupMode === "None" ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:bg-slate-50")}
+                      >
+                        List
+                      </button>
+                      <button
+                         onClick={() => setGroupMode("Vendor")}
+                         className={cn("rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors", groupMode !== "None" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "text-slate-500 hover:bg-slate-50")}
+                      >
+                        Smart Grouping
+                      </button>
+                   </div>
                 </div>
+              </div>
+
+              {/* Right Column: Sidebar (spans 3) */}
+              <div className="lg:col-span-3 space-y-6">
+                
+                {/* Escalation Panel */}
+                 <div className="rounded-3xl border border-rose-100 bg-white p-5 shadow-sm ring-4 ring-rose-50/50">
+                    <div className="flex items-start justify-between gap-3">
+                       <div>
+                          <div className="text-sm font-semibold text-slate-900">Escalation Panel</div>
+                          <div className="mt-1 text-xs text-slate-500">Items requiring immediate attention.</div>
+                       </div>
+                       <div className="grid h-8 w-8 place-items-center rounded-full bg-rose-50 text-rose-600">
+                          <AlertTriangle className="h-4 w-4" />
+                       </div>
+                    </div>
+                    
+                    <div className="mt-4 space-y-3">
+                       <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-3">
+                          <div className="flex items-center justify-between">
+                             <span className="text-xs font-semibold text-rose-700">Breached SLA</span>
+                             <span className="text-xs font-bold text-rose-800">3</span>
+                          </div>
+                          <div className="mt-2 h-1.5 w-full rounded-full bg-rose-100">
+                             <div className="h-full w-3/4 rounded-full bg-rose-500" />
+                          </div>
+                       </div>
+
+                       <div className="rounded-2xl border border-amber-100 bg-amber-50/50 p-3">
+                          <div className="flex items-center justify-between">
+                             <span className="text-xs font-semibold text-amber-700">High Risk</span>
+                             <span className="text-xs font-bold text-amber-800">5</span>
+                          </div>
+                           <div className="mt-2 h-1.5 w-full rounded-full bg-amber-100">
+                             <div className="h-full w-1/2 rounded-full bg-amber-500" />
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="mt-4">
+                       <Button variant="outline" className="w-full text-xs" onClick={() => {
+                          setRisk("High");
+                          setStatus("Breached");
+                          toast({ title: "Filtered", message: "Showing high priority items.", kind: "warn" });
+                       }}>
+                          View critical items
+                       </Button>
+                    </div>
+                 </div>
+
+                 {/* Quick Stats or other sidebar content */}
+                 <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="text-sm font-semibold text-slate-900">My Performance</div>
+                    <div className="mt-4 grid grid-cols-2 gap-4">
+                       <div>
+                          <div className="text-2xl font-bold text-emerald-600">12m</div>
+                          <div className="text-xs text-slate-500">Avg. response</div>
+                       </div>
+                        <div>
+                          <div className="text-2xl font-bold text-slate-900">85%</div>
+                          <div className="text-xs text-slate-500">SLA adherence</div>
+                       </div>
+                    </div>
+                 </div>
+
               </div>
             </div>
           </div>
 
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
-            {/* Premium: suggestions */}
-            {suggestions.length ? (
-              <div className="mb-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Smart grouping suggestions</div>
-                    <div className="mt-1 text-xs text-slate-500">Same vendor and repeated patterns. Use bulk approve with safeguards.</div>
-                  </div>
-                  <Pill label="Premium" tone="info" />
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-                  {suggestions.map((s) => (
-                    <div key={`${s.vendor}-${s.risk}`} className="rounded-3xl border border-slate-200 bg-white p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">{s.vendor}</div>
-                          <div className="mt-1 text-xs text-slate-500">{s.count} item(s) • Total {formatUGX(s.total)}</div>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <Pill label={`Risk: ${s.risk}`} tone={riskTone(s.risk)} />
-                            <Pill label="Same vendor" tone="neutral" />
-                          </div>
-                        </div>
-                        <Sparkles className="h-5 w-5 text-emerald-700" />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+               {/* Left Column: Main List (spans 9) */}
+              <div className="lg:col-span-9 space-y-6">
+                
+                {/* Premium: suggestions */}
+                {suggestions.length ? (
+                  <div className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm ring-4 ring-indigo-50/50">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <div className="flex items-center gap-3">
+                         <div className="grid h-10 w-10 place-items-center rounded-2xl bg-indigo-50 text-indigo-600">
+                            <Sparkles className="h-5 w-5" />
+                         </div>
+                         <div>
+                            <div className="text-sm font-semibold text-slate-900">Smart grouping suggestions</div>
+                            <div className="mt-1 text-xs text-slate-500">We found repeated patterns for bulk approval.</div>
+                         </div>
                       </div>
-                      <div className="mt-3 flex flex-col gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setSelected((prev) => {
-                              const next = new Set(prev);
-                              s.ids.forEach((id) => next.add(id));
-                              return next;
-                            });
-                            toast({ title: "Selected", message: `Selected ${s.count} item(s) from ${s.vendor}.`, kind: "success" });
-                          }}
-                        >
-                          <Group className="h-4 w-4" /> Select group
-                        </Button>
-                        <Button
-                          variant="primary"
-                          disabled={s.risk !== "Low"}
-                          title={s.risk !== "Low" ? "Bulk approve is restricted to low risk" : ""}
-                          onClick={() => {
-                            setSelected(new Set(s.ids));
-                            setBulkWhy("");
-                            setBulkAck(false);
-                            setBulkOpen(true);
-                          }}
-                        >
-                          <Sparkles className="h-4 w-4" /> Bulk approve
-                        </Button>
-                      </div>
+                      <Pill label={`${suggestions.length} suggestion(s)`} tone="info" />
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+                    <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                      {suggestions.map((s) => (
+                        <div key={`${s.vendor}-${s.risk}`} className="group relative rounded-2xl border border-slate-200 bg-slate-50/50 p-4 transition-all hover:bg-white hover:shadow-md hover:ring-1 hover:ring-indigo-200">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">{s.vendor}</div>
+                              <div className="mt-0.5 text-xs text-slate-500">{s.count} items • {formatUGX(s.total)}</div>
+                            </div>
+                            <Pill label={s.risk} tone={riskTone(s.risk)} />
+                          </div>
+                          
+                          <div className="mt-4 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                             <Button
+                                variant="primary"
+                                className="h-8 w-full text-xs"
+                                disabled={s.risk !== "Low"}
+                                onClick={() => {
+                                  setSelected(new Set(s.ids));
+                                  setBulkWhy("");
+                                  setBulkAck(false);
+                                  setBulkOpen(true);
+                                }}
+                              >
+                                Bulk Approve
+                              </Button>
+                          </div>
+                           {/* Overlay for non-hover state to show count clearly */}
+                           <div className="absolute bottom-4 right-4 text-xs font-semibold text-slate-400 group-hover:opacity-0">
+                              Review {s.count}
+                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              {/* Main list */}
-              <div className="lg:col-span-9">
                 {groupMode === "None" ? (
                   <InboxTable
                     items={filtered}
@@ -1761,29 +1806,26 @@ function InboxTable({
   onAction: (kind: ActionKind, id: string) => void;
 }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-visible">
       <div className="border-b border-slate-200 px-4 py-3">
         <div className="text-sm font-semibold text-slate-900">Queue</div>
         <div className="mt-1 text-xs text-slate-500">Approve, reject, request changes, attach docs, and view audit.</div>
       </div>
 
       {/* Desktop table */}
-      <div className="hidden overflow-x-auto md:block">
+      <div className="hidden overflow-visible md:block">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs text-slate-600">
             <tr>
-              <th className="px-4 py-3 font-semibold">Select</th>
-              <th className="px-4 py-3 font-semibold">ID</th>
-              <th className="px-4 py-3 font-semibold">Type</th>
-              <th className="px-4 py-3 font-semibold">Module</th>
-              <th className="px-4 py-3 font-semibold">Marketplace</th>
-              <th className="px-4 py-3 font-semibold">Group</th>
-              <th className="px-4 py-3 font-semibold">Requester</th>
-              <th className="px-4 py-3 font-semibold">Vendor</th>
+              <th className="px-4 py-3 font-semibold w-10">
+                <span className="sr-only">Select</span>
+              </th>
+              <th className="px-4 py-3 font-semibold">Details</th>
+              <th className="px-4 py-3 font-semibold">Requester/Vendor</th>
               <th className="px-4 py-3 font-semibold">Amount</th>
-              <th className="px-4 py-3 font-semibold">SLA</th>
               <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Actions</th>
+              <th className="px-4 py-3 font-semibold">SLA</th>
+              <th className="px-4 py-3 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1791,154 +1833,164 @@ function InboxTable({
               const due = isBreached(i.slaDueAt);
               const soon = isDueSoon(i.slaDueAt);
               const approveBlocked = i.requiresAttachment && !i.hasAttachment;
+
               return (
-                <tr key={i.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                <tr key={i.id} className="border-t border-slate-100 hover:bg-slate-50/60 group">
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selected.has(i.id)}
                       onChange={() => onToggle(i.id)}
-                      className="h-4 w-4 rounded border-slate-300"
+                      className="h-4 w-4 rounded border-slate-300 accent-emerald-500"
                     />
                   </td>
-                  <td className="px-4 py-3 font-semibold text-slate-900">{i.id}</td>
-                  <td className="px-4 py-3 text-slate-700">{i.tx}</td>
-                  <td className="px-4 py-3 text-slate-700">{i.module}</td>
-                  <td className="px-4 py-3 text-slate-700">{i.marketplace}</td>
-                  <td className="px-4 py-3 text-slate-700">{i.group}</td>
-                  <td className="px-4 py-3 text-slate-700">{i.requester}</td>
-                  <td className="px-4 py-3 text-slate-700">{i.vendor}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-slate-900">{i.tx}</div>
+                    <div className="text-xs text-slate-500">{i.module} • {i.marketplace}</div>
+                    <div className="text-xs text-slate-400">{i.group}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="text-slate-900">{i.requester}</div>
+                    <div className="text-xs text-slate-500">{i.vendor}</div>
+                  </td>
                   <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(i.amountUGX)}</td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
+                     <div className="flex flex-col gap-1 items-start">
+                        <Pill label={i.status} tone={statusTone(i.status)} />
+                        <div className="flex items-center gap-1">
+                          <div className={cn("h-1.5 w-1.5 rounded-full", riskTone(i.risk) === "bad" ? "bg-rose-500" : riskTone(i.risk) === "warn" ? "bg-amber-500" : "bg-emerald-500")} />
+                          <span className="text-xs text-slate-500">{i.risk} Risk</span>
+                        </div>
+                     </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-1 items-start">
                       <Pill label={dueLabel(i.slaDueAt)} tone={due ? "bad" : soon ? "warn" : "info"} />
                       <div className="text-xs text-slate-500">{formatDateTime(i.slaDueAt)}</div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-2">
-                      <Pill label={i.status} tone={statusTone(i.status)} />
-                      <Pill label={`Risk: ${i.risk}`} tone={riskTone(i.risk)} />
-                      {approveBlocked ? <Pill label="Attachment missing" tone="bad" /> : i.requiresAttachment ? <Pill label="Attachment OK" tone="good" /> : <Pill label="No attachment" tone="neutral" />}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => onOpenAudit(i.id)}>
-                        <FileText className="h-4 w-4" /> Audit
-                      </Button>
-                      {approveBlocked ? (
-                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => onAddAttachment(i.id)}>
-                          <Paperclip className="h-4 w-4" /> Add attachment
-                        </Button>
-                      ) : null}
-                      {(i.status === "Escalated" || i.status === "Breached" || isBreached(i.slaDueAt)) ? (
-                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => onDelegate(i.id)}>
-                          <Users className="h-4 w-4" /> Delegate
-                        </Button>
-                      ) : null}
-                      <Button variant="primary" className="px-3 py-2 text-xs" disabled={approveBlocked} title={approveBlocked ? "Attachment required" : ""} onClick={() => onAction("Approve", i.id)}>
-                        <Check className="h-4 w-4" /> Approve
-                      </Button>
-                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => onAction("Request changes", i.id)}>
-                        <Info className="h-4 w-4" /> Changes
-                      </Button>
-                      <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => onAction("Reject", i.id)}>
-                        <X className="h-4 w-4" /> Reject
-                      </Button>
-                    </div>
+                  <td className="px-4 py-3 text-right">
+                    <RowActions
+                      item={i}
+                      onOpenAudit={onOpenAudit}
+                      onAddAttachment={onAddAttachment}
+                      onDelegate={onDelegate}
+                      onAction={onAction}
+                      approveBlocked={approveBlocked}
+                    />
                   </td>
                 </tr>
               );
             })}
-
-            {!items.length ? (
-              <tr>
-                <td colSpan={12} className="px-4 py-10">
-                  <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
-                    <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
-                      <ListChecks className="h-6 w-6" />
-                    </div>
-                    <div className="mt-3 text-sm font-semibold text-slate-900">No items</div>
-                    <div className="mt-1 text-sm text-slate-600">Nothing matches your filters.</div>
-                  </div>
-                </td>
-              </tr>
-            ) : null}
           </tbody>
         </table>
-      </div>
-
-      {/* Mobile cards */}
-      <div className="md:hidden">
-        <div className="space-y-3 p-4">
-          {items.map((i) => {
-            const due = isBreached(i.slaDueAt);
-            const soon = isDueSoon(i.slaDueAt);
-            const approveBlocked = i.requiresAttachment && !i.hasAttachment;
-            return (
-              <div key={i.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-sm font-semibold text-slate-900">{i.id}</div>
-                      <Pill label={i.status} tone={statusTone(i.status)} />
-                      <Pill label={i.risk} tone={riskTone(i.risk)} />
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500">{i.tx} • {i.module}{i.module === "E-Commerce" ? ` • ${i.marketplace}` : ""}</div>
-                    <div className="mt-1 text-xs text-slate-500">{i.group} • {i.requester}</div>
-                    <div className="mt-1 text-xs text-slate-500">Vendor: {i.vendor}</div>
-                    <div className="mt-2 text-sm font-semibold text-slate-900">{formatUGX(i.amountUGX)}</div>
-                    <div className="mt-2">
-                      <Pill label={dueLabel(i.slaDueAt)} tone={due ? "bad" : soon ? "warn" : "info"} />
-                    </div>
-                    {approveBlocked ? <div className="mt-2"><Pill label="Attachment missing" tone="bad" /></div> : null}
-                  </div>
-                  <input type="checkbox" checked={selected.has(i.id)} onChange={() => onToggle(i.id)} className="mt-1 h-4 w-4 rounded border-slate-300" />
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => onOpenAudit(i.id)}>
-                    <FileText className="h-4 w-4" /> Audit
-                  </Button>
-                  {approveBlocked ? (
-                    <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => onAddAttachment(i.id)}>
-                      <Paperclip className="h-4 w-4" /> Attach
-                    </Button>
-                  ) : null}
-                  {(i.status === "Escalated" || i.status === "Breached" || isBreached(i.slaDueAt)) ? (
-                    <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => onDelegate(i.id)}>
-                      <Users className="h-4 w-4" /> Delegate
-                    </Button>
-                  ) : null}
-                  <Button variant="primary" className="px-3 py-2 text-xs" disabled={approveBlocked} onClick={() => onAction("Approve", i.id)}>
-                    <Check className="h-4 w-4" /> Approve
-                  </Button>
-                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => onAction("Request changes", i.id)}>
-                    <Info className="h-4 w-4" /> Changes
-                  </Button>
-                  <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => onAction("Reject", i.id)}>
-                    <X className="h-4 w-4" /> Reject
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-
-          {!items.length ? (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
-              <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
-                <ListChecks className="h-6 w-6" />
-              </div>
-              <div className="mt-3 text-sm font-semibold text-slate-900">No items</div>
-              <div className="mt-1 text-sm text-slate-600">Nothing matches your filters.</div>
-            </div>
-          ) : null}
-        </div>
       </div>
     </div>
   );
 }
+
+function RowActions({
+  item,
+  onOpenAudit,
+  onAddAttachment,
+  onDelegate,
+  onAction,
+  approveBlocked,
+}: {
+  item: ApprovalItem;
+  onOpenAudit: (id: string) => void;
+  onAddAttachment: (id: string) => void;
+  onDelegate: (id: string) => void;
+  onAction: (kind: ActionKind, id: string) => void;
+  approveBlocked: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative inline-block text-left" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-9 z-10 mt-1 w-48 origin-top-right rounded-xl border border-slate-100 bg-white p-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
+            Actions
+          </div>
+          
+          <button
+            onClick={() => { onAction("Approve", item.id); setOpen(false); }}
+            disabled={approveBlocked}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors mb-1",
+              approveBlocked ? "cursor-not-allowed opacity-50 text-slate-400" : "text-emerald-700 hover:bg-emerald-50"
+            )}
+          >
+            <CheckCircle className="h-4 w-4" /> Approve
+          </button>
+          
+          <button
+            onClick={() => { onAction("Reject", item.id); setOpen(false); }}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50 transition-colors mb-1"
+          >
+            <XClassName className="h-4 w-4" /> Reject
+          </button>
+
+          <button
+             onClick={() => { onAction("Request changes", item.id); setOpen(false); }}
+             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+          >
+             <Edit3 className="h-4 w-4" /> Request Changes
+          </button>
+
+          <div className="my-1 border-t border-slate-100" />
+          
+          <button
+            onClick={() => { onOpenAudit(item.id); setOpen(false); }}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <FileText className="h-4 w-4" /> View Audit
+          </button>
+
+          {item.requiresAttachment && (
+             <button
+               onClick={() => { onAddAttachment(item.id); setOpen(false); }}
+               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+             >
+                <Paperclip className="h-4 w-4" /> {item.hasAttachment ? "View Attachment" : "Add Attachment"}
+             </button>
+          )}
+
+          {(item.status === "Escalated" || item.status === "Breached" || isBreached(item.slaDueAt)) && (
+            <button
+               onClick={() => { onDelegate(item.id); setOpen(false); }}
+               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+               <Users className="h-4 w-4" /> Delegate
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Helper for the X icon since X is imported as XClassName sometimes or just X
+function XClassName(props: any) { return <X {...props} />; }
 
 function GroupedView({
   groups,

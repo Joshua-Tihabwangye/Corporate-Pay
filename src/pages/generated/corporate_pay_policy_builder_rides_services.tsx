@@ -1213,6 +1213,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
                 {/* Editor */}
                 <div className="lg:col-span-2 space-y-4">
                   <Card title="Rides and Logistics policy" subtitle="Categories, geofences, time windows, and purpose tags." right={<Pill label={scopeLabel} tone={scope === "Org" ? "info" : "warn"} />}>
+                    <div className="flex flex-col gap-4">
                     {/* Categories */}
                     <div className="rounded-3xl border border-slate-200 bg-white p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -1490,9 +1491,11 @@ export default function CorporatePayPolicyBuilderI_V2() {
                         {showOverrideControls && !isOverridden("rides", "purpose") ? <div className="mt-2 text-xs text-slate-500">Enable override to edit.</div> : null}
                       </div>
                     </div>
+                    </div>
                   </Card>
 
                   <Card title="Purchases and Services policy" subtitle="Cross-module controls: modules, marketplaces, vendors, categories, basket size, and attachments." right={<Pill label={scopeLabel} tone={scope === "Org" ? "info" : "warn"} />}>
+                    <div className="flex flex-col gap-4">
                     {/* Allowed modules */}
                     <div className="rounded-3xl border border-slate-200 bg-white p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -1836,6 +1839,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
 
                     <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
                       Use the Simulator tab to test edge cases: denied vendors, restricted categories, and missing attachments.
+                    </div>
                     </div>
                   </Card>
                 </div>
