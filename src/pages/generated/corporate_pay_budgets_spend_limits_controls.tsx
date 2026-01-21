@@ -24,6 +24,7 @@ import {
   Users,
   Wallet,
   X,
+  MoreVertical,
 } from "lucide-react";
 
 const EVZ = {
@@ -469,6 +470,42 @@ function TextArea({
   );
 }
 
+function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }> }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-40 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200">
+            {actions.map((a, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  a.onClick();
+                  setOpen(false);
+                }}
+                className={cn(
+                  "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
+                  a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
+                )}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -477,6 +514,7 @@ function Modal({
   onClose,
   footer,
   maxW = "920px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -485,6 +523,7 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -518,13 +557,16 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button
-                className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {actions ? <ActionMenu actions={actions} /> : null}
+                <button
+                  className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
+                  onClick={onClose}
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -1396,9 +1438,50 @@ export default function CorporatePayBudgetsSpendControlsV2() {
 
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            <div className="flex flex-col gap-4">
+              {/* Alerts */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">Alerts</div>
+                      <div className="mt-1 text-xs text-slate-500">Real-time cap breach alerts and policy reminders.</div>
+                    </div>
+                    <Pill label="Live" tone="info" />
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {openAlerts.slice(0, 6).map((a) => (
+                      <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Pill label={a.severity} tone={pillToneForSeverity(a.severity)} />
+                              <div className="text-sm font-semibold text-slate-900">{a.title}</div>
+                            </div>
+                            <div className="mt-1 text-sm text-slate-700">{a.message}</div>
+                            <div className="mt-2 text-xs text-slate-500">{timeAgo(a.ts)} • {formatDateTime(a.ts)}</div>
+                          </div>
+                          <AlertTriangle className={cn("h-5 w-5", a.severity === "Critical" ? "text-rose-700" : a.severity === "Warning" ? "text-amber-700" : "text-blue-700")} />
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => toast({ title: "Rule", message: "Create rule from this alert (see J).", kind: "info" })}>
+                            <Sparkles className="h-4 w-4" /> Create rule
+                          </Button>
+                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openNewException("Org", "B-ORG")}>
+                            <Shield className="h-4 w-4" /> Exception
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {!openAlerts.length ? (
+                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
+                        No alerts.
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
               {/* Main */}
-              <div className="lg:col-span-8 space-y-4">
+              <div className="space-y-4">
                 {tab === "budgets" ? (
                   <>
                     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1909,52 +1992,14 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                       Emergency exceptions should be rare and always audit logged.
                     </div>
                   </div>
+
                 ) : null}
               </div>
 
-              {/* Right rail */}
-              <div className="lg:col-span-4 space-y-4">
-                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Alerts</div>
-                      <div className="mt-1 text-xs text-slate-500">Real-time cap breach alerts and policy reminders.</div>
-                    </div>
-                    <Pill label="Live" tone="info" />
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {openAlerts.slice(0, 6).map((a) => (
-                      <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Pill label={a.severity} tone={pillToneForSeverity(a.severity)} />
-                              <div className="text-sm font-semibold text-slate-900">{a.title}</div>
-                            </div>
-                            <div className="mt-1 text-sm text-slate-700">{a.message}</div>
-                            <div className="mt-2 text-xs text-slate-500">{timeAgo(a.ts)} • {formatDateTime(a.ts)}</div>
-                          </div>
-                          <AlertTriangle className={cn("h-5 w-5", a.severity === "Critical" ? "text-rose-700" : a.severity === "Warning" ? "text-amber-700" : "text-blue-700")} />
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => toast({ title: "Rule", message: "Create rule from this alert (see J).", kind: "info" })}>
-                            <Sparkles className="h-4 w-4" /> Create rule
-                          </Button>
-                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openNewException("Org", "B-ORG")}>
-                            <Shield className="h-4 w-4" /> Exception
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {!openAlerts.length ? (
-                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
-                        No alerts.
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+
+              {/* Quick Actions */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-slate-900">Quick actions</div>
@@ -1962,7 +2007,7 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                     </div>
                     <Pill label="Admin" tone="neutral" />
                   </div>
-                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     <Button variant="outline" onClick={openNewBudget}>
                       <Plus className="h-4 w-4" /> Create budget
                     </Button>
@@ -1980,7 +2025,6 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                     Premium: emergency exceptions require approvals and are audit logged.
                   </div>
                 </div>
-              </div>
             </div>
           </div>
 
@@ -1998,19 +2042,18 @@ export default function CorporatePayBudgetsSpendControlsV2() {
         title={budgetDraft.id ? "Edit budget" : "New budget"}
         subtitle="Org, group, module, or marketplace budgets."
         onClose={() => setBudgetModalOpen(false)}
+        actions={[
+          ...(budgetDraft.id ? [{ label: "Delete", onClick: () => { deleteBudget(budgetDraft.id); setBudgetModalOpen(false); }, variant: "danger" as const }] : []),
+          { label: "Save", onClick: saveBudget }
+        ]}
         footer={
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button variant="outline" onClick={() => setBudgetModalOpen(false)}>Cancel</Button>
-            <div className="flex flex-wrap items-center gap-2">
-              {budgetDraft.id ? (
-                <Button variant="danger" onClick={() => { deleteBudget(budgetDraft.id); setBudgetModalOpen(false); }}>
-                  <X className="h-4 w-4" /> Delete
-                </Button>
-              ) : null}
-              <Button variant="primary" onClick={saveBudget}>
-                <BadgeCheck className="h-4 w-4" /> Save
-              </Button>
-            </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setBudgetModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={saveBudget}>
+              {budgetDraft.id ? "Save budget" : "Add budget"}
+            </Button>
           </div>
         }
       >
@@ -2124,11 +2167,16 @@ export default function CorporatePayBudgetsSpendControlsV2() {
         title={capDraft.id ? "Edit user cap" : "New user cap"}
         subtitle="User caps are enforced alongside budgets."
         onClose={() => setCapModalOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveCap }
+        ]}
         footer={
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="outline" onClick={() => setCapModalOpen(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setCapModalOpen(false)}>
+              Cancel
+            </Button>
             <Button variant="primary" onClick={saveCap}>
-              <BadgeCheck className="h-4 w-4" /> Save
+              Save cap
             </Button>
           </div>
         }
@@ -2173,17 +2221,18 @@ export default function CorporatePayBudgetsSpendControlsV2() {
         title="Simulate spend"
         subtitle="Creates alerts on breach and updates used amounts. Hard caps block."
         onClose={() => setSpendModalOpen(false)}
+        actions={[
+          { label: "Emergency exception", onClick: () => openNewException("Org", "B-ORG") },
+          { label: "Apply", onClick: applySpend }
+        ]}
         footer={
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button variant="outline" onClick={() => setSpendModalOpen(false)}>Cancel</Button>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" onClick={() => openNewException("Org", "B-ORG")}>
-                <Shield className="h-4 w-4" /> Emergency exception
-              </Button>
-              <Button variant="primary" onClick={applySpend}>
-                <Wallet className="h-4 w-4" /> Apply
-              </Button>
-            </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setSpendModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={applySpend}>
+              Apply
+            </Button>
           </div>
         }
       >
@@ -2257,11 +2306,16 @@ export default function CorporatePayBudgetsSpendControlsV2() {
         title="Emergency exception request"
         subtitle="Premium: temporary limit increase requires approval."
         onClose={() => setExceptionModalOpen(false)}
+        actions={[
+          { label: "Submit", onClick: submitException }
+        ]}
         footer={
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button variant="outline" onClick={() => setExceptionModalOpen(false)}>Cancel</Button>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setExceptionModalOpen(false)}>
+              Cancel
+            </Button>
             <Button variant="primary" onClick={submitException}>
-              <Shield className="h-4 w-4" /> Submit
+              Submit
             </Button>
           </div>
         }

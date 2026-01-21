@@ -1117,7 +1117,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "builder" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4">
                 {/* Scope */}
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm h-fit">
                   <div className="flex items-start justify-between gap-3">
@@ -1211,7 +1211,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
                 </div>
 
                 {/* Editor */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="space-y-4">
                   <Card title="Rides and Logistics policy" subtitle="Categories, geofences, time windows, and purpose tags." right={<Pill label={scopeLabel} tone={scope === "Org" ? "info" : "warn"} />}>
                     <div className="flex flex-col gap-4">
                     {/* Categories */}
@@ -1847,7 +1847,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
             ) : null}
 
             {tab === "inheritance" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4">
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="text-sm font-semibold text-slate-900">Pick a user to inspect</div>
                   <div className="mt-1 text-xs text-slate-500">Shows effective values and source (Org/Group/User).</div>
@@ -1871,7 +1871,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
                   </div>
                 </div>
 
-                <div className="lg:col-span-2 space-y-4">
+                <div className="space-y-4">
                   <Card title="Inheritance summary" subtitle="Source of each effective field" right={<Pill label="Explainable" tone="info" />}>
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-left text-sm">
@@ -1910,7 +1910,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
             ) : null}
 
             {tab === "simulator" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4">
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="text-sm font-semibold text-slate-900">Simulation context</div>
                   <div className="mt-1 text-xs text-slate-500">Choose a user to simulate with their effective policy.</div>
@@ -1958,7 +1958,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
                   </div>
                 </div>
 
-                <div className="lg:col-span-2 space-y-4">
+                <div className="space-y-4">
                   <Card title="Scenario inputs" subtitle="Set inputs and run the simulator" right={<Button variant="primary" onClick={() => toast({ title: "Simulated", message: `Result: ${simResult.status}`, kind: simResult.status === "Allowed" ? "success" : simResult.status === "Blocked" ? "warn" : "info" })}><Play className="h-4 w-4" /> Run</Button>}>
                     {simType === "Ride" ? (
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -2081,7 +2081,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
             ) : null}
 
             {tab === "recommendations" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4">
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="text-sm font-semibold text-slate-900">Recommendations</div>
                   <div className="mt-1 text-xs text-slate-500">Generated from current effective policy for the selected scope.</div>
@@ -2091,7 +2091,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
                   </Button>
                 </div>
 
-                <div className="lg:col-span-2 space-y-3">
+                <div className="space-y-3">
                   {recs.map((r, idx) => (
                     <div key={idx} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                       <div className="flex items-start justify-between gap-3">
@@ -2119,7 +2119,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
             ) : null}
 
             {tab === "impact" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4">
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="text-sm font-semibold text-slate-900">Impact preview</div>
                   <div className="mt-1 text-xs text-slate-500">Compares current draft against last published version.</div>
@@ -2143,7 +2143,7 @@ export default function CorporatePayPolicyBuilderI_V2() {
                   </Button>
                 </div>
 
-                <div className="lg:col-span-2 space-y-4">
+                <div className="space-y-4">
                   <Card title="Changed users" subtitle="Who is affected and which fields changed" right={<Pill label={`${impact.changedUsers} users`} tone={impact.changedUsers ? "warn" : "good"} />}>
                     {impact.diffs.length ? (
                       <div className="space-y-2">
