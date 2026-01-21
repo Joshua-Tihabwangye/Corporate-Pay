@@ -28,6 +28,7 @@ import {
   X,
   Bell,
   Settings,
+  MoreVertical,
 } from "lucide-react";
 
 const EVZ = {
@@ -427,6 +428,42 @@ function Section({ title, subtitle, right, children }: { title: string; subtitle
   );
 }
 
+function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }> }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-40 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200">
+            {actions.map((a, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  a.onClick();
+                  setOpen(false);
+                }}
+                className={cn(
+                  "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
+                  a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
+                )}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -435,6 +472,7 @@ function Modal({
   onClose,
   footer,
   maxW = "920px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -443,6 +481,7 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -471,9 +510,12 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                 {actions ? <ActionMenu actions={actions} /> : null}
+                 <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Body - scrollable */}
@@ -495,6 +537,7 @@ function Drawer({
   children,
   onClose,
   footer,
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -502,6 +545,7 @@ function Drawer({
   children: React.ReactNode;
   onClose: () => void;
   footer?: React.ReactNode;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -534,9 +578,12 @@ function Drawer({
                 <div className="truncate text-base font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-xs text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {actions ? <ActionMenu actions={actions} /> : null}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Body */}
@@ -1420,9 +1467,9 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "builder" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+              <div className="flex flex-col gap-4">
                 {/* Left: flow list */}
-                <div className="lg:col-span-4 space-y-4">
+                <div className="space-y-4">
                   <Section
                     title="Flows"
                     subtitle="Search and select a flow to edit."
@@ -1520,7 +1567,7 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
                 </div>
 
                 {/* Main editor */}
-                <div className="lg:col-span-5 space-y-4">
+                <div className="space-y-4">
                   {selectedFlow ? (
                     <>
                       <Section
@@ -1860,7 +1907,7 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
                 </div>
 
                 {/* Right: Simulator */}
-                <div className="lg:col-span-3 space-y-4">
+                <div className="space-y-4">
                   <Section
                     title="Simulator"
                     subtitle="Premium: test scenarios and preview decisions."
@@ -2182,6 +2229,10 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
         title={stageBeingEdited ? `Edit stage: ${stageBeingEdited.name}` : "Edit stage"}
         subtitle={stageBeingEdited ? `${stageBeingEdited.role} • Min ${formatUGX(stageBeingEdited.minAmountUGX)} • SLA ${stageBeingEdited.slaHours}h` : ""}
         onClose={() => setDrawerOpen(false)}
+        actions={[
+          { label: "Save changes", onClick: saveDraft, variant: "default" },
+          { label: "Close", onClick: () => setDrawerOpen(false) }
+        ]}
         footer={
           <div className="flex items-center justify-between gap-2">
             <div className="text-xs text-slate-600">Changes are draft-only until published.</div>
@@ -2351,6 +2402,10 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
         title="New approval flow"
         subtitle="Create a per-module, per-marketplace, or RFQ flow."
         onClose={() => setNewOpen(false)}
+        actions={[
+          { label: "Create", onClick: newFlow, variant: "default" },
+          { label: "Cancel", onClick: () => setNewOpen(false) }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setNewOpen(false)}>Cancel</Button>
@@ -2377,6 +2432,10 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
         title="Clone flow"
         subtitle="Premium: clone and then tweak thresholds, stages, or scope."
         onClose={() => setCloneOpen(false)}
+        actions={[
+          { label: "Clone", onClick: cloneFlow, variant: "default" },
+          { label: "Cancel", onClick: () => setCloneOpen(false) }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setCloneOpen(false)}>Cancel</Button>
@@ -2405,6 +2464,10 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
         title="Apply template"
         subtitle="Premium: industry templates with cloning support."
         onClose={() => setTemplateOpen(false)}
+        actions={[
+          { label: "Apply", onClick: applyTemplate, variant: "default" },
+          { label: "Cancel", onClick: () => setTemplateOpen(false) }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setTemplateOpen(false)}>Cancel</Button>
@@ -2429,6 +2492,10 @@ export default function CorporatePayApprovalWorkflowBuilderV2() {
         title="Publish approval workflows"
         subtitle="Provide a reason. This would be audit logged in production."
         onClose={() => setPublishOpen(false)}
+        actions={[
+          { label: "Publish", onClick: publish, variant: "default" },
+          { label: "Cancel", onClick: () => setPublishOpen(false) }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setPublishOpen(false)}>Cancel</Button>

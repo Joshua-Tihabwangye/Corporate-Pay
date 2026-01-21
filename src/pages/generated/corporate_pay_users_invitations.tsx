@@ -38,6 +38,51 @@ function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function ActionMenu({ actions }: { actions: { label: string; onClick: () => void; variant?: "default" | "danger" | "outline" }[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-48 origin-top-right overflow-hidden rounded-2xl border border-slate-100 bg-white p-1 shadow-lg ring-1 ring-slate-200">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                action.onClick();
+                setOpen(false);
+              }}
+              className={cn(
+                "flex w-full items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-50",
+                action.variant === "danger" ? "text-rose-600" : "text-slate-700"
+              )}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
 }
@@ -244,7 +289,7 @@ function Select({ label, value, onChange, options, hint, disabled }: { label: st
   );
 }
 
-function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px" }: { open: boolean; title: string; subtitle?: string; children: React.ReactNode; onClose: () => void; footer?: React.ReactNode; maxW?: string }) {
+function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px", actions }: { open: boolean; title: string; subtitle?: string; children: React.ReactNode; onClose: () => void; footer?: React.ReactNode; maxW?: string; actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" | "outline" }> }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     if (open) window.addEventListener("keydown", onKey);
@@ -272,9 +317,12 @@ function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {actions ? <ActionMenu actions={actions} /> : null}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Body - scrollable */}
@@ -289,7 +337,7 @@ function Modal({ open, title, subtitle, children, onClose, footer, maxW = "900px
   );
 }
 
-function Drawer({ open, title, subtitle, children, onClose, footer }: { open: boolean; title: string; subtitle?: string; children: React.ReactNode; onClose: () => void; footer?: React.ReactNode }) {
+function Drawer({ open, title, subtitle, children, onClose, footer, actions }: { open: boolean; title: string; subtitle?: string; children: React.ReactNode; onClose: () => void; footer?: React.ReactNode; actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" | "outline" }> }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     if (open) window.addEventListener("keydown", onKey);
@@ -321,9 +369,12 @@ function Drawer({ open, title, subtitle, children, onClose, footer }: { open: bo
                 <div className="truncate text-base font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-xs text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {actions ? <ActionMenu actions={actions} /> : null}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Body */}
@@ -1118,7 +1169,119 @@ export default function CorporatePayUsersInvitationsV2() {
 
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
-            {/* Main Users list - Full width at top */}
+            {/* Insight cards - Above users */}
+            <div className="flex flex-col gap-4 mb-6">
+              {/* Delegation prompt */}
+              {inactiveApprovers.length ? (
+                <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">Delegation needed</div>
+                      <div className="mt-1 text-xs text-slate-700">Approver inactivity detected. Set a delegate to avoid approval bottlenecks.</div>
+                    </div>
+                    <Pill label="Premium" tone="info" />
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {inactiveApprovers.slice(0, 2).map((x) => (
+                      <div key={x.user.id} className="rounded-2xl border border-amber-200 bg-white p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">{x.user.name}</div>
+                            <div className="mt-1 text-xs text-slate-600">Inactive approvals: {x.user.daysSinceApprovalAction} days • Risk: {x.risk.label}</div>
+                          </div>
+                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openDelegationFor(x.user)}>
+                            <ChevronRight className="h-4 w-4" /> Set delegate
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-xs text-slate-700">This creates an audit log entry and routes approvals to a delegate.</div>
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">Approvals health</div>
+                      <div className="mt-1 text-xs text-slate-500">No inactive approvers detected in this demo.</div>
+                    </div>
+                    <Pill label="OK" tone="good" />
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Premium: delegation prompts appear when an approver is inactive or SLA breaches spike.
+                  </div>
+                </div>
+              )}
+
+              {/* Top spenders */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Top spenders</div>
+                    <div className="mt-1 text-xs text-slate-500">Premium insights and limit suggestions</div>
+                  </div>
+                  <Pill label="Premium" tone="info" />
+                </div>
+                <div className="mt-3 space-y-2">
+                  {topSpenders.map((x) => (
+                    <div key={x.user.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <button className="min-w-0 text-left" onClick={() => openUser(x.user)}>
+                          <div className="truncate text-sm font-semibold text-slate-900">{x.user.name}</div>
+                          <div className="mt-1 text-xs text-slate-500">{x.user.group} • {x.user.role}</div>
+                          <div className="mt-2 text-xs text-slate-700">Spend: <span className="font-semibold text-slate-900">{formatUGX(x.user.spendMonth)}</span> / {formatUGX(x.user.limitMonth)}</div>
+                        </button>
+                        <div className="flex flex-col items-end gap-2">
+                          <Pill label={x.risk.label} tone={x.risk.tone} />
+                          <Pill label={x.suggestion.title} tone={x.suggestion.tone} />
+                        </div>
+                      </div>
+                      {x.suggestion.suggestedLimit ? (
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                          <div>
+                            Suggested monthly cap: <span className="font-semibold text-slate-900">{formatUGX(x.suggestion.suggestedLimit)}</span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            className="px-3 py-2 text-xs"
+                            onClick={() => {
+                              setUsers((prev) => prev.map((u) => (u.id === x.user.id ? { ...u, limitMonth: x.suggestion.suggestedLimit as number } : u)));
+                              addAudit(x.user.id, { actor: "Org Admin", action: "Limit adjusted", detail: `Monthly cap set to ${formatUGX(x.suggestion.suggestedLimit as number)}` });
+                              toast({ title: "Applied", message: "Limit suggestion applied (demo).", kind: "success" });
+                            }}
+                          >
+                            <Sparkles className="h-4 w-4" /> Apply
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-xs text-slate-600">{x.suggestion.body}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bulk/HRIS summary */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Onboarding tools</div>
+                    <div className="mt-1 text-xs text-slate-500">CSV bulk import and HRIS (Phase 2)</div>
+                  </div>
+                  <Pill label="Core" tone="neutral" />
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-2">
+                  <Button variant="outline" onClick={openBulk}>
+                    <ClipboardList className="h-4 w-4" /> Bulk import CSV
+                  </Button>
+                  <Button variant="outline" onClick={() => setHrisOpen(true)}>
+                    <Building2 className="h-4 w-4" /> HRIS import (Phase 2)
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Users list - Full width */}
             <div className="mb-6">
               <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 md:flex-row md:items-center md:justify-between">
@@ -1300,117 +1463,7 @@ export default function CorporatePayUsersInvitationsV2() {
               </div>
             </div>
 
-            {/* Insight cards - Below users */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {/* Delegation prompt */}
-              {inactiveApprovers.length ? (
-                <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Delegation needed</div>
-                      <div className="mt-1 text-xs text-slate-700">Approver inactivity detected. Set a delegate to avoid approval bottlenecks.</div>
-                    </div>
-                    <Pill label="Premium" tone="info" />
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {inactiveApprovers.slice(0, 2).map((x) => (
-                      <div key={x.user.id} className="rounded-2xl border border-amber-200 bg-white p-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">{x.user.name}</div>
-                            <div className="mt-1 text-xs text-slate-600">Inactive approvals: {x.user.daysSinceApprovalAction} days • Risk: {x.risk.label}</div>
-                          </div>
-                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openDelegationFor(x.user)}>
-                            <ChevronRight className="h-4 w-4" /> Set delegate
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 text-xs text-slate-700">This creates an audit log entry and routes approvals to a delegate.</div>
-                </div>
-              ) : (
-                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Approvals health</div>
-                      <div className="mt-1 text-xs text-slate-500">No inactive approvers detected in this demo.</div>
-                    </div>
-                    <Pill label="OK" tone="good" />
-                  </div>
-                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                    Premium: delegation prompts appear when an approver is inactive or SLA breaches spike.
-                  </div>
-                </div>
-              )}
 
-              {/* Top spenders */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Top spenders</div>
-                    <div className="mt-1 text-xs text-slate-500">Premium insights and limit suggestions</div>
-                  </div>
-                  <Pill label="Premium" tone="info" />
-                </div>
-                <div className="mt-3 space-y-2">
-                  {topSpenders.map((x) => (
-                    <div key={x.user.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <button className="min-w-0 text-left" onClick={() => openUser(x.user)}>
-                          <div className="truncate text-sm font-semibold text-slate-900">{x.user.name}</div>
-                          <div className="mt-1 text-xs text-slate-500">{x.user.group} • {x.user.role}</div>
-                          <div className="mt-2 text-xs text-slate-700">Spend: <span className="font-semibold text-slate-900">{formatUGX(x.user.spendMonth)}</span> / {formatUGX(x.user.limitMonth)}</div>
-                        </button>
-                        <div className="flex flex-col items-end gap-2">
-                          <Pill label={x.risk.label} tone={x.risk.tone} />
-                          <Pill label={x.suggestion.title} tone={x.suggestion.tone} />
-                        </div>
-                      </div>
-                      {x.suggestion.suggestedLimit ? (
-                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                          <div>
-                            Suggested monthly cap: <span className="font-semibold text-slate-900">{formatUGX(x.suggestion.suggestedLimit)}</span>
-                          </div>
-                          <Button
-                            variant="outline"
-                            className="px-3 py-2 text-xs"
-                            onClick={() => {
-                              setUsers((prev) => prev.map((u) => (u.id === x.user.id ? { ...u, limitMonth: x.suggestion.suggestedLimit as number } : u)));
-                              addAudit(x.user.id, { actor: "Org Admin", action: "Limit adjusted", detail: `Monthly cap set to ${formatUGX(x.suggestion.suggestedLimit as number)}` });
-                              toast({ title: "Applied", message: "Limit suggestion applied (demo).", kind: "success" });
-                            }}
-                          >
-                            <Sparkles className="h-4 w-4" /> Apply
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="mt-2 text-xs text-slate-600">{x.suggestion.body}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bulk/HRIS summary */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Onboarding tools</div>
-                    <div className="mt-1 text-xs text-slate-500">CSV bulk import and HRIS (Phase 2)</div>
-                  </div>
-                  <Pill label="Core" tone="neutral" />
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-2">
-                  <Button variant="outline" onClick={openBulk}>
-                    <ClipboardList className="h-4 w-4" /> Bulk import CSV
-                  </Button>
-                  <Button variant="outline" onClick={() => setHrisOpen(true)}>
-                    <Building2 className="h-4 w-4" /> HRIS import (Phase 2)
-                  </Button>
-                </div>
-              </div>
-            </div>
 
             <div className="mt-4 text-xs text-slate-500">
               F Users & Invitations v2: add users with role/group/cost center, auto-approval eligibility, spend limits, bulk CSV import, HRIS (phase 2), offboarding workflow, risk scoring, top spenders insights, and delegation prompts.
@@ -1425,6 +1478,11 @@ export default function CorporatePayUsersInvitationsV2() {
         title="Add user"
         subtitle="Create a user, set role, group, cost center, spend limits, and auto-approval eligibility."
         onClose={() => setAddOpen(false)}
+        actions={[
+          { label: "Cancel", onClick: () => setAddOpen(false), variant: "outline" },
+          { label: "Preview invite", onClick: () => toast({ title: "Preview", message: "Preview invite message (demo).", kind: "info" }), variant: "outline" },
+          { label: "Create", onClick: createUser, variant: "default" },
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
@@ -1559,6 +1617,11 @@ export default function CorporatePayUsersInvitationsV2() {
         title="Bulk import users"
         subtitle="Upload a CSV or paste contents. Users are created as Invited by default."
         onClose={() => setBulkOpen(false)}
+        actions={[
+          { label: "Cancel", onClick: () => setBulkOpen(false), variant: "outline" },
+          { label: "Download template", onClick: downloadTemplate, variant: "outline" },
+          { label: "Import", onClick: importUsers, variant: "default" },
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setBulkOpen(false)}>Close</Button>
@@ -1670,6 +1733,9 @@ export default function CorporatePayUsersInvitationsV2() {
         title="HRIS import"
         subtitle="Phase 2: sync users and groups from HRIS."
         onClose={() => setHrisOpen(false)}
+        actions={[
+          { label: "Close", onClick: () => setHrisOpen(false), variant: "outline" },
+        ]}
         footer={<div className="flex justify-end"><Button variant="outline" onClick={() => setHrisOpen(false)}>Close</Button></div>}
         maxW="860px"
       >
@@ -1707,6 +1773,12 @@ export default function CorporatePayUsersInvitationsV2() {
         title={selected ? selected.name : ""}
         subtitle={selected ? `${selected.email} • ${selected.id}` : ""}
         onClose={() => { setSelected(null); setOffboardOpen(false); }}
+        actions={selected ? [
+          ...(selected.status === "Invited" ? [{ label: "Resend invite", onClick: () => resendInvite(selected!), variant: "outline" as const }] : []),
+          ...(selected.status === "Active" ? [{ label: "Suspend", onClick: () => suspendUser(selected!), variant: "outline" as const }] : []),
+          ...(selected.status === "Suspended" ? [{ label: "Reactivate", onClick: () => reactivateUser(selected!), variant: "outline" as const }] : []),
+          ...(selected.status !== "Offboarded" ? [{ label: "Offboard", onClick: () => openOffboard(selected!), variant: "danger" as const }] : []),
+        ] : []}
         footer={
           selected ? (
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1885,6 +1957,10 @@ export default function CorporatePayUsersInvitationsV2() {
         title="Offboard user"
         subtitle="Revokes CorporatePay instantly and preserves audit history."
         onClose={() => setOffboardOpen(false)}
+        actions={[
+          { label: "Cancel", onClick: () => setOffboardOpen(false), variant: "outline" },
+          { label: "Confirm offboard", onClick: confirmOffboard, variant: "danger" },
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setOffboardOpen(false)}>Cancel</Button>
@@ -1925,6 +2001,10 @@ export default function CorporatePayUsersInvitationsV2() {
         title="Set approver delegation"
         subtitle="Route approvals to a delegate when the approver is inactive."
         onClose={() => setDelegateOpen(false)}
+        actions={[
+          { label: "Cancel", onClick: () => setDelegateOpen(false), variant: "outline" },
+          { label: "Save delegation", onClick: confirmDelegation, variant: "default" },
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setDelegateOpen(false)}>Cancel</Button>

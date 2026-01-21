@@ -13,6 +13,7 @@ import {
   Layers,
   LineChart,
   Plus,
+  MoreVertical,
   Save,
   Settings,
   Sparkles,
@@ -180,6 +181,40 @@ function Button({
   );
 }
 
+function ActionMenu({ actions = [] }: { actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "outline" | "danger" }> }) {
+  const [open, setOpen] = useState(false);
+  if (!actions.length) return null;
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)} className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-slate-100">
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-50" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+            {actions.map((a, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  a.onClick();
+                  setOpen(false);
+                }}
+                className={cn(
+                  "block w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50",
+                  a.variant === "danger" ? "text-rose-600" : "text-slate-700"
+                )}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -187,6 +222,7 @@ function Modal({
   children,
   onClose,
   footer,
+  actions,
   maxW = "920px",
 }: {
   open: boolean;
@@ -195,6 +231,7 @@ function Modal({
   children: React.ReactNode;
   onClose: () => void;
   footer?: React.ReactNode;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "outline" | "danger" }>;
   maxW?: string;
 }) {
   useEffect(() => {
@@ -223,9 +260,12 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <ActionMenu actions={actions} />
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -243,6 +283,7 @@ function Drawer({
   children,
   onClose,
   footer,
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -250,6 +291,7 @@ function Drawer({
   children: React.ReactNode;
   onClose: () => void;
   footer?: React.ReactNode;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "outline" | "danger" }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -280,9 +322,12 @@ function Drawer({
                 <div className="truncate text-base font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-xs text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <ActionMenu actions={actions} />
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="h-full min-h-0 overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -989,6 +1034,68 @@ export default function CorporatePayGroupsCostCentersV2() {
               {tab === "Groups" ? (
                 <motion.div key="groups" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
                   {/* Main Groups and budgets card - Full width */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">Budget forecasting</div>
+                            <div className="mt-1 text-xs text-slate-500">Premium: month-end forecast per group</div>
+                          </div>
+                          <Pill label="Premium" tone="info" />
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          {filteredGroups.slice(0, 5).map((g) => {
+                            const forecast = calcForecast(g.spendMTD, DAY_OF_MONTH, DAYS_IN_MONTH);
+                            const ft = forecastTone(forecast, g.budgetMonth);
+                            return (
+                              <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <div className="text-sm font-semibold text-slate-900">{g.id}</div>
+                                    <div className="mt-1 text-xs text-slate-500">Forecast: {formatUGX(forecast)} / Budget: {formatUGX(g.budgetMonth)}</div>
+                                  </div>
+                                  <Pill label={ft.label} tone={ft.tone} />
+                                </div>
+                                <div className="mt-2">
+                                  <MiniBar label="Forecast vs budget" value={forecast} total={Math.max(1, g.budgetMonth)} hint={`${Math.round((forecast / Math.max(1, g.budgetMonth)) * 100)}%`} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">What changed?</div>
+                            <div className="mt-1 text-xs text-slate-500">Premium: trend explanations</div>
+                          </div>
+                          <Pill label="Premium" tone="info" />
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          {filteredGroups.slice(0, 4).map((g) => {
+                            const ex = topDriverExplanation(g);
+                            return (
+                              <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <div className="text-sm font-semibold text-slate-900">{g.id}</div>
+                                    <div className="mt-1 text-xs text-slate-500">{ex.title}</div>
+                                  </div>
+                                  <Pill label="Trend" tone={ex.tone as any} />
+                                </div>
+                                <div className="mt-2 text-xs text-slate-700">{ex.body}</div>
+                                <div className="mt-2">
+                                  <Sparkline values={g.weeklySeries} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div>
@@ -1081,66 +1188,6 @@ export default function CorporatePayGroupsCostCentersV2() {
                   </div>
 
                   {/* Budget forecasting and What changed cards - Side by side grid */}
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Budget forecasting</div>
-                          <div className="mt-1 text-xs text-slate-500">Premium: month-end forecast per group</div>
-                        </div>
-                        <Pill label="Premium" tone="info" />
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {filteredGroups.slice(0, 5).map((g) => {
-                          const forecast = calcForecast(g.spendMTD, DAY_OF_MONTH, DAYS_IN_MONTH);
-                          const ft = forecastTone(forecast, g.budgetMonth);
-                          return (
-                            <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <div className="text-sm font-semibold text-slate-900">{g.id}</div>
-                                  <div className="mt-1 text-xs text-slate-500">Forecast: {formatUGX(forecast)} / Budget: {formatUGX(g.budgetMonth)}</div>
-                                </div>
-                                <Pill label={ft.label} tone={ft.tone} />
-                              </div>
-                              <div className="mt-2">
-                                <MiniBar label="Forecast vs budget" value={forecast} total={Math.max(1, g.budgetMonth)} hint={`${Math.round((forecast / Math.max(1, g.budgetMonth)) * 100)}%`} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">What changed?</div>
-                          <div className="mt-1 text-xs text-slate-500">Premium: trend explanations</div>
-                        </div>
-                        <Pill label="Premium" tone="info" />
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {filteredGroups.slice(0, 4).map((g) => {
-                          const ex = topDriverExplanation(g);
-                          return (
-                            <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <div className="text-sm font-semibold text-slate-900">{g.id}</div>
-                                  <div className="mt-1 text-xs text-slate-500">{ex.title}</div>
-                                </div>
-                                <Pill label="Trend" tone={ex.tone as any} />
-                              </div>
-                              <div className="mt-2 text-xs text-slate-700">{ex.body}</div>
-                              <div className="mt-2">
-                                <Sparkline values={g.weeklySeries} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
                   </div>
                 </motion.div>
               ) : null}
@@ -1148,6 +1195,72 @@ export default function CorporatePayGroupsCostCentersV2() {
               {tab === "Cost centers" ? (
                 <motion.div key="cc" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
                   {/* Main Cost centers card - Full width */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">Project tags</div>
+                            <div className="mt-1 text-xs text-slate-500">Client, event, campaign, project</div>
+                          </div>
+                          <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => openTag()}>
+                            <Plus className="h-4 w-4" /> Add
+                          </Button>
+                        </div>
+
+                        <div className="mt-3">
+                          <div className="text-xs font-semibold text-slate-600">Search</div>
+                          <input
+                            value={qTag}
+                            onChange={(e) => setQTag(e.target.value)}
+                            placeholder="Client ABC, Expo2026..."
+                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                          />
+                        </div>
+
+                        <div className="mt-3 space-y-2 max-h-[400px] overflow-y-auto">
+                          {filteredTags.slice(0, 8).map((t) => (
+                            <div key={t.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <div className="text-sm font-semibold text-slate-900">{t.label}</div>
+                                  <div className="mt-1 text-xs text-slate-500">{t.type}: {t.key}</div>
+                                  <div className="mt-2 flex flex-wrap gap-2">
+                                    <Pill label={t.active ? "Active" : "Inactive"} tone={t.active ? "good" : "neutral"} />
+                                    <Pill label={timeAgo(t.updatedAt)} tone="neutral" />
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openTag(t)}>
+                                    <Settings className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteTag(t.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {!filteredTags.length ? <div className="text-sm text-slate-600">No tags found.</div> : null}
+                        </div>
+
+                        <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                          Tags are used in chargeback rules and for reporting.
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm h-fit">
+                        <div className="flex items-start gap-3">
+                          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-amber-800 ring-1 ring-amber-200">
+                            <Sparkles className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">Premium note</div>
+                            <div className="mt-1 text-sm text-slate-700">Chargeback rules can split billing by tag and route to invoice groups automatically.</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div>
@@ -1225,70 +1338,6 @@ export default function CorporatePayGroupsCostCentersV2() {
                   </div>
 
                   {/* Project tags and Premium note - Side by side grid */}
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Project tags</div>
-                          <div className="mt-1 text-xs text-slate-500">Client, event, campaign, project</div>
-                        </div>
-                        <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => openTag()}>
-                          <Plus className="h-4 w-4" /> Add
-                        </Button>
-                      </div>
-
-                      <div className="mt-3">
-                        <div className="text-xs font-semibold text-slate-600">Search</div>
-                        <input
-                          value={qTag}
-                          onChange={(e) => setQTag(e.target.value)}
-                          placeholder="Client ABC, Expo2026..."
-                          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                        />
-                      </div>
-
-                      <div className="mt-3 space-y-2 max-h-[400px] overflow-y-auto">
-                        {filteredTags.slice(0, 8).map((t) => (
-                          <div key={t.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <div className="text-sm font-semibold text-slate-900">{t.label}</div>
-                                <div className="mt-1 text-xs text-slate-500">{t.type}: {t.key}</div>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  <Pill label={t.active ? "Active" : "Inactive"} tone={t.active ? "good" : "neutral"} />
-                                  <Pill label={timeAgo(t.updatedAt)} tone="neutral" />
-                                </div>
-                              </div>
-                              <div className="flex flex-col gap-2">
-                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openTag(t)}>
-                                  <Settings className="h-4 w-4" />
-                                </Button>
-                                <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteTag(t.id)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        {!filteredTags.length ? <div className="text-sm text-slate-600">No tags found.</div> : null}
-                      </div>
-
-                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                        Tags are used in chargeback rules and for reporting.
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm h-fit">
-                      <div className="flex items-start gap-3">
-                        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-amber-800 ring-1 ring-amber-200">
-                          <Sparkles className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Premium note</div>
-                          <div className="mt-1 text-sm text-slate-700">Chargeback rules can split billing by tag and route to invoice groups automatically.</div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </motion.div>
               ) : null}
@@ -1296,6 +1345,33 @@ export default function CorporatePayGroupsCostCentersV2() {
               {tab === "Chargeback" ? (
                 <motion.div key="chargeback" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
                   {/* Main Chargeback rules card - Full width */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">Simulation</div>
+                            <div className="mt-1 text-xs text-slate-500">Test a transaction against chargeback rules.</div>
+                          </div>
+                          <Pill label="Premium" tone="info" />
+                        </div>
+                        <Button variant="primary" className="mt-3 w-full" onClick={() => setSimulateOpen(true)}>
+                          <Sparkles className="h-4 w-4" /> Open simulator
+                        </Button>
+                        <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                          Tip: if multiple rules match, the lowest priority number wins.
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="text-sm font-semibold text-slate-900">Chargeback best practices</div>
+                        <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                          <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} /> Keep rules simple and tag-driven.</li>
+                          <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.orange }} /> Use priority to avoid ambiguity.</li>
+                          <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} /> Ensure splits always sum to 100%.</li>
+                        </ul>
+                      </div>
+                    </div>
                   <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div>
@@ -1387,31 +1463,6 @@ export default function CorporatePayGroupsCostCentersV2() {
                   </div>
 
                   {/* Simulation and Best practices cards - Side by side grid */}
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Simulation</div>
-                          <div className="mt-1 text-xs text-slate-500">Test a transaction against chargeback rules.</div>
-                        </div>
-                        <Pill label="Premium" tone="info" />
-                      </div>
-                      <Button variant="primary" className="mt-3 w-full" onClick={() => setSimulateOpen(true)}>
-                        <Sparkles className="h-4 w-4" /> Open simulator
-                      </Button>
-                      <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                        Tip: if multiple rules match, the lowest priority number wins.
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="text-sm font-semibold text-slate-900">Chargeback best practices</div>
-                      <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                        <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} /> Keep rules simple and tag-driven.</li>
-                        <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.orange }} /> Use priority to avoid ambiguity.</li>
-                        <li className="flex items-start gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} /> Ensure splits always sum to 100%.</li>
-                      </ul>
-                    </div>
                   </div>
                 </motion.div>
               ) : null}
@@ -1419,6 +1470,115 @@ export default function CorporatePayGroupsCostCentersV2() {
               {tab === "Forecast" ? (
                 <motion.div key="forecast" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
                   {/* Main Budget forecasting card - Full width */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">Scenario planner</div>
+                            <div className="mt-1 text-xs text-slate-500">If we lower cap by X%, savings estimate</div>
+                          </div>
+                          <Pill label="Premium" tone="info" />
+                        </div>
+
+                        <div className="mt-3 space-y-3">
+                          <div>
+                            <div className="text-xs font-semibold text-slate-600">Group</div>
+                            <select
+                              value={scenarioGroup}
+                              onChange={(e) => setScenarioGroup(e.target.value as GroupId)}
+                              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                            >
+                              {groups
+                                .slice()
+                                .sort((a, b) => a.priority - b.priority)
+                                .map((g) => (
+                                  <option key={g.id} value={g.id}>
+                                    {g.id}
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <div className="text-xs font-semibold text-slate-600">Lower cap by</div>
+                              <Pill label={`${scenarioPct}%`} tone="neutral" />
+                            </div>
+                            <input
+                              type="range"
+                              min={0}
+                              max={40}
+                              step={5}
+                              value={scenarioPct}
+                              onChange={(e) => setScenarioPct(Number(e.target.value))}
+                              className="mt-2 w-full"
+                            />
+                            <div className="mt-1 text-xs text-slate-500">This estimates savings as forecast minus new cap (if forecast exceeds cap).</div>
+                          </div>
+
+                          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                            <div className="text-xs font-semibold text-slate-600">Current</div>
+                            <div className="mt-2 grid grid-cols-1 gap-2">
+                              <MiniBar label="Budget" value={scenario.g.budgetMonth} total={scenario.g.budgetMonth} hint={formatUGX(scenario.g.budgetMonth)} />
+                              <MiniBar label="Forecast" value={scenario.forecast} total={Math.max(1, scenario.g.budgetMonth)} hint={formatUGX(scenario.forecast)} />
+                            </div>
+                            <div className="mt-3 flex items-center justify-between">
+                              <Pill label={`Status: ${scenario.tone.label}`} tone={scenario.tone.tone} />
+                              <Pill label={`Hard cap: ${scenario.g.hardCap ? "Yes" : "No"}`} tone={scenario.g.hardCap ? "warn" : "neutral"} />
+                            </div>
+                          </div>
+
+                          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+                            <div className="text-xs font-semibold text-emerald-900">Scenario</div>
+                            <div className="mt-2 text-sm font-semibold text-slate-900">New cap: {formatUGX(scenario.newBudget)}</div>
+                            <div className="mt-1 text-sm text-slate-700">Potential savings: <span className="font-semibold text-slate-900">{formatUGX(scenario.potentialSavings)}</span></div>
+                            <div className="mt-2 flex items-center justify-between">
+                              <Pill label={`New status: ${scenario.newTone.label}`} tone={scenario.newTone.tone} />
+                              <Button
+                                variant="outline"
+                                className="px-3 py-2 text-xs"
+                                onClick={() => {
+                                  setGroups((prev) => prev.map((g) => (g.id === scenarioGroup ? { ...g, budgetMonth: scenario.newBudget, updatedAt: Date.now() } : g)));
+                                  toast({ title: "Applied", message: "Scenario cap applied to group budget (demo).", kind: "success" });
+                                }}
+                              >
+                                <Sparkles className="h-4 w-4" /> Apply
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                            Note: lowering caps can reduce spend but may also block legitimate operations. Consider approvals instead of hard blocks.
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm h-fit">
+                        <div className="text-sm font-semibold text-slate-900">What changed</div>
+                        <div className="mt-1 text-xs text-slate-500">Premium: driver explanations per group</div>
+                        <div className="mt-3 space-y-2">
+                          {groups
+                            .slice()
+                            .sort((a, b) => a.priority - b.priority)
+                            .slice(0, 3)
+                            .map((g) => {
+                              const ex = topDriverExplanation(g);
+                              return (
+                                <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <div className="text-sm font-semibold text-slate-900">{g.id}</div>
+                                      <div className="mt-1 text-xs text-slate-600">{ex.body}</div>
+                                    </div>
+                                    <Pill label="Driver" tone={ex.tone as any} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    </div>
                   <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div>
@@ -1476,113 +1636,6 @@ export default function CorporatePayGroupsCostCentersV2() {
                   </div>
 
                   {/* Scenario planner and What changed cards - Side by side grid */}
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Scenario planner</div>
-                          <div className="mt-1 text-xs text-slate-500">If we lower cap by X%, savings estimate</div>
-                        </div>
-                        <Pill label="Premium" tone="info" />
-                      </div>
-
-                      <div className="mt-3 space-y-3">
-                        <div>
-                          <div className="text-xs font-semibold text-slate-600">Group</div>
-                          <select
-                            value={scenarioGroup}
-                            onChange={(e) => setScenarioGroup(e.target.value as GroupId)}
-                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                          >
-                            {groups
-                              .slice()
-                              .sort((a, b) => a.priority - b.priority)
-                              .map((g) => (
-                                <option key={g.id} value={g.id}>
-                                  {g.id}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <div className="text-xs font-semibold text-slate-600">Lower cap by</div>
-                            <Pill label={`${scenarioPct}%`} tone="neutral" />
-                          </div>
-                          <input
-                            type="range"
-                            min={0}
-                            max={40}
-                            step={5}
-                            value={scenarioPct}
-                            onChange={(e) => setScenarioPct(Number(e.target.value))}
-                            className="mt-2 w-full"
-                          />
-                          <div className="mt-1 text-xs text-slate-500">This estimates savings as forecast minus new cap (if forecast exceeds cap).</div>
-                        </div>
-
-                        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                          <div className="text-xs font-semibold text-slate-600">Current</div>
-                          <div className="mt-2 grid grid-cols-1 gap-2">
-                            <MiniBar label="Budget" value={scenario.g.budgetMonth} total={scenario.g.budgetMonth} hint={formatUGX(scenario.g.budgetMonth)} />
-                            <MiniBar label="Forecast" value={scenario.forecast} total={Math.max(1, scenario.g.budgetMonth)} hint={formatUGX(scenario.forecast)} />
-                          </div>
-                          <div className="mt-3 flex items-center justify-between">
-                            <Pill label={`Status: ${scenario.tone.label}`} tone={scenario.tone.tone} />
-                            <Pill label={`Hard cap: ${scenario.g.hardCap ? "Yes" : "No"}`} tone={scenario.g.hardCap ? "warn" : "neutral"} />
-                          </div>
-                        </div>
-
-                        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
-                          <div className="text-xs font-semibold text-emerald-900">Scenario</div>
-                          <div className="mt-2 text-sm font-semibold text-slate-900">New cap: {formatUGX(scenario.newBudget)}</div>
-                          <div className="mt-1 text-sm text-slate-700">Potential savings: <span className="font-semibold text-slate-900">{formatUGX(scenario.potentialSavings)}</span></div>
-                          <div className="mt-2 flex items-center justify-between">
-                            <Pill label={`New status: ${scenario.newTone.label}`} tone={scenario.newTone.tone} />
-                            <Button
-                              variant="outline"
-                              className="px-3 py-2 text-xs"
-                              onClick={() => {
-                                setGroups((prev) => prev.map((g) => (g.id === scenarioGroup ? { ...g, budgetMonth: scenario.newBudget, updatedAt: Date.now() } : g)));
-                                toast({ title: "Applied", message: "Scenario cap applied to group budget (demo).", kind: "success" });
-                              }}
-                            >
-                              <Sparkles className="h-4 w-4" /> Apply
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                          Note: lowering caps can reduce spend but may also block legitimate operations. Consider approvals instead of hard blocks.
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm h-fit">
-                      <div className="text-sm font-semibold text-slate-900">What changed</div>
-                      <div className="mt-1 text-xs text-slate-500">Premium: driver explanations per group</div>
-                      <div className="mt-3 space-y-2">
-                        {groups
-                          .slice()
-                          .sort((a, b) => a.priority - b.priority)
-                          .slice(0, 3)
-                          .map((g) => {
-                            const ex = topDriverExplanation(g);
-                            return (
-                              <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <div className="text-sm font-semibold text-slate-900">{g.id}</div>
-                                    <div className="mt-1 text-xs text-slate-600">{ex.body}</div>
-                                  </div>
-                                  <Pill label="Driver" tone={ex.tone as any} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </div>
                   </div>
                 </motion.div>
               ) : null}
@@ -1601,6 +1654,7 @@ export default function CorporatePayGroupsCostCentersV2() {
         title="Edit group"
         subtitle="Update group budget, enforcement priority, and manager details."
         onClose={() => setGroupOpen(false)}
+        actions={[{ label: "Save", onClick: saveGroup }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setGroupOpen(false)}>Cancel</Button>
@@ -1697,6 +1751,10 @@ export default function CorporatePayGroupsCostCentersV2() {
         title={ccDraft?.id ? "Edit cost center" : "Add cost center"}
         subtitle="Cost centers map spend to invoices, tags, and chargeback rules."
         onClose={() => setCcOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveCC },
+          ...(ccDraft?.id ? [{ label: "Delete", onClick: () => { deleteCC(ccDraft.id); setCcOpen(false); }, variant: "danger" as const }] : []),
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setCcOpen(false)}>Cancel</Button>
@@ -1832,6 +1890,10 @@ export default function CorporatePayGroupsCostCentersV2() {
         title={tagDraft?.id ? "Edit tag" : "Add tag"}
         subtitle="Tags power reporting, budgets, and chargeback rules."
         onClose={() => setTagOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveTag },
+          ...(tagDraft?.id ? [{ label: "Delete", onClick: () => { deleteTag(tagDraft.id); setTagOpen(false); }, variant: "danger" as const }] : []),
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setTagOpen(false)}>Cancel</Button>
@@ -1909,6 +1971,10 @@ export default function CorporatePayGroupsCostCentersV2() {
         title={ruleDraft?.id ? "Edit chargeback rule" : "Add chargeback rule"}
         subtitle="Split billing by tag mapping. Splits must sum to 100%."
         onClose={() => setRuleOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveRule },
+          ...(ruleDraft?.id ? [{ label: "Delete", onClick: () => { deleteRule(ruleDraft.id); setRuleOpen(false); }, variant: "danger" as const }] : []),
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setRuleOpen(false)}>Cancel</Button>

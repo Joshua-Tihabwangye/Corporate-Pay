@@ -26,6 +26,7 @@ import {
   Sparkles,
   Trash2,
   X,
+  MoreVertical,
 } from "lucide-react";
 
 const EVZ = {
@@ -410,6 +411,67 @@ function Section({ title, subtitle, right, children }: { title: string; subtitle
   );
 }
 
+function ActionMenu({
+  actions,
+}: {
+  actions: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (!actions.length) return null;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                action.onClick();
+                setIsOpen(false);
+              }}
+              disabled={action.disabled}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50",
+                action.variant === "danger"
+                  ? "text-rose-600 hover:bg-rose-50"
+                  : "text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -418,6 +480,7 @@ function Modal({
   onClose,
   footer,
   maxW = "960px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -426,6 +489,12 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -453,9 +522,12 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[72vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -473,6 +545,7 @@ function Drawer({
   children,
   onClose,
   footer,
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -480,6 +553,12 @@ function Drawer({
   children: React.ReactNode;
   onClose: () => void;
   footer?: React.ReactNode;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -510,9 +589,12 @@ function Drawer({
                 <div className="truncate text-base font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-xs text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="h-full min-h-0 overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -1664,8 +1746,8 @@ export default function CorporatePayInvoicesStatementsV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "invoices" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-4">
                   <Section
                     title="Filters"
                     subtitle="Search and narrow invoice list."
@@ -2308,6 +2390,12 @@ export default function CorporatePayInvoicesStatementsV2() {
         title={activeInvoice ? activeInvoice.invoiceNo : "Invoice"}
         subtitle={activeInvoice ? `${entityById[activeInvoice.entityId]?.name || activeInvoice.entityId} • ${groupById[activeInvoice.invoiceGroupId]?.name || activeInvoice.invoiceGroupId}` : ""}
         onClose={() => setInvoiceDrawerOpen(false)}
+        actions={[
+          { label: "Lines CSV", onClick: () => activeInvoice && exportInvoiceLinesCSV(activeInvoice.id) },
+          { label: "PDF", onClick: () => activeInvoice && printInvoice(activeInvoice.id) },
+          { label: "Credit", onClick: () => activeInvoice && openCredit(activeInvoice.id) },
+          { label: "Dispute", onClick: () => activeInvoice && openDispute(activeInvoice.id) },
+        ]}
         footer={
           activeInvoice ? (
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
@@ -2490,6 +2578,7 @@ export default function CorporatePayInvoicesStatementsV2() {
         title="Explain charge"
         subtitle="Premium: drill down from line item to raw events."
         onClose={() => setExplainOpen(false)}
+        actions={[{ label: "Export raw", onClick: () => toast({ title: "Export", message: "In production, raw events export to CSV.", kind: "info" }) }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setExplainOpen(false)}>Close</Button>
@@ -2597,6 +2686,7 @@ export default function CorporatePayInvoicesStatementsV2() {
         title="Create credit note"
         subtitle="Core: adjustments are approval-gated."
         onClose={() => setCreditModalOpen(false)}
+        actions={[{ label: "Submit", onClick: submitCredit }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setCreditModalOpen(false)}>Cancel</Button>
@@ -2653,6 +2743,10 @@ export default function CorporatePayInvoicesStatementsV2() {
         title="Credit note approval"
         subtitle="Approval-gated adjustments require a reason."
         onClose={() => setCreditDecisionOpen(false)}
+        actions={[
+          { label: "Reject", onClick: () => decideCredit("Rejected"), variant: "danger" },
+          { label: "Approve", onClick: () => decideCredit("Approved") },
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setCreditDecisionOpen(false)}>Cancel</Button>
@@ -2702,6 +2796,7 @@ export default function CorporatePayInvoicesStatementsV2() {
         title="Create dispute ticket"
         subtitle="Premium: ticketing with evidence attachments."
         onClose={() => setDisputeModalOpen(false)}
+        actions={[{ label: "Create", onClick: submitDispute }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setDisputeModalOpen(false)}>Cancel</Button>
@@ -2766,6 +2861,11 @@ export default function CorporatePayInvoicesStatementsV2() {
         title={activeTicket ? `Ticket ${activeTicket.id}` : "Ticket"}
         subtitle={activeTicket ? `${activeTicket.status} • Invoice ${findInvoice(activeTicket.invoiceId)?.invoiceNo || activeTicket.invoiceId}` : ""}
         onClose={() => setTicketOpen(false)}
+        actions={[
+          { label: "In review", onClick: () => setTicketStatus("In review") },
+          { label: "Reject", onClick: () => setTicketStatus("Rejected"), variant: "danger" },
+          { label: "Resolve", onClick: () => setTicketStatus("Resolved") },
+        ]}
         footer={
           activeTicket ? (
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
@@ -2870,6 +2970,7 @@ export default function CorporatePayInvoicesStatementsV2() {
         title="Explorer drilldown"
         subtitle="Premium: items behind the pivot cell."
         onClose={() => setPivotCellOpen(false)}
+        actions={[{ label: "Close", onClick: () => setPivotCellOpen(false) }]}
         footer={
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => setPivotCellOpen(false)}>Close</Button>

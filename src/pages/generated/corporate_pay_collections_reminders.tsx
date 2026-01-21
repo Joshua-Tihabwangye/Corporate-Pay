@@ -21,6 +21,7 @@ import {
   Mail,
   MessageCircle,
   MessageSquare,
+  MoreVertical,
   Plus,
   RefreshCcw,
   Save,
@@ -438,6 +439,42 @@ function TextArea({
   );
 }
 
+function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }> }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-40 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200">
+            {actions.map((a, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  a.onClick();
+                  setOpen(false);
+                }}
+                className={cn(
+                  "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
+                  a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
+                )}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -446,6 +483,7 @@ function Modal({
   onClose,
   footer,
   maxW = "920px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -454,6 +492,7 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -481,9 +520,12 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {actions ? <ActionMenu actions={actions} /> : null}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -1776,8 +1818,8 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
             ) : null}
 
             {tab === "dunning" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-8 space-y-4">
+              <div className="flex flex-col-reverse gap-4">
+                <div className="space-y-4">
                   <Section
                     title="Dunning schedules"
                     subtitle="Upcoming due, overdue, and final notice. Configure channels and actions per stage."
@@ -1881,7 +1923,7 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
                   </Section>
                 </div>
 
-                <div className="lg:col-span-4 space-y-4">
+                <div className="space-y-4">
                   <Section title="Runbook" subtitle="How dunning is executed." right={<Pill label="Core" tone="neutral" /> }>
                     <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
                       <ul className="space-y-1">
@@ -1928,8 +1970,8 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
             ) : null}
 
             {tab === "reminders" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-4">
                   <Section title="Filters" subtitle="Search delivery logs." right={<Pill label="Core" tone="neutral" /> }>
                     <Field label="Search" value={delQ} onChange={setDelQ} placeholder="invoice, stage, to..." />
                     <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1990,7 +2032,7 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
                   </Section>
                 </div>
 
-                <div className="lg:col-span-8">
+                <div className="space-y-4">
                   <Section
                     title="Delivery logs"
                     subtitle="Audit-ready logs per channel."
@@ -2053,8 +2095,48 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
             ) : null}
 
             {tab === "enforcement" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-7 space-y-4">
+              <div className="flex flex-col-reverse gap-4">
+                <div className="space-y-4">
+                   <Section 
+                    title="Simulation" 
+                    subtitle="Preview enforcement actions."
+                    right={
+                      <Button variant="outline" onClick={() => toast({ title: "Simulation", message: "Preview updated.", kind: "info" })}>
+                        <RefreshCcw className="h-4 w-4" /> Run
+                      </Button>
+                    }
+                  >
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                      {(() => {
+                        const sim = evaluateEnforcement(invoices, enforcementCfg, now);
+                        return (
+                          <div className="flex items-start gap-4">
+                            <div className={cn("grid h-10 w-10 place-items-center rounded-2xl bg-slate-50", enforcementTone(sim.mode) === "bad" ? "bg-rose-100 text-rose-700" : enforcementTone(sim.mode) === "warn" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-700")}>
+                                {sim.mode === "Active" ? <Check className="h-5 w-5" /> : sim.mode === "Soft paused" ? <AlertTriangle className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
+                            </div>
+                            <div>
+                                <div className="text-sm font-semibold text-slate-900">{sim.mode}</div>
+                                <div className="mt-1 text-xs text-slate-600">{sim.reason}</div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </Section>
+
+                  <Section title="Enforcement audit log" subtitle="Recent automated actions." right={<Pill label="5 events" tone="neutral" /> }>
+                     <div className="space-y-2">
+                       <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-600">
+                         <span className="font-semibold text-slate-900">{fmtDate(now - 2 * 24 * 3600 * 1000)}</span>: System changed status from Active to Soft paused (Risk alert).
+                       </div>
+                       <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-600">
+                         <span className="font-semibold text-slate-900">{fmtDate(now - 5 * 24 * 3600 * 1000)}</span>: Payment received (INV-001). Enforcement restored to Active.
+                       </div>
+                     </div>
+                  </Section>
+                </div>
+
+                <div className="space-y-4">
                   <Section
                     title="Service suspension rules"
                     subtitle="Soft pause vs full stop. Reactivation after payment."
@@ -2552,6 +2634,9 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
         title={stageDraft.id ? "Edit dunning stage" : "New dunning stage"}
         subtitle="Configure trigger timing, channels, escalation routing, and enforcement action."
         onClose={() => setStageModalOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveStage }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setStageModalOpen(false)}>Cancel</Button>
@@ -2639,6 +2724,9 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
         title={templateDraft.id ? "Edit template" : "New template"}
         subtitle="Templates support placeholders: {invoiceNo}, {dueDate}, {balance}, {contactName}"
         onClose={() => setTemplateModalOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveTemplate }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setTemplateModalOpen(false)}>Cancel</Button>
@@ -2705,6 +2793,15 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
         title="Send reminder now"
         subtitle="Manual send for a specific invoice and stage."
         onClose={() => setSendNowOpen(false)}
+        actions={[
+          {
+            label: "Send",
+            onClick: () => {
+              simulateSend(sendNowDraft.invoiceId, sendNowDraft.stageId, sendNowDraft.note || "Manual");
+              setSendNowOpen(false);
+            }
+          }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setSendNowOpen(false)}>Cancel</Button>

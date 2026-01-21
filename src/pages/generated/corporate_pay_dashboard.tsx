@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -144,6 +144,69 @@ function Button({
   );
 }
 
+
+
+function ActionMenu({
+  actions,
+}: {
+  actions: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (!actions.length) return null;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                action.onClick();
+                setIsOpen(false);
+              }}
+              disabled={action.disabled}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50",
+                action.variant === "danger"
+                  ? "text-rose-600 hover:bg-rose-50"
+                  : "text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -152,6 +215,7 @@ function Modal({
   onClose,
   footer,
   maxW = "900px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -160,6 +224,12 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
 }) {
   return (
     <AnimatePresence>
@@ -190,13 +260,16 @@ function Modal({
                   <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">{subtitle}</div>
                 ) : null}
               </div>
-              <button
-                className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button
+                  className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                  onClick={onClose}
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Body - scrollable */}

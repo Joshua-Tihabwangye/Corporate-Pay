@@ -21,6 +21,7 @@ import {
   Crown,
   X,
   Shield,
+  MoreVertical,
 } from "lucide-react";
 
 const EVZ = {
@@ -458,6 +459,69 @@ function TextArea({
   );
 }
 
+
+
+function ActionMenu({
+  actions,
+}: {
+  actions: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (!actions.length) return null;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                action.onClick();
+                setIsOpen(false);
+              }}
+              disabled={action.disabled}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50",
+                action.variant === "danger"
+                  ? "text-rose-600 hover:bg-rose-50"
+                  : "text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -466,6 +530,7 @@ function Modal({
   onClose,
   footer,
   maxW = "980px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -474,6 +539,12 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -501,9 +572,12 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[72vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -521,6 +595,7 @@ function Drawer({
   children,
   onClose,
   footer,
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -528,6 +603,12 @@ function Drawer({
   children: React.ReactNode;
   onClose: () => void;
   footer?: React.ReactNode;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -558,9 +639,12 @@ function Drawer({
                 <div className="truncate text-base font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-xs text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="h-full min-h-0 overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -2365,6 +2449,7 @@ export default function CorporatePayEVChargingSchedulingV2() {
         title="New charging session"
         subtitle="Book on behalf. Purpose tags and policy enforcement are required."
         onClose={() => setCreateOpen(false)}
+        actions={[{ label: "Create", onClick: submitDraft }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
@@ -2541,6 +2626,7 @@ export default function CorporatePayEVChargingSchedulingV2() {
         title="Bulk fleet charging plan"
         subtitle="Premium: schedule many vehicles with staggered slots."
         onClose={() => setBulkOpen(false)}
+        actions={[{ label: "Create", onClick: runBulkFleetBooking }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setBulkOpen(false)}>Cancel</Button>
@@ -2611,6 +2697,7 @@ export default function CorporatePayEVChargingSchedulingV2() {
         title="Request VIP charging exception"
         subtitle="Premium: allow DC fast, priority slots, or after-hours through approvals."
         onClose={() => setVipReqOpen(false)}
+        actions={[{ label: "Submit", onClick: requestVipException }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setVipReqOpen(false)}>Cancel</Button>
