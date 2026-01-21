@@ -23,6 +23,7 @@ import {
   User,
   Users,
   X,
+  MoreVertical,
 } from "lucide-react";
 
 const EVZ = {
@@ -439,6 +440,68 @@ function Select({
   );
 }
 
+function ActionMenu({
+  actions,
+}: {
+  actions: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (!actions.length) return null;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                action.onClick();
+                setIsOpen(false);
+              }}
+              disabled={action.disabled}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                action.variant === "danger"
+                  ? "text-rose-600 hover:bg-rose-50"
+                  : "text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -447,6 +510,7 @@ function Modal({
   onClose,
   footer,
   maxW = "920px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -455,6 +519,12 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -490,13 +560,16 @@ function Modal({
                   <div className="mt-1 text-sm text-slate-600">{subtitle}</div>
                 ) : null}
               </div>
-              <button
-                className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button
+                  className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
+                  onClick={onClose}
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? (
@@ -516,6 +589,7 @@ function Drawer({
   children,
   onClose,
   footer,
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -523,6 +597,12 @@ function Drawer({
   children: React.ReactNode;
   onClose: () => void;
   footer?: React.ReactNode;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -561,13 +641,16 @@ function Drawer({
                   <div className="mt-1 text-xs text-slate-600">{subtitle}</div>
                 ) : null}
               </div>
-              <button
-                className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button
+                  className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
+                  onClick={onClose}
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="h-full min-h-0 overflow-auto px-5 py-4">{children}</div>
             {footer ? (
@@ -1781,9 +1864,9 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "Roles" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                {/* Left: role list */}
-                <div className="lg:col-span-4 space-y-4">
+              <div className="flex flex-col gap-4">
+                {/* Left: role list (moved to bottom/second in stack) */}
+                <div className="space-y-4">
                   <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -1904,8 +1987,8 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
                   ) : null}
                 </div>
 
-                {/* Right: role editor */}
-                <div className="lg:col-span-8 space-y-4">
+                {/* Right: role editor (moved to top/first in stack) */}
+                <div className="space-y-4">
                   {selectedRole ? (
                     <>
                       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -2175,8 +2258,8 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
             ) : null}
 
             {tab === "Delegation" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-4">
                   <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -2206,7 +2289,7 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
                   </div>
                 </div>
 
-                <div className="lg:col-span-8">
+                <div>
                   <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
                     <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
                       <div>
@@ -2279,8 +2362,8 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
             ) : null}
 
             {tab === "Dual-control" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-4">
                   <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -2586,6 +2669,7 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
         title="Template preview"
         subtitle="See what changes before applying."
         onClose={() => setTemplateModalOpen(false)}
+        actions={[{ label: "Apply", onClick: applyTemplate }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setTemplateModalOpen(false)}>Cancel</Button>
@@ -2623,6 +2707,7 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
         title={roleDraft?.type === "Custom" ? (roleNames.includes(roleDraft?.name || "") ? "Edit custom role" : "Create custom role") : "Role"}
         subtitle="Custom roles can be scoped by modules, marketplaces, areas, and actions."
         onClose={() => setRoleModalOpen(false)}
+        actions={[{ label: "Save", onClick: saveRoleDraft }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setRoleModalOpen(false)}>Cancel</Button>
@@ -2696,6 +2781,7 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
         title={delegationDraft?.id ? "Delegation" : "New delegation"}
         subtitle="Approval delegation and out-of-office coverage."
         onClose={() => setDelegationModalOpen(false)}
+        actions={[{ label: "Save", onClick: saveDelegation }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setDelegationModalOpen(false)}>Cancel</Button>
@@ -2771,6 +2857,7 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
         title={supportToggleOpen === "enable" ? "Enable support mode" : "Disable support mode"}
         subtitle="This change is audited and visible to org admins."
         onClose={() => setSupportToggleOpen(null)}
+        actions={[{ label: "Confirm", onClick: confirmSupportToggle, variant: supportToggleOpen === "enable" ? "default" : "danger" }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setSupportToggleOpen(null)}>Cancel</Button>
@@ -2800,6 +2887,11 @@ export default function CorporatePayRolesPermissionsGovernanceV2() {
         title={auditTitle || "Confirm action"}
         subtitle="Audit-friendly confirmation and reason prompt."
         onClose={() => setAuditOpen(false)}
+        actions={[{
+          label: "Confirm",
+          onClick: confirmAudit,
+          disabled: auditReason.trim().length < 8 || !auditAck || (auditSecondRequired && !auditSecondRole)
+        }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setAuditOpen(false)}>Cancel</Button>

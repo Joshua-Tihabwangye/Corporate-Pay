@@ -130,6 +130,51 @@ type GroupMode = "None" | "Requester" | "Vendor" | "Pattern";
 
 type ActionKind = "Approve" | "Reject" | "Request changes";
 
+function ActionMenu({ actions }: { actions: { label: string; onClick: () => void; variant?: "default" | "danger" | "outline" }[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 w-48 origin-top-right overflow-hidden rounded-2xl border border-slate-100 bg-white p-1 shadow-lg ring-1 ring-slate-200">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                action.onClick();
+                setOpen(false);
+              }}
+              className={cn(
+                "flex w-full items-center px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-50",
+                action.variant === "danger" ? "text-rose-600" : "text-slate-700"
+              )}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -397,6 +442,7 @@ function Modal({
   onClose,
   footer,
   maxW = "920px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -405,6 +451,7 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" | "outline" }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -438,13 +485,16 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button
-                className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {actions ? <ActionMenu actions={actions} /> : null}
+                <button
+                  className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
+                  onClick={onClose}
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -1284,9 +1334,9 @@ export default function CorporatePayApprovalsInboxV2() {
 
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <div className="flex flex-col-reverse gap-6">
                {/* Left Column: Main List (spans 9) */}
-              <div className="lg:col-span-9 space-y-6">
+              <div className="space-y-6">
                 
                 {/* Premium: suggestions */}
                 {suggestions.length ? (
@@ -1377,7 +1427,7 @@ export default function CorporatePayApprovalsInboxV2() {
               </div>
 
               {/* Escalation panel */}
-              <div className="lg:col-span-3">
+              <div className="">
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -1481,6 +1531,10 @@ export default function CorporatePayApprovalsInboxV2() {
         title={`${actionKind}`}
         subtitle={`Applies to ${actionItemIds.length} item(s). Comment is required.`}
         onClose={() => setActionOpen(false)}
+        actions={[
+          { label: "Confirm", onClick: performAction, variant: actionKind === "Reject" ? "danger" : "default" },
+          { label: "Cancel", onClick: () => setActionOpen(false) }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setActionOpen(false)}>Cancel</Button>
@@ -1548,6 +1602,18 @@ export default function CorporatePayApprovalsInboxV2() {
         title="Bulk approve"
         subtitle="Premium safeguards apply. Same vendor and low risk only."
         onClose={() => setBulkOpen(false)}
+        actions={[
+          { 
+              label: "Confirm bulk approve", 
+              onClick: () => {
+                  openAction("Approve", selectedItems.map((x) => x.id));
+                  setBulkOpen(false);
+                  setActionWhy(bulkWhy);
+              }, 
+              variant: "default" 
+          },
+          { label: "Cancel", onClick: () => setBulkOpen(false) }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setBulkOpen(false)}>Cancel</Button>
@@ -1606,6 +1672,10 @@ export default function CorporatePayApprovalsInboxV2() {
         title="Add attachment"
         subtitle="Required attachment enforcement blocks approval without this."
         onClose={() => setAttachOpen(false)}
+        actions={[
+          { label: "Mark attached", onClick: addAttachment, variant: "default" },
+          { label: "Cancel", onClick: () => setAttachOpen(false) }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setAttachOpen(false)}>Cancel</Button>
@@ -1636,9 +1706,13 @@ export default function CorporatePayApprovalsInboxV2() {
         title="Delegate now"
         subtitle="Premium: reassign escalated items to prevent SLA breaches."
         onClose={() => setDelegateOpen(false)}
+        actions={[
+          { label: "Delegate", onClick: delegateNow, variant: "default" },
+          { label: "Cancel", onClick: () => setDelegateOpen(false) }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-            <Button variant="outline" onClick={() => setDelegateOpen(false)}>Cancel</Button>
+             <Button variant="outline" onClick={() => setDelegateOpen(false)}>Cancel</Button>
             <Button variant="primary" onClick={delegateNow}>
               <Users className="h-4 w-4" /> Delegate
             </Button>
@@ -1684,6 +1758,9 @@ export default function CorporatePayApprovalsInboxV2() {
         title="Audit trail"
         subtitle="Who, when, and why."
         onClose={() => setAuditOpen(false)}
+        actions={[
+          { label: "Close", onClick: () => setAuditOpen(false) }
+        ]}
         footer={
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => setAuditOpen(false)}>Close</Button>

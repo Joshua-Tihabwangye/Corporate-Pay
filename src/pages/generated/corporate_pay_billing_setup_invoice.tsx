@@ -14,6 +14,7 @@ import {
   Info,
   Layers,
   Mail,
+  MoreVertical,
   Palette,
   Pencil,
   Plus,
@@ -418,6 +419,42 @@ function TextArea({
   );
 }
 
+function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }> }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-40 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200">
+            {actions.map((a, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  a.onClick();
+                  setOpen(false);
+                }}
+                className={cn(
+                  "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
+                  a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
+                )}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -426,6 +463,7 @@ function Modal({
   onClose,
   footer,
   maxW = "920px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -434,6 +472,7 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -461,9 +500,12 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {actions ? <ActionMenu actions={actions} /> : null}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -1895,6 +1937,9 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
         title={entityDraft.id ? "Edit entity" : "New entity"}
         subtitle="Tax and VAT settings are configured per entity or branch."
         onClose={() => setEntityModalOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveEntity }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setEntityModalOpen(false)}>Cancel</Button>
@@ -1927,6 +1972,9 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
         title={templateDraft.id ? "Edit template" : "New template"}
         subtitle="Premium: branded invoice templates per invoice group."
         onClose={() => setTemplateModalOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveTemplate }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setTemplateModalOpen(false)}>Cancel</Button>
@@ -1970,6 +2018,10 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
         title={groupDraft.id ? "Edit invoice group" : "New invoice group"}
         subtitle="Frequency, AP recipients, cost codes, templates, and per-group terms."
         onClose={() => setGroupModalOpen(false)}
+        actions={[
+          ...(groupDraft.id ? [{ label: "Delete", onClick: () => { deleteGroup(groupDraft.id); setGroupModalOpen(false); }, variant: "danger" as const }] : []),
+          { label: "Save", onClick: saveGroup }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setGroupModalOpen(false)}>Cancel</Button>
@@ -2051,6 +2103,9 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
         title="Payment terms override"
         subtitle="This override is applied to the invoice group draft."
         onClose={() => setTermsOverrideModalOpen(false)}
+        actions={[
+          { label: "Apply", onClick: applyTermsOverrideToDraft }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setTermsOverrideModalOpen(false)}>Cancel</Button>

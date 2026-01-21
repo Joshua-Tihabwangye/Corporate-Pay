@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -29,6 +29,7 @@ import {
   Trash2,
   Users,
   X,
+  MoreVertical,
 } from "lucide-react";
 
 const EVZ = {
@@ -152,6 +153,69 @@ function Button({
   );
 }
 
+
+
+function ActionMenu({
+  actions,
+}: {
+  actions: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (!actions.length) return null;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                action.onClick();
+                setIsOpen(false);
+              }}
+              disabled={action.disabled}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50",
+                action.variant === "danger"
+                  ? "text-rose-600 hover:bg-rose-50"
+                  : "text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -160,6 +224,7 @@ function Modal({
   onClose,
   footer,
   maxW = "920px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -168,6 +233,12 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -203,13 +274,16 @@ function Modal({
                   <div className="mt-1 text-sm text-slate-600">{subtitle}</div>
                 ) : null}
               </div>
-              <button
-                className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button
+                  className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
+                  onClick={onClose}
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-auto px-5 py-4">{children}</div>
             {footer ? (
@@ -1095,6 +1169,11 @@ export default function CorporatePayNotificationsCenterV2() {
         title="Assign event"
         subtitle="Assign an event to a person or desk (audit logged in production)."
         onClose={() => setAssignOpen(false)}
+        actions={[{ label: "Assign", onClick: () => {
+          if (!assignTarget) return;
+          assign(assignTarget, assignTo);
+          setAssignOpen(false);
+        } }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setAssignOpen(false)}>Cancel</Button>
@@ -1141,6 +1220,7 @@ export default function CorporatePayNotificationsCenterV2() {
         title="Why did I get this?"
         subtitle="Audit-linked explanation of rules and triggers."
         onClose={() => setWhyOpen(false)}
+        actions={[{ label: "Close", onClick: () => setWhyOpen(false) }]}
         footer={
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => setWhyOpen(false)}>Close</Button>
@@ -1198,6 +1278,10 @@ export default function CorporatePayNotificationsCenterV2() {
         title="Create rule from this event"
         subtitle="Generate a policy/routing rule draft based on the event."
         onClose={() => setRuleOpen(false)}
+        actions={[{ label: "Create", onClick: () => {
+          setRuleOpen(false);
+          toast({ title: "Rule created", message: "Rule draft created (demo).", kind: "success" });
+        } }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setRuleOpen(false)}>Cancel</Button>
@@ -1255,6 +1339,7 @@ export default function CorporatePayNotificationsCenterV2() {
         title="Smart digests"
         subtitle="Daily/weekly summaries by role and channel."
         onClose={() => setDigestOpen(false)}
+        actions={[{ label: "Send now", onClick: triggerSendDigest }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setDigestOpen(false)}>Close</Button>
@@ -1320,6 +1405,7 @@ export default function CorporatePayNotificationsCenterV2() {
         title="Routing rules"
         subtitle="Send finance alerts to Accountants, approvals to Approvers, etc."
         onClose={() => setRoutingOpen(false)}
+        actions={[{ label: "Save", onClick: () => toast({ title: "Saved", message: "Routing rules saved (demo).", kind: "success" }) }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setRoutingOpen(false)}>Close</Button>
