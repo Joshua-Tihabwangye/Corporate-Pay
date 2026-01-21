@@ -18,6 +18,7 @@ import {
   Filter,
   Gauge,
   Lock,
+  MoreVertical,
   Plus,
   RefreshCcw,
   Search,
@@ -469,6 +470,42 @@ function TextArea({
   );
 }
 
+function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }> }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-40 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200">
+            {actions.map((a, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  a.onClick();
+                  setOpen(false);
+                }}
+                className={cn(
+                  "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
+                  a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
+                )}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Modal({
   open,
   title,
@@ -477,6 +514,7 @@ function Modal({
   onClose,
   footer,
   maxW = "920px",
+  actions,
 }: {
   open: boolean;
   title: string;
@@ -485,6 +523,7 @@ function Modal({
   onClose: () => void;
   footer?: React.ReactNode;
   maxW?: string;
+  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }>;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -518,9 +557,12 @@ function Modal({
                 <div className="text-lg font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
               </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {actions ? <ActionMenu actions={actions} /> : null}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
@@ -1764,103 +1806,101 @@ export default function CorporatePayWalletCreditPrepaidV2() {
             ) : null}
 
             {tab === "wallets" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-8 space-y-4">
-                  <Section
-                    title="Multi-wallets"
-                    subtitle="Premium: wallets per group and cost center. Allocate funds and enforce spend boundaries."
-                    right={<Pill label={`${wallets.length} wallets`} tone="info" />}
-                  >
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">Primary</th>
-                            <th className="px-4 py-3 font-semibold">Wallet</th>
-                            <th className="px-4 py-3 font-semibold">Type</th>
-                            <th className="px-4 py-3 font-semibold">Target</th>
-                            <th className="px-4 py-3 font-semibold">Balance</th>
-                            <th className="px-4 py-3 font-semibold">Held</th>
-                            <th className="px-4 py-3 font-semibold">Available</th>
-                            <th className="px-4 py-3 font-semibold">Status</th>
-                            <th className="px-4 py-3 font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredWallets.map((w) => (
-                            <tr key={w.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                              <td className="px-4 py-3">
-                                <input
-                                  type="radio"
-                                  name="primaryWallet"
-                                  checked={primaryWalletId === w.id}
-                                  onChange={() => setPrimaryWalletId(w.id)}
-                                  className="h-4 w-4"
-                                />
-                              </td>
-                              <td className="px-4 py-3 font-semibold text-slate-900">{w.name}</td>
-                              <td className="px-4 py-3 text-slate-700">{w.type}</td>
-                              <td className="px-4 py-3 text-slate-700">{w.type === "Group" ? w.group : w.type === "Cost center" ? w.costCenter : "Organization"}</td>
-                              <td className="px-4 py-3 text-slate-700">{formatUGX(w.balanceUGX)}</td>
-                              <td className="px-4 py-3 text-slate-700">{formatUGX(w.heldUGX)}</td>
-                              <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(availableWalletBalance(w))}</td>
-                              <td className="px-4 py-3">
-                                <Pill label={w.status} tone={w.status === "Frozen" ? "bad" : "good"} />
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openEditWallet(w)}>
-                                    Edit
-                                  </Button>
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => toggleWalletFreeze(w.id)}>
-                                    {w.status === "Frozen" ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />} {w.status === "Frozen" ? "Unfreeze" : "Freeze"}
-                                  </Button>
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setFundDraft((p) => ({ ...p, kind: "Transfer", fromWalletId: primaryWalletId, toWalletId: w.id })); setFundModalOpen(true); }}>
-                                    <ArrowUpRight className="h-4 w-4" /> Allocate
-                                  </Button>
-                                  <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteWallet(w.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                                <div className="mt-2 text-xs text-slate-500">Updated {timeAgo(w.updatedAt)}</div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Premium: cost center wallets help chargeback and improve reporting.
-                    </div>
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-4 space-y-4">
-                  <Section
-                    title="Wallet settings"
-                    subtitle="Funding thresholds and risk controls."
-                    right={<Pill label="Premium" tone="info" />}
-                  >
+              <div className="space-y-4">
+                {/* Wallet settings - moved to top, full width */}
+                <Section
+                  title="Wallet settings"
+                  subtitle="Funding thresholds and risk controls."
+                  right={<Pill label="Premium" tone="info" />}
+                >
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <NumberField
                       label="Large funding threshold (UGX)"
                       value={largeFundingThresholdUGX}
                       onChange={(v) => setLargeFundingThresholdUGX(Math.max(0, v))}
                       hint="Above this requires approval"
                     />
-                    <div className="mt-3">
-                      <Toggle
-                        enabled={riskFreezeCorporatePay}
-                        onChange={setRiskFreezeCorporatePay}
-                        label="Freeze CorporatePay"
-                        description="Risk control that blocks CorporatePay at checkout."
-                      />
-                    </div>
-                    <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                      Premium: fraud triggers can automatically freeze wallets and require step-up approval.
-                    </div>
-                  </Section>
-                </div>
+                    <Toggle
+                      enabled={riskFreezeCorporatePay}
+                      onChange={setRiskFreezeCorporatePay}
+                      label="Freeze CorporatePay"
+                      description="Risk control that blocks CorporatePay at checkout."
+                    />
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                    Premium: fraud triggers can automatically freeze wallets and require step-up approval.
+                  </div>
+                </Section>
+
+                {/* Multi-wallets - now below, full width */}
+                <Section
+                  title="Multi-wallets"
+                  subtitle="Premium: wallets per group and cost center. Allocate funds and enforce spend boundaries."
+                  right={<Pill label={`${wallets.length} wallets`} tone="info" />}
+                >
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Primary</th>
+                          <th className="px-4 py-3 font-semibold">Wallet</th>
+                          <th className="px-4 py-3 font-semibold">Type</th>
+                          <th className="px-4 py-3 font-semibold">Target</th>
+                          <th className="px-4 py-3 font-semibold">Balance</th>
+                          <th className="px-4 py-3 font-semibold">Held</th>
+                          <th className="px-4 py-3 font-semibold">Available</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredWallets.map((w) => (
+                          <tr key={w.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                            <td className="px-4 py-3">
+                              <input
+                                type="radio"
+                                name="primaryWallet"
+                                checked={primaryWalletId === w.id}
+                                onChange={() => setPrimaryWalletId(w.id)}
+                                className="h-4 w-4"
+                              />
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-slate-900">{w.name}</td>
+                            <td className="px-4 py-3 text-slate-700">{w.type}</td>
+                            <td className="px-4 py-3 text-slate-700">{w.type === "Group" ? w.group : w.type === "Cost center" ? w.costCenter : "Organization"}</td>
+                            <td className="px-4 py-3 text-slate-700">{formatUGX(w.balanceUGX)}</td>
+                            <td className="px-4 py-3 text-slate-700">{formatUGX(w.heldUGX)}</td>
+                            <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(availableWalletBalance(w))}</td>
+                            <td className="px-4 py-3">
+                              <Pill label={w.status} tone={w.status === "Frozen" ? "bad" : "good"} />
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openEditWallet(w)}>
+                                  Edit
+                                </Button>
+                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => toggleWalletFreeze(w.id)}>
+                                  {w.status === "Frozen" ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />} {w.status === "Frozen" ? "Unfreeze" : "Freeze"}
+                                </Button>
+                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setFundDraft((p) => ({ ...p, kind: "Transfer", fromWalletId: primaryWalletId, toWalletId: w.id })); setFundModalOpen(true); }}>
+                                  <ArrowUpRight className="h-4 w-4" /> Allocate
+                                </Button>
+                                <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteWallet(w.id)}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="mt-2 text-xs text-slate-500">Updated {timeAgo(w.updatedAt)}</div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Premium: cost center wallets help chargeback and improve reporting.
+                  </div>
+                </Section>
               </div>
             ) : null}
 
@@ -2509,6 +2549,10 @@ export default function CorporatePayWalletCreditPrepaidV2() {
         title={walletDraft.id ? "Edit wallet" : "Create wallet"}
         subtitle="Premium: multi-wallets per group and cost center."
         onClose={() => setWalletModalOpen(false)}
+        actions={[
+          ...(walletDraft.id ? [{ label: "Delete", onClick: () => { deleteWallet(walletDraft.id); setWalletModalOpen(false); }, variant: "danger" as const }] : []),
+          { label: "Save", onClick: saveWallet }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setWalletModalOpen(false)}>Cancel</Button>
@@ -2580,6 +2624,9 @@ export default function CorporatePayWalletCreditPrepaidV2() {
         title={fundDraft.kind}
         subtitle="Funding actions with approvals for large events."
         onClose={() => setFundModalOpen(false)}
+        actions={[
+          { label: "Submit", onClick: applyFunding }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setFundModalOpen(false)}>Cancel</Button>
@@ -2667,6 +2714,9 @@ export default function CorporatePayWalletCreditPrepaidV2() {
         title={autoTopUpDraft.id ? "Edit auto top-up" : "New auto top-up"}
         subtitle="Premium: threshold-based top up rule with max per day."
         onClose={() => setAutoTopUpOpen(false)}
+        actions={[
+          { label: "Save", onClick: saveAutoTopUp }
+        ]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setAutoTopUpOpen(false)}>Cancel</Button>
