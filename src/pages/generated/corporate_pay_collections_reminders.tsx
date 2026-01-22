@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -439,39 +440,91 @@ function TextArea({
   );
 }
 
-function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }> }) {
-  const [open, setOpen] = useState(false);
+function ActionMenu({
+  actions,
+}: {
+  actions: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, up: false });
+
+  useEffect(() => {
+    if (isOpen && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const menuHeight = actions.length * 40 + 20; // approx
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const up = spaceBelow < menuHeight && rect.top > menuHeight;
+
+      setPos({
+        top: up ? rect.top - 8 : rect.bottom + 8,
+        left: rect.right,
+        up,
+      });
+
+      const close = () => setIsOpen(false);
+      window.addEventListener("scroll", close, { capture: true });
+      window.addEventListener("resize", close);
+      return () => {
+        window.removeEventListener("scroll", close, { capture: true });
+        window.removeEventListener("resize", close);
+      };
+    }
+  }, [isOpen, actions.length]);
+
+  if (!actions.length) return null;
+
   return (
-    <div className="relative">
+    <>
       <button
-        onClick={() => setOpen(!open)}
-        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+        ref={btnRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
       >
         <MoreVertical className="h-5 w-5" />
       </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-40 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200">
-            {actions.map((a, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  a.onClick();
-                  setOpen(false);
-                }}
-                className={cn(
-                  "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
-                  a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
-                )}
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+      {isOpen &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
+            <div
+              className="fixed z-[9999] w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200"
+              style={{
+                top: pos.up ? "auto" : pos.top,
+                bottom: pos.up ? window.innerHeight - pos.top : "auto",
+                left: pos.left - 192, // align right edge to button right
+              }}
+            >
+              {actions.map((action, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    action.onClick();
+                    setIsOpen(false);
+                  }}
+                  disabled={action.disabled}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 disabled:opacity-50",
+                    action.variant === "danger"
+                      ? "text-rose-600 hover:bg-rose-50"
+                      : "text-slate-700"
+                  )}
+                >
+                  {action.icon && <span className="mr-2 h-4 w-4">{action.icon}</span>}
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </>,
+          document.body
+        )}
+    </>
   );
 }
 
@@ -670,14 +723,14 @@ function Metric({ title, value, sub, icon, tone }: { title: string; value: strin
       : "bg-slate-50 text-slate-700";
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-semibold text-slate-500">{title}</div>
-          <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{value}</div>
-          <div className="mt-1 text-xs text-slate-600">{sub}</div>
+          <div className="text-sm font-semibold text-slate-500">{title}</div>
+          <div className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{value}</div>
+          <div className="mt-1 text-sm text-slate-600">{sub}</div>
         </div>
-        <div className={cn("grid h-10 w-10 place-items-center rounded-2xl", bg)}>{icon}</div>
+        <div className={cn("grid h-12 w-12 place-items-center rounded-2xl", bg)}>{icon}</div>
       </div>
     </div>
   );
@@ -1532,7 +1585,7 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
             </div>
 
             {/* KPI grid */}
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <Metric
                 title="Outstanding"
                 value={totalsByCurrency.map((x) => formatMoney(x.balance, x.currency)).join(" • ")}
@@ -1605,215 +1658,380 @@ export default function CorporatePayCollectionsRemindersEnforcementV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "overview" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-8 space-y-4">
-                  <Section
-                    title="Collections queue"
-                    subtitle="Prioritize overdue items and upcoming due reminders."
-                    right={<Pill label={`${unpaidInvoices.length} unpaid`} tone={unpaidInvoices.length ? "warn" : "good"} />}
-                  >
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">Invoice</th>
-                            <th className="px-4 py-3 font-semibold">Entity</th>
-                            <th className="px-4 py-3 font-semibold">Group</th>
-                            <th className="px-4 py-3 font-semibold">Due</th>
-                            <th className="px-4 py-3 font-semibold">Status</th>
-                            <th className="px-4 py-3 font-semibold">Balance</th>
-                            <th className="px-4 py-3 font-semibold">Reminders</th>
-                            <th className="px-4 py-3 font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {invoices
-                            .filter((i) => i.balance > 0 && i.status !== "Draft")
-                            .slice()
-                            .sort((a, b) => {
-                              const ao = Math.max(0, Math.floor((now - a.dueDate) / DAY));
-                              const bo = Math.max(0, Math.floor((now - b.dueDate) / DAY));
-                              return bo - ao;
-                            })
-                            .map((i) => {
-                              const e = entityById[i.entityId];
-                              const g = groupById[i.invoiceGroupId];
-                              const overdueDays = Math.max(0, Math.floor((now - i.dueDate) / DAY));
-                              const dueTone = overdueDays >= enforcementCfg.fullStopAfterOverdueDays ? "bad" : overdueDays >= enforcementCfg.softPauseAfterOverdueDays ? "warn" : "neutral";
-                              const cur = e?.currency || "UGX";
+              <div className="flex flex-col gap-6">
+                {/* 1. Collections Queue */}
+                <Section
+                  title="Collections queue"
+                  subtitle="Prioritize overdue items and upcoming due reminders."
+                  right={
+                    <Pill
+                      label={`${unpaidInvoices.length} unpaid`}
+                      tone={unpaidInvoices.length ? "warn" : "good"}
+                    />
+                  }
+                >
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Invoice</th>
+                          <th className="px-4 py-3 font-semibold">Entity</th>
+                          <th className="px-4 py-3 font-semibold">Group</th>
+                          <th className="px-4 py-3 font-semibold">Due</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold">Balance</th>
+                          <th className="px-4 py-3 font-semibold">Reminders</th>
+                          <th className="px-4 py-3 font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invoices
+                          .filter((i) => i.balance > 0 && i.status !== "Draft")
+                          .slice()
+                          .sort((a, b) => {
+                            const ao = Math.max(0, Math.floor((now - a.dueDate) / DAY));
+                            const bo = Math.max(0, Math.floor((now - b.dueDate) / DAY));
+                            return bo - ao;
+                          })
+                          .map((i) => {
+                            const e = entityById[i.entityId];
+                            const g = groupById[i.invoiceGroupId];
+                            const overdueDays = Math.max(
+                              0,
+                              Math.floor((now - i.dueDate) / DAY)
+                            );
+                            const dueTone =
+                              overdueDays >= enforcementCfg.fullStopAfterOverdueDays
+                                ? "bad"
+                                : overdueDays >=
+                                  enforcementCfg.softPauseAfterOverdueDays
+                                ? "warn"
+                                : "neutral";
+                            const cur = e?.currency || "UGX";
 
-                              return (
-                                <tr key={i.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                  <td className="px-4 py-3">
-                                    <div className="font-semibold text-slate-900">{i.invoiceNo}</div>
-                                    <div className="mt-1 text-xs text-slate-500">{i.id}</div>
-                                    {i.openDisputes ? <div className="mt-2"><Pill label={`${i.openDisputes} dispute`} tone="warn" /></div> : null}
-                                  </td>
-                                  <td className="px-4 py-3 text-slate-700">{e?.name || i.entityId}</td>
-                                  <td className="px-4 py-3 text-slate-700">{g?.name || i.invoiceGroupId}</td>
-                                  <td className="px-4 py-3">
-                                    <div className="flex flex-col gap-1">
-                                      <Pill label={fmtDate(i.dueDate)} tone={dueTone} />
-                                      <div className="text-xs text-slate-500">{overdueDays > 0 ? `${overdueDays} day(s) overdue` : `${Math.max(0, Math.ceil((i.dueDate - now) / DAY))} day(s) to due`}</div>
+                            return (
+                              <tr
+                                key={i.id}
+                                className="border-t border-slate-100 hover:bg-slate-50/60"
+                              >
+                                <td className="px-4 py-3">
+                                  <div className="font-semibold text-slate-900">
+                                    {i.invoiceNo}
+                                  </div>
+                                  <div className="mt-1 text-xs text-slate-500">
+                                    {i.id}
+                                  </div>
+                                  {i.openDisputes ? (
+                                    <div className="mt-2">
+                                      <Pill
+                                        label={`${i.openDisputes} dispute`}
+                                        tone="warn"
+                                      />
                                     </div>
-                                  </td>
-                                  <td className="px-4 py-3"><Pill label={i.status} tone={statusTone(i.status)} /></td>
-                                  <td className="px-4 py-3 font-semibold text-slate-900">{formatMoney(i.balance, cur)}</td>
-                                  <td className="px-4 py-3 text-slate-700">
-                                    {i.lastReminderAt ? (
-                                      <div>
-                                        <div className="text-xs text-slate-500">Last</div>
-                                        <div className="text-sm font-semibold text-slate-900">{timeAgo(i.lastReminderAt)}</div>
+                                  ) : null}
+                                </td>
+                                <td className="px-4 py-3 text-slate-700">
+                                  {e?.name || i.entityId}
+                                </td>
+                                <td className="px-4 py-3 text-slate-700">
+                                  {g?.name || i.invoiceGroupId}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex flex-col gap-1">
+                                    <Pill label={fmtDate(i.dueDate)} tone={dueTone} />
+                                    <div className="text-xs text-slate-500">
+                                      {overdueDays > 0
+                                        ? `${overdueDays} day(s) overdue`
+                                        : `${Math.max(
+                                            0,
+                                            Math.ceil((i.dueDate - now) / DAY)
+                                          )} day(s) to due`}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Pill
+                                    label={i.status}
+                                    tone={statusTone(i.status)}
+                                  />
+                                </td>
+                                <td className="px-4 py-3 font-semibold text-slate-900">
+                                  {formatMoney(i.balance, cur)}
+                                </td>
+                                <td className="px-4 py-3 text-slate-700">
+                                  {i.lastReminderAt ? (
+                                    <div>
+                                      <div className="text-xs text-slate-500">
+                                        Last
                                       </div>
-                                    ) : (
-                                      <Pill label="None" tone="neutral" />
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => openInvoice(i.id)}>
-                                        <ChevronRight className="h-4 w-4" /> Open
-                                      </Button>
-                                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setSendNowDraft({ invoiceId: i.id, stageId: stages[0]?.id || "STG-1", note: "Manual" }); setSendNowOpen(true); }}>
-                                        <Sparkles className="h-4 w-4" /> Remind
-                                      </Button>
-                                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => markPaid(i.id)}>
-                                        <Check className="h-4 w-4" /> Mark paid
-                                      </Button>
+                                      <div className="text-sm font-semibold text-slate-900">
+                                        {timeAgo(i.lastReminderAt)}
+                                      </div>
                                     </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          {!unpaidInvoices.length ? (
-                            <tr>
-                              <td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-600">No unpaid invoices.</td>
-                            </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
+                                  ) : (
+                                    <Pill label="None" tone="neutral" />
+                                  )}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex justify-end">
+                                    <ActionMenu
+                                      actions={[
+                                        {
+                                          label: "Open invoice",
+                                          icon: <ChevronRight className="h-4 w-4" />,
+                                          onClick: () => openInvoice(i.id),
+                                        },
+                                        {
+                                          label: "Send reminder",
+                                          icon: <Sparkles className="h-4 w-4" />,
+                                          onClick: () => {
+                                            setSendNowDraft({
+                                              invoiceId: i.id,
+                                              stageId: stages[0]?.id || "STG-1",
+                                              note: "Manual",
+                                            });
+                                            setSendNowOpen(true);
+                                          },
+                                        },
+                                        {
+                                          label: "Mark as paid",
+                                          icon: <Check className="h-4 w-4" />,
+                                          onClick: () => markPaid(i.id),
+                                        },
+                                      ]}
+                                    />
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        {!unpaidInvoices.length ? (
+                          <tr>
+                            <td
+                              colSpan={8}
+                              className="px-4 py-12 text-center text-sm text-slate-600"
+                            >
+                              No unpaid invoices.
+                            </td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
 
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Core: upcoming due, overdue, and final notice reminders. Premium: escalation routing and health score.
-                    </div>
-                  </Section>
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Core: upcoming due, overdue, and final notice reminders.
+                    Premium: escalation routing and health score.
+                  </div>
+                </Section>
 
-                  <Section
-                    title="Channel delivery health"
-                    subtitle="Delivery status per channel with logs."
-                    right={<Button variant="outline" onClick={() => setTab("reminders")}><ChevronRight className="h-4 w-4" /> Open logs</Button>}
-                  >
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                      {CHANNELS.map((c) => (
-                        <div key={c} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                                <span className="text-slate-600">{channelIcon(c)}</span> {c}
-                              </div>
-                              <div className="mt-2 text-xs text-slate-500">Delivered</div>
-                              <div className="mt-1 text-lg font-semibold text-slate-900">{deliverySummary[c].delivered}</div>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <Pill label={`Failed ${deliverySummary[c].failed}`} tone={deliverySummary[c].failed ? "warn" : "good"} />
-                              <Pill label={`Queued ${deliverySummary[c].queued}`} tone="neutral" />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-4 space-y-4">
-                  <Section
-                    title="Enforcement summary"
-                    subtitle="Service suspension rules and reactivation after payment."
-                    right={<Pill label={enforcement.mode} tone={enforcementTone(enforcement.mode)} />}
-                  >
-                    <div className={cn(
+                {/* 2. Enforcement Summary */}
+                <Section
+                  title="Enforcement summary"
+                  subtitle="Service suspension rules and reactivation after payment."
+                  right={
+                    <Pill
+                      label={enforcement.mode}
+                      tone={enforcementTone(enforcement.mode)}
+                    />
+                  }
+                >
+                  <div
+                    className={cn(
                       "rounded-3xl border p-4",
-                      enforcement.mode === "Full stopped" ? "border-rose-200 bg-rose-50" : enforcement.mode === "Soft paused" ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"
-                    )}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">{enforcement.mode}</div>
-                          <div className="mt-1 text-xs text-slate-700">{enforcement.reason}</div>
-                          <div className="mt-2 text-xs text-slate-700">Scope: <span className="font-semibold">{enforcementCfg.scope}</span></div>
+                      enforcement.mode === "Full stopped"
+                        ? "border-rose-200 bg-rose-50"
+                        : enforcement.mode === "Soft paused"
+                        ? "border-amber-200 bg-amber-50"
+                        : "border-emerald-200 bg-emerald-50"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          {enforcement.mode}
                         </div>
-                        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/60 text-slate-700 ring-1 ring-slate-200">
-                          <Shield className="h-5 w-5" />
+                        <div className="mt-1 text-xs text-slate-700">
+                          {enforcement.reason}
+                        </div>
+                        <div className="mt-2 text-xs text-slate-700">
+                          Scope:{" "}
+                          <span className="font-semibold">
+                            {enforcementCfg.scope}
+                          </span>
                         </div>
                       </div>
-
-                      <div className="mt-3 text-xs text-slate-700">
-                        Soft pause: CorporatePay is paused and users may be prompted to pay first.
-                        <br />
-                        Full stop: corporate-funded services are stopped until compliant.
+                      <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/60 text-slate-700 ring-1 ring-slate-200">
+                        <Shield className="h-5 w-5" />
                       </div>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-1 gap-2">
-                      <Toggle
-                        enabled={enforcementCfg.enabled}
-                        onChange={(v) => setEnforcementCfg((p) => ({ ...p, enabled: v }))}
-                        label="Enable enforcement"
-                        description="Applies suspension rules based on overdue and risk controls."
-                      />
-                      <Toggle
-                        enabled={enforcementCfg.autoReactivateAfterPayment}
-                        onChange={(v) => setEnforcementCfg((p) => ({ ...p, autoReactivateAfterPayment: v }))}
-                        label="Auto-reactivate after payment"
-                        description="When balances are cleared, services can resume automatically."
-                      />
+                    <div className="mt-3 text-xs text-slate-700">
+                      Soft pause: CorporatePay is paused and users may be prompted
+                      to pay first.
+                      <br />
+                      Full stop: corporate-funded services are stopped until
+                      compliant.
                     </div>
+                  </div>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button variant="outline" onClick={() => setTab("enforcement")}>
-                        <ChevronRight className="h-4 w-4" /> Configure
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          if (enforcementCfg.freezeAllServices) {
-                            setEnforcementCfg((p) => ({ ...p, freezeAllServices: false }));
-                            toast({ title: "Freeze disabled", message: "Enforcement can now resume normal evaluation.", kind: "info" });
-                          } else {
-                            toast({ title: "Not frozen", message: "Risk freeze is not enabled.", kind: "info" });
-                          }
-                        }}
+                  <div className="mt-3 grid grid-cols-1 gap-2">
+                    <Toggle
+                      enabled={enforcementCfg.enabled}
+                      onChange={(v) =>
+                        setEnforcementCfg((p) => ({ ...p, enabled: v }))
+                      }
+                      label="Enable enforcement"
+                      description="Applies suspension rules based on overdue and risk controls."
+                    />
+                    <Toggle
+                      enabled={enforcementCfg.autoReactivateAfterPayment}
+                      onChange={(v) =>
+                        setEnforcementCfg((p) => ({
+                          ...p,
+                          autoReactivateAfterPayment: v,
+                        }))
+                      }
+                      label="Auto-reactivate after payment"
+                      description="When balances are cleared, services can resume automatically."
+                    />
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setTab("enforcement")}
+                    >
+                      <ChevronRight className="h-4 w-4" /> Configure
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (enforcementCfg.freezeAllServices) {
+                          setEnforcementCfg((p) => ({
+                            ...p,
+                            freezeAllServices: false,
+                          }));
+                          toast({
+                            title: "Freeze disabled",
+                            message: "Enforcement can now resume normal evaluation.",
+                            kind: "info",
+                          });
+                        } else {
+                          toast({
+                            title: "Not frozen",
+                            message: "Risk freeze is not enabled.",
+                            kind: "info",
+                          });
+                        }
+                      }}
+                    >
+                      <Unlock className="h-4 w-4" /> Unfreeze
+                    </Button>
+                  </div>
+                </Section>
+
+                {/* 3. Channel Delivery Health */}
+                <Section
+                  title="Channel delivery health"
+                  subtitle="Delivery status per channel with logs."
+                  right={
+                    <Button
+                      variant="outline"
+                      onClick={() => setTab("reminders")}
+                    >
+                      <ChevronRight className="h-4 w-4" /> Open logs
+                    </Button>
+                  }
+                >
+                  <div className="grid grid-cols-1 gap-4">
+                    {CHANNELS.map((c) => (
+                      <div
+                        key={c}
+                        className="rounded-3xl border border-slate-200 bg-white p-4"
                       >
-                        <Unlock className="h-4 w-4" /> Unfreeze
-                      </Button>
-                    </div>
-                  </Section>
-
-                  <Section title="Escalation ladder" subtitle="Premium: finance to CFO to EVzone support." right={<Pill label="Premium" tone="info" />}>
-                    <div className="space-y-2">
-                      {escalationLadder.map((e, idx) => (
-                        <div key={e.level} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">Step {idx + 1}: {e.level}</div>
-                              <div className="mt-1 text-xs text-slate-500">Notify: {e.notify.join(", ")}</div>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {pickEscalationRecipients(e.level, contacts).slice(0, 3).map((c) => (
-                                  <Pill key={c.id} label={c.name} tone="neutral" />
-                                ))}
-                                {!pickEscalationRecipients(e.level, contacts).length ? <Pill label="No contacts" tone="warn" /> : null}
-                              </div>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                              <span className="text-slate-600">
+                                {channelIcon(c)}
+                              </span>{" "}
+                              {c}
                             </div>
-                            <Sparkles className="h-5 w-5 text-emerald-700" />
+                            <div className="mt-2 text-xs text-slate-500">
+                              Delivered
+                            </div>
+                            <div className="mt-1 text-lg font-semibold text-slate-900">
+                              {deliverySummary[c].delivered}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <Pill
+                              label={`Failed ${deliverySummary[c].failed}`}
+                              tone={
+                                deliverySummary[c].failed ? "warn" : "good"
+                              }
+                            />
+                            <Pill
+                              label={`Queued ${deliverySummary[c].queued}`}
+                              tone="neutral"
+                            />
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Escalation routing can be customized per stage in the Escalation tab.
-                    </div>
-                  </Section>
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+
+                {/* 4. Escalation Ladder */}
+                <Section
+                  title="Escalation ladder"
+                  subtitle="Premium: finance to CFO to EVzone support."
+                  right={<Pill label="Premium" tone="info" />}
+                >
+                  <div className="space-y-4">
+                    {escalationLadder.map((e, idx) => (
+                      <div
+                        key={e.level}
+                        className="rounded-3xl border border-slate-200 bg-white p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">
+                              Step {idx + 1}: {e.level}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              Notify: {e.notify.join(", ")}
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {pickEscalationRecipients(
+                                e.level,
+                                contacts
+                              )
+                                .slice(0, 3)
+                                .map((c) => (
+                                  <Pill
+                                    key={c.id}
+                                    label={c.name}
+                                    tone="neutral"
+                                  />
+                                ))}
+                              {!pickEscalationRecipients(e.level, contacts)
+                                .length ? (
+                                <Pill label="No contacts" tone="warn" />
+                              ) : null}
+                            </div>
+                          </div>
+                          <Sparkles className="h-5 w-5 text-emerald-700" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Escalation routing can be customized per stage in the
+                    Escalation tab.
+                  </div>
+                </Section>
               </div>
             ) : null}
 

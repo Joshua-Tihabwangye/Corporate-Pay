@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -423,52 +424,79 @@ function ActionMenu({
   }>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, up: false });
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    if (isOpen && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const menuHeight = actions.length * 40 + 20; // approx
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const up = spaceBelow < menuHeight && rect.top > menuHeight;
+
+      setPos({
+        top: up ? rect.top - 8 : rect.bottom + 8,
+        left: rect.right,
+        up,
+      });
+
+      const close = () => setIsOpen(false);
+      window.addEventListener("scroll", close, { capture: true });
+      window.addEventListener("resize", close);
+      return () => {
+        window.removeEventListener("scroll", close, { capture: true });
+        window.removeEventListener("resize", close);
+      };
+    }
+  }, [isOpen, actions.length]);
 
   if (!actions.length) return null;
 
   return (
-    <div className="relative" ref={menuRef}>
+    <>
       <button
+        ref={btnRef}
         onClick={() => setIsOpen(!isOpen)}
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
       >
         <MoreVertical className="h-5 w-5" />
       </button>
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
-          {actions.map((action, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                action.onClick();
-                setIsOpen(false);
+      {isOpen &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
+            <div
+              className="fixed z-[9999] w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200"
+              style={{
+                top: pos.up ? "auto" : pos.top,
+                bottom: pos.up ? window.innerHeight - pos.top : "auto",
+                left: pos.left - 192, // align right edge to button right
               }}
-              disabled={action.disabled}
-              className={cn(
-                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50",
-                action.variant === "danger"
-                  ? "text-rose-600 hover:bg-rose-50"
-                  : "text-slate-700 hover:bg-slate-50"
-              )}
             >
-              {action.icon}
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+              {actions.map((action, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    action.onClick();
+                    setIsOpen(false);
+                  }}
+                  disabled={action.disabled}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50 disabled:opacity-50",
+                    action.variant === "danger"
+                      ? "text-rose-600 hover:bg-rose-50"
+                      : "text-slate-700"
+                  )}
+                >
+                  {action.icon && <span className="mr-2 h-4 w-4">{action.icon}</span>}
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </>,
+          document.body
+        )}
+    </>
   );
 }
 
@@ -1903,19 +1931,31 @@ export default function CorporatePayInvoicesStatementsV2() {
                                   {formatMoney(i.balance, i.currency)}
                                 </td>
                                 <td className="px-4 py-3">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => openInvoice(i.id)}>
-                                      <ChevronRight className="h-4 w-4" /> Open
-                                    </Button>
-                                    <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => printInvoice(i.id)}>
-                                      <FileText className="h-4 w-4" /> PDF
-                                    </Button>
-                                    <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openCredit(i.id)}>
-                                      <Shield className="h-4 w-4" /> Credit
-                                    </Button>
-                                    <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openDispute(i.id)}>
-                                      <MessageSquare className="h-4 w-4" /> Dispute
-                                    </Button>
+  <div className="flex justify-end">
+                                    <ActionMenu
+                                      actions={[
+                                        {
+                                          label: "Open details",
+                                          icon: <ChevronRight className="h-4 w-4" />,
+                                          onClick: () => openInvoice(i.id),
+                                        },
+                                        {
+                                          label: "Download PDF",
+                                          icon: <FileText className="h-4 w-4" />,
+                                          onClick: () => printInvoice(i.id),
+                                        },
+                                        {
+                                          label: "Create credit note",
+                                          icon: <Shield className="h-4 w-4" />,
+                                          onClick: () => openCredit(i.id),
+                                        },
+                                        {
+                                          label: "Raise dispute",
+                                          icon: <MessageSquare className="h-4 w-4" />,
+                                          onClick: () => openDispute(i.id),
+                                        },
+                                      ]}
+                                    />
                                   </div>
                                 </td>
                               </tr>
@@ -1940,33 +1980,117 @@ export default function CorporatePayInvoicesStatementsV2() {
             ) : null}
 
             {tab === "explorer" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="flex flex-col gap-4">
+                <Section
+                  title="Pivot table"
+                  subtitle="Totals are computed in real time."
+                  right={
+                    <Pill
+                      label={pivotMetric === "Amount" ? formatMoney(pivot.grand, "UGX") : `${pivot.grand} events`}
+                      tone="neutral"
+                    />
+                  }
+                >
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">{pivotRowDim}</th>
+                          {pivot.colKeys.map((c) => (
+                            <th key={c} className="px-4 py-3 font-semibold">
+                              {c}
+                            </th>
+                          ))}
+                          <th className="px-4 py-3 font-semibold">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pivot.rowKeys.map((rk) => (
+                          <tr key={rk} className="border-t border-slate-100 hover:bg-slate-50/60">
+                            <td className="px-4 py-3 font-semibold text-slate-900">{rk}</td>
+                            {pivot.colKeys.map((ck) => {
+                              const v = pivot.matrix[rk]?.[ck] || 0;
+                              return (
+                                <td key={ck} className="px-4 py-3">
+                                  <button
+                                    type="button"
+                                    className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+                                    onClick={() => {
+                                      setPivotCellFilter({ rowKey: rk, colKey: ck });
+                                      setPivotCellOpen(true);
+                                    }}
+                                  >
+                                    {pivotMetric === "Amount" ? formatMoney(v, "UGX") : v}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                            <td className="px-4 py-3 font-semibold text-slate-900">
+                              {pivotMetric === "Amount" ? formatMoney(pivot.rowTotals[rk] || 0, "UGX") : pivot.rowTotals[rk] || 0}
+                            </td>
+                          </tr>
+                        ))}
+
+                        {!pivot.rowKeys.length ? (
+                          <tr>
+                            <td
+                              colSpan={pivot.colKeys.length + 2}
+                              className="px-4 py-12 text-center text-sm text-slate-600"
+                            >
+                              No data in current scope.
+                            </td>
+                          </tr>
+                        ) : (
+                          <tr className="border-t border-slate-200 bg-slate-50">
+                            <td className="px-4 py-3 font-semibold text-slate-900">Total</td>
+                            {pivot.colKeys.map((ck) => (
+                              <td key={ck} className="px-4 py-3 font-semibold text-slate-900">
+                                {pivotMetric === "Amount"
+                                  ? formatMoney(pivot.colTotals[ck] || 0, "UGX")
+                                  : pivot.colTotals[ck] || 0}
+                              </td>
+                            ))}
+                            <td className="px-4 py-3 font-semibold text-slate-900">
+                              {pivotMetric === "Amount" ? formatMoney(pivot.grand, "UGX") : pivot.grand}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Premium: drilldown supports explain charge linking to raw events.
+                  </div>
+                </Section>
+
+                <div className="space-y-4">
                   <Section
                     title="Interactive invoice explorer"
                     subtitle="Premium: pivot-like analysis across line items."
                     right={<Pill label="Premium" tone="info" />}
                   >
-                    <Select
-                      label="Row dimension"
-                      value={pivotRowDim}
-                      onChange={(v) => setPivotRowDim(v as PivotDim)}
-                      options={pivotDims.map((d) => ({ value: d.value, label: d.label }))}
-                    />
-                    <div className="mt-3">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                      <Select
+                        label="Row dimension"
+                        value={pivotRowDim}
+                        onChange={(v) => setPivotRowDim(v as PivotDim)}
+                        options={pivotDims.map((d) => ({ value: d.value, label: d.label }))}
+                      />
                       <Select
                         label="Column dimension"
                         value={pivotColDim}
                         onChange={(v) => setPivotColDim(v as any)}
                         options={[{ value: "None", label: "None" }, ...pivotDims.map((d) => ({ value: d.value, label: d.label }))]}
                       />
-                    </div>
-                    <div className="mt-3">
                       <Select
                         label="Metric"
                         value={pivotMetric}
                         onChange={(v) => setPivotMetric(v as PivotMetric)}
-                        options={[{ value: "Amount", label: "Amount" }, { value: "Count", label: "Count" }]}
+                        options={[
+                          { value: "Amount", label: "Amount" },
+                          { value: "Count", label: "Count" },
+                        ]}
                         hint="Amount sums line items"
                       />
                     </div>
@@ -1985,80 +2109,13 @@ export default function CorporatePayInvoicesStatementsV2() {
                     </div>
                   </Section>
 
-                  <Section title="Scope" subtitle="Explorer uses invoice filters from Invoices tab." right={<Pill label={`${explorerFiltered.length} line(s)`} tone="neutral" />}>
+                  <Section
+                    title="Scope"
+                    subtitle="Explorer uses invoice filters from Invoices tab."
+                    right={<Pill label={`${explorerFiltered.length} line(s)`} tone="neutral" />}
+                  >
                     <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
                       To change scope, go to Invoices tab and adjust entity, status, or invoice group.
-                    </div>
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-8">
-                  <Section
-                    title="Pivot table"
-                    subtitle="Totals are computed in real time."
-                    right={<Pill label={pivotMetric === "Amount" ? formatMoney(pivot.grand, "UGX") : `${pivot.grand} events`} tone="neutral" />}
-                  >
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">{pivotRowDim}</th>
-                            {pivot.colKeys.map((c) => (
-                              <th key={c} className="px-4 py-3 font-semibold">{c}</th>
-                            ))}
-                            <th className="px-4 py-3 font-semibold">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pivot.rowKeys.map((rk) => (
-                            <tr key={rk} className="border-t border-slate-100 hover:bg-slate-50/60">
-                              <td className="px-4 py-3 font-semibold text-slate-900">{rk}</td>
-                              {pivot.colKeys.map((ck) => {
-                                const v = pivot.matrix[rk]?.[ck] || 0;
-                                return (
-                                  <td key={ck} className="px-4 py-3">
-                                    <button
-                                      type="button"
-                                      className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
-                                      onClick={() => {
-                                        setPivotCellFilter({ rowKey: rk, colKey: ck });
-                                        setPivotCellOpen(true);
-                                      }}
-                                    >
-                                      {pivotMetric === "Amount" ? formatMoney(v, "UGX") : v}
-                                    </button>
-                                  </td>
-                                );
-                              })}
-                              <td className="px-4 py-3 font-semibold text-slate-900">
-                                {pivotMetric === "Amount" ? formatMoney(pivot.rowTotals[rk] || 0, "UGX") : pivot.rowTotals[rk] || 0}
-                              </td>
-                            </tr>
-                          ))}
-
-                          {!pivot.rowKeys.length ? (
-                            <tr>
-                              <td colSpan={pivot.colKeys.length + 2} className="px-4 py-12 text-center text-sm text-slate-600">No data in current scope.</td>
-                            </tr>
-                          ) : (
-                            <tr className="border-t border-slate-200 bg-slate-50">
-                              <td className="px-4 py-3 font-semibold text-slate-900">Total</td>
-                              {pivot.colKeys.map((ck) => (
-                                <td key={ck} className="px-4 py-3 font-semibold text-slate-900">
-                                  {pivotMetric === "Amount" ? formatMoney(pivot.colTotals[ck] || 0, "UGX") : pivot.colTotals[ck] || 0}
-                                </td>
-                              ))}
-                              <td className="px-4 py-3 font-semibold text-slate-900">
-                                {pivotMetric === "Amount" ? formatMoney(pivot.grand, "UGX") : pivot.grand}
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Premium: drilldown supports explain charge linking to raw events.
                     </div>
                   </Section>
                 </div>
