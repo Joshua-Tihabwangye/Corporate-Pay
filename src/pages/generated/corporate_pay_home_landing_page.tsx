@@ -408,12 +408,30 @@ export default function CorporatePayLandingPageV2Fixed() {
           <ScrollSpyNav active={active} onJump={jumpTo} />
 
           <div className="flex items-center gap-2">
-            <Button variant="primary" onClick={() => navigate(ROUTES.CONSOLE.DASHBOARD)}>
-              <LayoutDashboard className="h-4 w-4" /> Launch console
-            </Button>
-            <Button variant="outline" onClick={() => jumpTo("faq")}>
-              <Rocket className="h-4 w-4" /> Request demo
-            </Button>
+            <div className="hidden items-center gap-2 lg:flex">
+              <Button variant="primary" onClick={() => jumpTo("faq")}>
+                <Rocket className="h-4 w-4" /> Request demo
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const text = "CorporatePay one-pager (demo).";
+                  downloadText("corporatepay-one-pager.txt", text, "text/plain");
+                }}
+              >
+                <Download className="h-4 w-4" /> Download one-pager
+              </Button>
+              <Button variant="ghost" onClick={() => jumpTo("how")}>
+                <ChevronRight className="h-4 w-4" /> How it works
+              </Button>
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.CONSOLE.DASHBOARD)}
+                className="ml-1 text-xs font-semibold text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline"
+              >
+                Already a customer? Launch console
+              </button>
+            </div>
 
             <button
               type="button"
@@ -478,25 +496,36 @@ export default function CorporatePayLandingPageV2Fixed() {
                 <Pill label="Approvals-first" tone="info" />
                 <Pill label="Budget enforcement" tone="good" />
                 <Pill label="ERP-ready" tone="neutral" />
-                <Pill label="SSO-ready (Phase 2)" tone="neutral" />
+                <Pill label="SSO-ready (coming soon)" tone="neutral" />
               </div>
 
               <h1 className="mt-5 text-3xl font-semibold tracking-tight text-slate-900 md:text-5xl">
-                Corporate rides, services, and purchases with
-                <span className="text-emerald-700"> serious approvals</span>.
+                Approve, budget and invoice EVzone spend—
+                <span className="text-emerald-700"> without slowing teams down</span>.
               </h1>
 
               <p className="mt-4 max-w-2xl text-base text-slate-600 md:text-lg">
-                CorporatePay is the web admin console that centralizes budgets, approvals, invoicing, and policy enforcement across the EVzone Super App.
-                Employees keep using the normal EVzone apps. CorporatePay simply governs how the company pays.
+                CorporatePay centralizes budgets, approvals, invoicing and policy enforcement across the EVzone Super App, while employees keep using the standard EVzone apps.
               </p>
 
+              <ul className="mt-4 max-w-2xl space-y-2 text-sm text-slate-700 md:text-base">
+                <li className="flex items-start gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} />
+                  <span>Budgets by org/team/user + hard/soft caps</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} />
+                  <span>Multi-level approvals with audit trails</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 rounded-full" style={{ background: EVZ.green }} />
+                  <span>Invoicing + policy enforcement across EVzone spending groups + ERP exports</span>
+                </li>
+              </ul>
+
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button variant="primary" onClick={() => navigate(ROUTES.CONSOLE.DASHBOARD)}>
-                  <LayoutDashboard className="h-4 w-4" /> Enter Dashboard
-                </Button>
-                <Button variant="outline" onClick={() => jumpTo("how")}>
-                  <ChevronRight className="h-4 w-4" /> See how it works
+                <Button variant="primary" onClick={() => jumpTo("faq")}>
+                  <Rocket className="h-4 w-4" /> Request demo
                 </Button>
                 <Button
                   variant="outline"
@@ -507,6 +536,19 @@ export default function CorporatePayLandingPageV2Fixed() {
                 >
                   <Download className="h-4 w-4" /> Download one-pager
                 </Button>
+                <Button variant="ghost" onClick={() => jumpTo("how")}>
+                  <ChevronRight className="h-4 w-4" /> How it works
+                </Button>
+              </div>
+
+              <div className="mt-3 text-sm text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => navigate(ROUTES.CONSOLE.DASHBOARD)}
+                  className="font-semibold text-slate-700 underline-offset-4 hover:text-slate-900 hover:underline"
+                >
+                  Already a customer? Launch console
+                </button>
               </div>
 
               <div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -769,33 +811,48 @@ export default function CorporatePayLandingPageV2Fixed() {
             </Section>
           </div>
 
-          {/* Security */}
+          {/* Trust & security highlights */}
           <div className="mt-12">
             <Section
               id="security"
-              eyebrow="Security"
-              title="Security, audit, and support controls"
-              subtitle="Designed for enterprise-grade governance with auditable actions, policy enforcement, and support-mode safeguards."
+              eyebrow="Trust & security"
+              title="Trust & security highlights"
+              subtitle="Enterprise controls designed for governance, auditability, and integrations."
             >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FeatureCard
-                  icon={<Lock className="h-6 w-6" />}
-                  title="MFA and device trust"
-                  desc="Require MFA for finance and approvers. Trust devices with expiry and trigger step-up prompts for risk signals."
-                  chips={[{ label: "Core", tone: "neutral" }, { label: "Conditional access", tone: "info" }]}
-                />
-                <FeatureCard
                   icon={<ShieldCheck className="h-6 w-6" />}
-                  title="Dual-control for sensitive actions"
-                  desc="Two-person approval for production key rotation, retention changes, support write actions, and forensic exports."
-                  chips={[{ label: "Premium", tone: "info" }, { label: "Forensics", tone: "info" }]}
+                  title="Audit-ready"
+                  desc="Immutable logs + exports."
+                  chips={[{ label: "Audit-ready", tone: "info" }]}
                 />
                 <FeatureCard
-                  icon={<Headphones className="h-6 w-6" />}
-                  title="Support mode gating"
-                  desc="EVzone Support is an embedded role. Sessions are visible, watermarked, and never silent. Optional recording is policy-controlled."
-                  chips={[{ label: "Core", tone: "neutral" }, { label: "Premium recording", tone: "info" }]}
+                  icon={<Users className="h-6 w-6" />}
+                  title="Role-based access"
+                  desc="Admins, approvers, viewers."
+                  chips={[{ label: "RBAC", tone: "neutral" }]}
                 />
+                <FeatureCard
+                  icon={<GitBranch className="h-6 w-6" />}
+                  title="Integrations"
+                  desc="ERP export + webhooks."
+                  chips={[{ label: "ERP", tone: "neutral" }, { label: "Webhooks", tone: "info" }]}
+                />
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <Button variant="outline" onClick={() => navigate("/console/security")}>
+                  <FileText className="h-4 w-4" /> Security docs
+                </Button>
+                <Button variant="outline" onClick={() => jumpTo("integrations")}>
+                  <Key className="h-4 w-4" /> SSO / SAML
+                </Button>
+                <Button variant="outline" onClick={() => jumpTo("integrations")}>
+                  <GitBranch className="h-4 w-4" /> Webhook events
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/console/security")}>
+                  <Lock className="h-4 w-4" /> Data retention
+                </Button>
               </div>
             </Section>
           </div>

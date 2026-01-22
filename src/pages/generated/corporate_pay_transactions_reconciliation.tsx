@@ -438,6 +438,7 @@ function ActionMenu({
   }>;
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [placement, setPlacement] = React.useState<"down" | "up">("down");
   const menuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -450,18 +451,39 @@ function ActionMenu({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const el = menuRef.current;
+    if (!el) return;
+
+    // Flip the menu up/down based on available viewport space so actions are always reachable.
+    const rect = el.getBoundingClientRect();
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    // Rough estimate: each row ~40px, plus padding.
+    const estimatedMenuHeight = Math.min(actions.length, 10) * 40 + 16;
+    const shouldFlipUp = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow;
+    setPlacement(shouldFlipUp ? "up" : "down");
+  }, [isOpen, actions.length]);
+
   if (!actions.length) return null;
 
   return (
     <div className="relative" ref={menuRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen((v) => !v)}
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
       >
         <MoreVertical className="h-5 w-5" />
       </button>
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+        <div
+          className={cn(
+            "absolute right-0 z-[9999] w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl",
+            placement === "up" ? "bottom-full mb-1" : "top-full mt-1"
+          )}
+          style={{ maxHeight: "70vh", overflowY: "auto" }}
+        >
           {actions.map((action, idx) => (
             <button
               key={idx}
@@ -1693,8 +1715,120 @@ export default function CorporatePayTransactionsReconciliationV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "ledger" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="space-y-4">
+                <Section
+                  title="Transaction ledger"
+                  subtitle="Click a transaction to reconcile against the selected invoice line."
+                  right={<Pill label={`${filteredLedger.length} tx`} tone="neutral" />}
+                >
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Tx</th>
+                          <th className="px-4 py-3 font-semibold">Time</th>
+                          <th className="px-4 py-3 font-semibold">Type</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold">Vendor</th>
+                          <th className="px-4 py-3 font-semibold">Module</th>
+                          <th className="px-4 py-3 font-semibold">Amount</th>
+                          <th className="px-4 py-3 font-semibold">Remaining</th>
+                          <th className="px-4 py-3 font-semibold text-right"> </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredLedger.map((t) => {
+                          const matched = txMatchedMap[t.id] || 0;
+                          const rem = txRemaining(t.id);
+                          const isActive = activeTxId === t.id;
+                          return (
+                            <tr key={t.id} className={cn("border-t border-slate-100 hover:bg-slate-50/60", isActive && "bg-emerald-50/40")}>
+                              <td className="px-4 py-3">
+                                <div className="font-semibold text-slate-900">{t.id}</div>
+                                <div className="mt-1 text-xs text-slate-500">Ref: {t.reference}</div>
+                              </td>
+                              <td className="px-4 py-3 text-slate-700">{formatDateTime(t.occurredAt)}</td>
+                              <td className="px-4 py-3 text-slate-700">{t.type}</td>
+                              <td className="px-4 py-3"><Pill label={t.status} tone={t.status === "Posted" ? "good" : t.status === "Pending" ? "warn" : "bad"} /></td>
+                              <td className="px-4 py-3 text-slate-700">{t.vendor}</td>
+                              <td className="px-4 py-3 text-slate-700">{t.serviceModule}{t.marketplace !== "-" ? ` • ${t.marketplace}` : ""}</td>
+                              <td className="px-4 py-3 font-semibold text-slate-900">{formatMoney(t.amount, t.currency)}</td>
+                              <td className="px-4 py-3">
+                                <div className="text-sm font-semibold text-slate-900">{formatMoney(rem, t.currency)}</div>
+                                <div className="mt-1 text-xs text-slate-500">Matched: {formatMoney(matched, t.currency)}</div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex justify-end">
+                                  <ActionMenu
+                                    actions={[
+                                      {
+                                        label: "Select",
+                                        icon: <Link2 className="h-4 w-4" />,
+                                        onClick: () => {
+                                          setActiveTxId(t.id);
+                                          toast({ title: "Selected", message: "Transaction selected.", kind: "info" });
+                                        },
+                                      },
+                                      {
+                                        label: "Match",
+                                        icon: <Check className="h-4 w-4" />,
+                                        onClick: () => {
+                                          setActiveTxId(t.id);
+                                          openMatchModal(t.id);
+                                        },
+                                        disabled: !activeLineId || rem <= 0 || t.status === "Failed",
+                                      },
+                                      ...(t.status === "Failed"
+                                        ? [
+                                            {
+                                              label: "Retry",
+                                              icon: <RefreshCcw className="h-4 w-4" />,
+                                              onClick: () => retryFailedTx(t.id),
+                                            },
+                                          ]
+                                        : t.status === "Pending"
+                                          ? [
+                                              {
+                                                label: "Mark posted",
+                                                icon: <BadgeCheck className="h-4 w-4" />,
+                                                onClick: () => markTxPosted(t.id),
+                                              },
+                                            ]
+                                          : []),
+                                      {
+                                        label: "Copy ID",
+                                        icon: <Copy className="h-4 w-4" />,
+                                        onClick: async () => {
+                                          try {
+                                            await navigator.clipboard.writeText(t.id);
+                                            toast({ title: "Copied", message: "Transaction ID copied.", kind: "success" });
+                                          } catch {
+                                            toast({ title: "Copy failed", message: "Copy manually.", kind: "warn" });
+                                          }
+                                        },
+                                      },
+                                    ]}
+                                  />
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {!filteredLedger.length ? (
+                          <tr>
+                            <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-600">No transactions match filters.</td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Premium: ERP export mappings (GL codes, cost centers, tax codes) are configured in the ERP tab.
+                  </div>
+                </Section>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <Section title="Ledger filters" subtitle="Search by vendor, ref, module, cost center." right={<Pill label="Core" tone="neutral" />}>
                     <Field label="Search" value={ledgerQ} onChange={setLedgerQ} placeholder="TX-9001, vendor, ORD..." />
                     <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1736,196 +1870,12 @@ export default function CorporatePayTransactionsReconciliationV2() {
                     <PivotSummary rows={filteredLedger} currency="UGX" />
                   </Section>
                 </div>
-
-                <div className="lg:col-span-8">
-                  <Section
-                    title="Transaction ledger"
-                    subtitle="Click a transaction to reconcile against the selected invoice line."
-                    right={<Pill label={`${filteredLedger.length} tx`} tone="neutral" />}
-                  >
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">Tx</th>
-                            <th className="px-4 py-3 font-semibold">Time</th>
-                            <th className="px-4 py-3 font-semibold">Type</th>
-                            <th className="px-4 py-3 font-semibold">Status</th>
-                            <th className="px-4 py-3 font-semibold">Vendor</th>
-                            <th className="px-4 py-3 font-semibold">Module</th>
-                            <th className="px-4 py-3 font-semibold">Amount</th>
-                            <th className="px-4 py-3 font-semibold">Remaining</th>
-                            <th className="px-4 py-3 font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredLedger.map((t) => {
-                            const matched = txMatchedMap[t.id] || 0;
-                            const rem = txRemaining(t.id);
-                            const isActive = activeTxId === t.id;
-                            return (
-                              <tr key={t.id} className={cn("border-t border-slate-100 hover:bg-slate-50/60", isActive && "bg-emerald-50/40")}>
-                                <td className="px-4 py-3">
-                                  <div className="font-semibold text-slate-900">{t.id}</div>
-                                  <div className="mt-1 text-xs text-slate-500">Ref: {t.reference}</div>
-                                </td>
-                                <td className="px-4 py-3 text-slate-700">{formatDateTime(t.occurredAt)}</td>
-                                <td className="px-4 py-3 text-slate-700">{t.type}</td>
-                                <td className="px-4 py-3"><Pill label={t.status} tone={t.status === "Posted" ? "good" : t.status === "Pending" ? "warn" : "bad"} /></td>
-                                <td className="px-4 py-3 text-slate-700">{t.vendor}</td>
-                                <td className="px-4 py-3 text-slate-700">{t.serviceModule}{t.marketplace !== "-" ? ` • ${t.marketplace}` : ""}</td>
-                                <td className="px-4 py-3 font-semibold text-slate-900">{formatMoney(t.amount, t.currency)}</td>
-                                <td className="px-4 py-3">
-                                  <div className="text-sm font-semibold text-slate-900">{formatMoney(rem, t.currency)}</div>
-                                  <div className="mt-1 text-xs text-slate-500">Matched: {formatMoney(matched, t.currency)}</div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <Button
-                                      variant="outline"
-                                      className="px-3 py-2 text-xs"
-                                      onClick={() => {
-                                        setActiveTxId(t.id);
-                                        toast({ title: "Selected", message: "Transaction selected.", kind: "info" });
-                                      }}
-                                    >
-                                      <Link2 className="h-4 w-4" /> Select
-                                    </Button>
-                                    <Button
-                                      variant="primary"
-                                      className="px-3 py-2 text-xs"
-                                      onClick={() => {
-                                        setActiveTxId(t.id);
-                                        openMatchModal(t.id);
-                                      }}
-                                      disabled={!activeLineId || rem <= 0 || t.status === "Failed"}
-                                      title={!activeLineId ? "Select an invoice line first" : rem <= 0 ? "No remaining amount" : t.status === "Failed" ? "Failed transaction" : ""}
-                                    >
-                                      <Check className="h-4 w-4" /> Match
-                                    </Button>
-                                    {t.status === "Failed" ? (
-                                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => retryFailedTx(t.id)}>
-                                        <RefreshCcw className="h-4 w-4" /> Retry
-                                      </Button>
-                                    ) : t.status === "Pending" ? (
-                                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => markTxPosted(t.id)}>
-                                        <BadgeCheck className="h-4 w-4" /> Post
-                                      </Button>
-                                    ) : null}
-                                    <Button
-                                      variant="outline"
-                                      className="px-3 py-2 text-xs"
-                                      onClick={async () => {
-                                        try {
-                                          await navigator.clipboard.writeText(t.id);
-                                          toast({ title: "Copied", message: "Transaction ID copied.", kind: "success" });
-                                        } catch {
-                                          toast({ title: "Copy failed", message: "Copy manually.", kind: "warn" });
-                                        }
-                                      }}
-                                    >
-                                      <Copy className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                          {!filteredLedger.length ? (
-                            <tr>
-                              <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-600">No transactions match filters.</td>
-                            </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Premium: ERP export mappings (GL codes, cost centers, tax codes) are configured in the ERP tab.
-                    </div>
-                  </Section>
-                </div>
               </div>
             ) : null}
 
             {tab === "recon" ? (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Invoice lines" subtitle="Select a line and match to transactions." right={<Pill label={lineScope} tone="neutral" />}>
-                    <Field label="Search lines" value={lineQ} onChange={setLineQ} placeholder="Invoice, vendor, project tag..." />
-                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <Select
-                        label="Scope"
-                        value={lineScope}
-                        onChange={(v) => setLineScope(v as any)}
-                        options={[
-                          { value: "Unmatched", label: "Unmatched" },
-                          { value: "Partially matched", label: "Partially matched" },
-                          { value: "All", label: "All" },
-                        ]}
-                        hint="Worklist"
-                      />
-                      <Button variant="outline" className="mt-[22px] w-full sm:mt-0" onClick={runAutoMatch}>
-                        <Sparkles className="h-4 w-4" /> Auto-match
-                      </Button>
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      {filteredLines.slice(0, 30).map((l) => {
-                        const rem = lineRemaining(l.id);
-                        const matched = lineMatchedMap[l.id] || 0;
-                        const active = activeLineId === l.id;
-                        return (
-                          <button
-                            key={l.id}
-                            type="button"
-                            className={cn(
-                              "w-full rounded-3xl border bg-white p-4 text-left hover:bg-slate-50",
-                              active ? "border-emerald-300 ring-4 ring-emerald-100" : "border-slate-200"
-                            )}
-                            onClick={() => {
-                              setActiveLineId(l.id);
-                              // keep tx selection but do not force
-                            }}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <div className="truncate text-sm font-semibold text-slate-900">{l.invoiceNo}</div>
-                                  {rem <= 0.0001 ? <Pill label="Matched" tone="good" /> : matched > 0 ? <Pill label="Partial" tone="info" /> : <Pill label="Unmatched" tone="warn" />}
-                                </div>
-                                <div className="mt-1 truncate text-xs text-slate-500">{l.description}</div>
-                                <div className="mt-1 text-xs text-slate-500">{l.vendor} • {l.serviceModule}{l.marketplace !== "-" ? ` • ${l.marketplace}` : ""}</div>
-                                <div className="mt-1 text-xs text-slate-500">{l.group} • {l.costCenter} • {l.projectTag}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-xs text-slate-500">Amount</div>
-                                <div className="mt-1 text-sm font-semibold text-slate-900">{formatMoney(l.amount, l.currency)}</div>
-                                <div className="mt-2 text-xs text-slate-500">Remaining</div>
-                                <div className={cn("mt-1 text-sm font-semibold", rem > 0 ? "text-slate-900" : "text-emerald-700")}>{formatMoney(rem, l.currency)}</div>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                      {!filteredLines.length ? (
-                        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
-                          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
-                            <ListChecks className="h-6 w-6" />
-                          </div>
-                          <div className="mt-3 text-sm font-semibold text-slate-900">No lines</div>
-                          <div className="mt-1 text-sm text-slate-600">Your current scope and filters show no lines.</div>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Premium assistant: auto-match uses enabled rules and confidence thresholds.
-                    </div>
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-8 space-y-4">
+                <div className="lg:col-span-12 space-y-4">
                   <Section
                     title="Reconciliation workspace"
                     subtitle="Match invoice lines to wallet, credit, prepaid, refunds, and reversals."
@@ -1946,7 +1896,7 @@ export default function CorporatePayTransactionsReconciliationV2() {
                           <Link2 className="h-6 w-6" />
                         </div>
                         <div className="mt-3 text-sm font-semibold text-slate-900">Select an invoice line</div>
-                        <div className="mt-1 text-sm text-slate-600">Choose a line on the left to see candidate transactions.</div>
+                        <div className="mt-1 text-sm text-slate-600">Choose a line below to see candidate transactions.</div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
@@ -2185,13 +2135,148 @@ export default function CorporatePayTransactionsReconciliationV2() {
                       </div>
                     )}
                   </Section>
+
+                  <Section title="Invoice lines" subtitle="Select a line and match to transactions." right={<Pill label={lineScope} tone="neutral" />}>
+                    <Field label="Search lines" value={lineQ} onChange={setLineQ} placeholder="Invoice, vendor, project tag..." />
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <Select
+                        label="Scope"
+                        value={lineScope}
+                        onChange={(v) => setLineScope(v as any)}
+                        options={[
+                          { value: "Unmatched", label: "Unmatched" },
+                          { value: "Partially matched", label: "Partially matched" },
+                          { value: "All", label: "All" },
+                        ]}
+                        hint="Worklist"
+                      />
+                      <Button variant="outline" className="mt-[22px] w-full sm:mt-0" onClick={runAutoMatch}>
+                        <Sparkles className="h-4 w-4" /> Auto-match
+                      </Button>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+                      {filteredLines.slice(0, 30).map((l) => {
+                        const rem = lineRemaining(l.id);
+                        const matched = lineMatchedMap[l.id] || 0;
+                        const active = activeLineId === l.id;
+                        return (
+                          <button
+                            key={l.id}
+                            type="button"
+                            className={cn(
+                              "w-full rounded-3xl border bg-white p-4 text-left hover:bg-slate-50",
+                              active ? "border-emerald-300 ring-4 ring-emerald-100" : "border-slate-200"
+                            )}
+                            onClick={() => {
+                              setActiveLineId(l.id);
+                              // keep tx selection but do not force
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <div className="truncate text-sm font-semibold text-slate-900">{l.invoiceNo}</div>
+                                  {rem <= 0.0001 ? <Pill label="Matched" tone="good" /> : matched > 0 ? <Pill label="Partial" tone="info" /> : <Pill label="Unmatched" tone="warn" />}
+                                </div>
+                                <div className="mt-1 truncate text-xs text-slate-500">{l.description}</div>
+                                <div className="mt-1 text-xs text-slate-500">{l.vendor} • {l.serviceModule}{l.marketplace !== "-" ? ` • ${l.marketplace}` : ""}</div>
+                                <div className="mt-1 text-xs text-slate-500">{l.group} • {l.costCenter} • {l.projectTag}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs text-slate-500">Amount</div>
+                                <div className="mt-1 text-sm font-semibold text-slate-900">{formatMoney(l.amount, l.currency)}</div>
+                                <div className="mt-2 text-xs text-slate-500">Remaining</div>
+                                <div className={cn("mt-1 text-sm font-semibold", rem > 0 ? "text-slate-900" : "text-emerald-700")}>{formatMoney(rem, l.currency)}</div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                      {!filteredLines.length ? (
+                        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center md:col-span-2">
+                          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
+                            <ListChecks className="h-6 w-6" />
+                          </div>
+                          <div className="mt-3 text-sm font-semibold text-slate-900">No lines</div>
+                          <div className="mt-1 text-sm text-slate-600">Your current scope and filters show no lines.</div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                      Premium assistant: auto-match uses enabled rules and confidence thresholds.
+                    </div>
+                  </Section>
                 </div>
               </div>
             ) : null}
 
             {tab === "exceptions" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="space-y-4">
+                <Section title="Exceptions queue" subtitle="Failed charges, partial payments, and reconciliation gaps." right={<Pill label={`${filteredExceptions.length}`} tone="neutral" />}>
+                  <div className="space-y-2">
+                    {filteredExceptions.map((e) => {
+                      const tone = e.severity === "Critical" ? "bad" : e.severity === "Warning" ? "warn" : "info";
+                      return (
+                        <div key={e.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="text-sm font-semibold text-slate-900">{e.id}</div>
+                                <Pill label={e.kind} tone="neutral" />
+                                <Pill label={e.severity} tone={tone} />
+                                <Pill label={e.status} tone={e.status === "Resolved" ? "good" : e.status === "Investigating" ? "info" : "warn"} />
+                              </div>
+                              <div className="mt-1 text-xs text-slate-500">Created {timeAgo(e.createdAt)} • {formatDateTime(e.createdAt)}</div>
+                              {e.invoiceNo ? <div className="mt-1 text-xs text-slate-500">Invoice: {e.invoiceNo}</div> : null}
+                              {e.txId ? <div className="mt-1 text-xs text-slate-500">Transaction: {e.txId}</div> : null}
+                              <div className="mt-2 text-sm text-slate-700">{e.message}</div>
+                              <div className="mt-2 text-xs text-slate-600">Next: {e.suggestedNext}</div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {e.txId ? (
+                                <Button
+                                  variant="outline"
+                                  className="px-3 py-2 text-xs"
+                                  onClick={() => {
+                                    setActiveTxId(e.txId || null);
+                                    setTab("ledger");
+                                    toast({ title: "Opened", message: "Transaction selected in ledger.", kind: "info" });
+                                  }}
+                                >
+                                  <ChevronRight className="h-4 w-4" /> Open tx
+                                </Button>
+                              ) : null}
+                              {e.status !== "Resolved" ? (
+                                <>
+                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => setExceptionStatus(e.id, "Investigating")}>
+                                    <Settings2 className="h-4 w-4" /> Investigate
+                                  </Button>
+                                  <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => resolveException(e.id)}>
+                                    <Check className="h-4 w-4" /> Resolve
+                                  </Button>
+                                </>
+                              ) : (
+                                <Pill label="Done" tone="good" />
+                              )}
+                              {e.kind === "Failed charge" && e.txId ? (
+                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => retryFailedTx(e.txId!)}>
+                                  <RefreshCcw className="h-4 w-4" /> Retry
+                                </Button>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {!filteredExceptions.length ? (
+                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">No exceptions.</div>
+                    ) : null}
+                  </div>
+                </Section>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <Section title="Exceptions filters" subtitle="Search and manage exceptions." right={<Pill label="Core" tone="neutral" />}>
                     <Field label="Search" value={excQ} onChange={setExcQ} placeholder="TX, invoice, message..." />
                     <Select
@@ -2242,76 +2327,66 @@ export default function CorporatePayTransactionsReconciliationV2() {
                     </div>
                   </Section>
                 </div>
-
-                <div className="lg:col-span-8">
-                  <Section title="Exceptions queue" subtitle="Failed charges, partial payments, and reconciliation gaps." right={<Pill label={`${filteredExceptions.length}`} tone="neutral" />}>
-                    <div className="space-y-2">
-                      {filteredExceptions.map((e) => {
-                        const tone = e.severity === "Critical" ? "bad" : e.severity === "Warning" ? "warn" : "info";
-                        return (
-                          <div key={e.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <div className="text-sm font-semibold text-slate-900">{e.id}</div>
-                                  <Pill label={e.kind} tone="neutral" />
-                                  <Pill label={e.severity} tone={tone} />
-                                  <Pill label={e.status} tone={e.status === "Resolved" ? "good" : e.status === "Investigating" ? "info" : "warn"} />
-                                </div>
-                                <div className="mt-1 text-xs text-slate-500">Created {timeAgo(e.createdAt)} • {formatDateTime(e.createdAt)}</div>
-                                {e.invoiceNo ? <div className="mt-1 text-xs text-slate-500">Invoice: {e.invoiceNo}</div> : null}
-                                {e.txId ? <div className="mt-1 text-xs text-slate-500">Transaction: {e.txId}</div> : null}
-                                <div className="mt-2 text-sm text-slate-700">{e.message}</div>
-                                <div className="mt-2 text-xs text-slate-600">Next: {e.suggestedNext}</div>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                {e.txId ? (
-                                  <Button
-                                    variant="outline"
-                                    className="px-3 py-2 text-xs"
-                                    onClick={() => {
-                                      setActiveTxId(e.txId || null);
-                                      setTab("ledger");
-                                      toast({ title: "Opened", message: "Transaction selected in ledger.", kind: "info" });
-                                    }}
-                                  >
-                                    <ChevronRight className="h-4 w-4" /> Open tx
-                                  </Button>
-                                ) : null}
-                                {e.status !== "Resolved" ? (
-                                  <>
-                                    <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => setExceptionStatus(e.id, "Investigating")}>
-                                      <Settings2 className="h-4 w-4" /> Investigate
-                                    </Button>
-                                    <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => resolveException(e.id)}>
-                                      <Check className="h-4 w-4" /> Resolve
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <Pill label="Done" tone="good" />
-                                )}
-                                {e.kind === "Failed charge" && e.txId ? (
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => retryFailedTx(e.txId!)}>
-                                    <RefreshCcw className="h-4 w-4" /> Retry
-                                  </Button>
-                                ) : null}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {!filteredExceptions.length ? (
-                        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">No exceptions.</div>
-                      ) : null}
-                    </div>
-                  </Section>
-                </div>
               </div>
             ) : null}
 
             {tab === "erp" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="space-y-4">
+                <Section title="Mappings" subtitle="Define GL, cost center, and tax codes for exports." right={<Pill label={`${erpMappings.length}`} tone="neutral" />}>
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Scope</th>
+                          <th className="px-4 py-3 font-semibold">Key</th>
+                          <th className="px-4 py-3 font-semibold">GL</th>
+                          <th className="px-4 py-3 font-semibold">Cost center</th>
+                          <th className="px-4 py-3 font-semibold">Tax</th>
+                          <th className="px-4 py-3 font-semibold">Enabled</th>
+                          <th className="px-4 py-3 font-semibold text-right"> </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {erpMappings.map((m) => (
+                          <tr key={m.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                            <td className="px-4 py-3"><Pill label={m.scope} tone={m.scope === "Default" ? "neutral" : "info"} /></td>
+                            <td className="px-4 py-3 font-semibold text-slate-900">{m.key}</td>
+                            <td className="px-4 py-3 text-slate-700">{m.glCode}</td>
+                            <td className="px-4 py-3 text-slate-700">{m.costCenter}</td>
+                            <td className="px-4 py-3 text-slate-700">{m.taxCode}</td>
+                            <td className="px-4 py-3"><Pill label={m.enabled ? "On" : "Off"} tone={m.enabled ? "good" : "neutral"} /></td>
+                            <td className="px-4 py-3">
+                              <div className="flex justify-end">
+                                <ActionMenu
+                                  actions={[
+                                    { label: "Edit", icon: <Settings2 className="h-4 w-4" />, onClick: () => openMappingEdit(m) },
+                                    {
+                                      label: m.enabled ? "Disable" : "Enable",
+                                      onClick: () => setErpMappings((p) => p.map((x) => (x.id === m.id ? { ...x, enabled: !x.enabled } : x))),
+                                    },
+                                    { label: "Delete", icon: <X className="h-4 w-4" />, variant: "danger", onClick: () => deleteMapping(m.id) },
+                                  ]}
+                                />
+                              </div>
+                              {m.memo ? <div className="mt-2 text-xs text-slate-500">{m.memo}</div> : null}
+                            </td>
+                          </tr>
+                        ))}
+                        {!erpMappings.length ? (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-600">No mappings.</td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                    Premium: exports can map invoice lines to GL codes, cost centers, and tax codes.
+                  </div>
+                </Section>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <Section title="ERP export mappings" subtitle="GL codes, cost centers, tax codes." right={<Pill label="Premium" tone="info" />}>
                     <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
                       <ul className="space-y-1">
@@ -2346,61 +2421,6 @@ export default function CorporatePayTransactionsReconciliationV2() {
                         toast({ title: "Pick tx", message: "Select a transaction in the ledger.", kind: "info" });
                       }}
                     />
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-8">
-                  <Section title="Mappings" subtitle="Define GL, cost center, and tax codes for exports." right={<Pill label={`${erpMappings.length}`} tone="neutral" />}>
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">Scope</th>
-                            <th className="px-4 py-3 font-semibold">Key</th>
-                            <th className="px-4 py-3 font-semibold">GL</th>
-                            <th className="px-4 py-3 font-semibold">Cost center</th>
-                            <th className="px-4 py-3 font-semibold">Tax</th>
-                            <th className="px-4 py-3 font-semibold">Enabled</th>
-                            <th className="px-4 py-3 font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {erpMappings.map((m) => (
-                            <tr key={m.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                              <td className="px-4 py-3"><Pill label={m.scope} tone={m.scope === "Default" ? "neutral" : "info"} /></td>
-                              <td className="px-4 py-3 font-semibold text-slate-900">{m.key}</td>
-                              <td className="px-4 py-3 text-slate-700">{m.glCode}</td>
-                              <td className="px-4 py-3 text-slate-700">{m.costCenter}</td>
-                              <td className="px-4 py-3 text-slate-700">{m.taxCode}</td>
-                              <td className="px-4 py-3"><Pill label={m.enabled ? "On" : "Off"} tone={m.enabled ? "good" : "neutral"} /></td>
-                              <td className="px-4 py-3">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openMappingEdit(m)}>
-                                    <Settings2 className="h-4 w-4" /> Edit
-                                  </Button>
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => setErpMappings((p) => p.map((x) => (x.id === m.id ? { ...x, enabled: !x.enabled } : x)))}>
-                                    {m.enabled ? "Disable" : "Enable"}
-                                  </Button>
-                                  <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteMapping(m.id)}>
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                                {m.memo ? <div className="mt-2 text-xs text-slate-500">{m.memo}</div> : null}
-                              </td>
-                            </tr>
-                          ))}
-                          {!erpMappings.length ? (
-                            <tr>
-                              <td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-600">No mappings.</td>
-                            </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                      Premium: exports can map invoice lines to GL codes, cost centers, and tax codes.
-                    </div>
                   </Section>
                 </div>
               </div>
