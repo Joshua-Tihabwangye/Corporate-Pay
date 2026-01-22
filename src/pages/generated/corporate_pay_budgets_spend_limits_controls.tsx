@@ -936,6 +936,11 @@ export default function CorporatePayBudgetsSpendControlsV2() {
     approver: "Org Admin",
   }));
 
+  // Forecast UI controls
+  const [forecastGroupQ, setForecastGroupQ] = useState("");
+  const [forecastDept, setForecastDept] = useState<"All" | GroupName>("All");
+  const [forecastMethod, setForecastMethod] = useState<"runrate" | "last7" | "seasonality">("runrate");
+
   // Derived
   const orgBudget = useMemo(() => budgets.find((b) => b.scope === "Org") || null, [budgets]);
   const totalUsed = orgBudget?.usedUGX || budgets.filter((b) => b.scope === "Org").reduce((a, b) => a + b.usedUGX, 0);
@@ -990,6 +995,15 @@ export default function CorporatePayBudgetsSpendControlsV2() {
       return { ...b, forecast, burnPerDay: burn, runway };
     });
   }, [budgets]);
+
+  const groupForecastFiltered = useMemo(() => {
+    const q = forecastGroupQ.trim().toLowerCase();
+    return groupForecast.filter((g) => {
+      const deptOk = forecastDept === "All" ? true : g.group === forecastDept;
+      const qOk = !q ? true : String(g.group || "").toLowerCase().includes(q);
+      return deptOk && qOk;
+    });
+  }, [groupForecast, forecastDept, forecastGroupQ]);
 
   const moduleForecast = useMemo(() => {
     const moduleBudgets = budgets.filter((b) => b.scope === "Module" && b.period === "Monthly");
@@ -1811,10 +1825,63 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                         <Pill label="Premium" tone="info" />
                       </div>
 
+                      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-xs font-semibold text-slate-600">Search groups</div>
+                            <Search className="h-4 w-4 text-slate-500" />
+                          </div>
+                          <input
+                            value={forecastGroupQ}
+                            onChange={(e) => setForecastGroupQ(e.target.value)}
+                            placeholder="Search groups"
+                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                          />
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                          <div className="text-xs font-semibold text-slate-600">Department</div>
+                          <select
+                            value={forecastDept}
+                            onChange={(e) => setForecastDept(e.target.value as any)}
+                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                          >
+                            <option value="All">All</option>
+                            <option value="Operations">Ops</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Procurement">Procurement</option>
+                          </select>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-xs font-semibold text-slate-600">Forecast method</div>
+                            <span title="Run rate uses month-to-date burn (used ÷ day of period) × period days. Last 7 days and Seasonality are placeholders.">
+                              <Info className="h-4 w-4 text-slate-500" />
+                            </span>
+                          </div>
+                          <select
+                            value={forecastMethod}
+                            onChange={(e) => {
+                              const v = e.target.value as any;
+                              setForecastMethod(v);
+                              if (v !== "runrate") toast({ title: "Coming soon", message: "Only Run rate is implemented in this demo.", kind: "info" });
+                            }}
+                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+                          >
+                            <option value="runrate">Run rate (linear)</option>
+                            <option value="last7">Last 7 days</option>
+                            <option value="seasonality">Seasonality (placeholder)</option>
+                          </select>
+                        </div>
+                      </div>
+
                       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div className="rounded-3xl border border-slate-200 bg-white p-4">
                           <div className="text-sm font-semibold text-slate-900">Org forecast</div>
-                          <div className="mt-1 text-xs text-slate-500">Simple burn-rate projection.</div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {forecastMethod === "runrate" ? "Run rate projection." : "Projection method selected."}
+                          </div>
                           <div className="mt-3">
                             <ProgressBar
                               valuePct={pct(orgForecast, totalAmount)}
@@ -1829,17 +1896,33 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                           <div className="text-sm font-semibold text-slate-900">Runway by group</div>
                           <div className="mt-1 text-xs text-slate-500">How long until budgets run out.</div>
                           <div className="mt-3 space-y-2">
-                            {groupForecast.map((g) => {
+                            {groupForecastFiltered.map((g) => {
                               const rem = Math.max(0, g.amountUGX - g.usedUGX);
                               const days = g.runway === Infinity ? Infinity : Math.max(0, Math.round(g.runway));
+                              const variance = Math.round(g.forecast - g.amountUGX);
+                              const variancePct = g.amountUGX > 0 ? Math.round((variance / g.amountUGX) * 100) : 0;
+                              const status = g.forecast > g.amountUGX ? "At risk" : "OK";
                               return (
                                 <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
                                   <div className="flex items-start justify-between gap-3">
                                     <div>
                                       <div className="text-sm font-semibold text-slate-900">{g.group}</div>
                                       <div className="mt-1 text-xs text-slate-500">Remaining: {formatUGX(rem)} • Burn/day: {formatUGX(Math.round(g.burnPerDay))}</div>
+                                      <div className="mt-1 text-xs text-slate-500">
+                                        Variance: <span className={variance > 0 ? "font-semibold text-rose-700" : "font-semibold text-emerald-700"}>{formatUGX(variance)}</span>
+                                        <span className="ml-2 block text-[11px] text-slate-500">Variance %: {variancePct}%</span>
+                                      </div>
                                     </div>
-                                    <Pill label={days === Infinity ? "∞" : `${days}d`} tone={days !== Infinity && days <= 5 ? "warn" : "neutral"} />
+                                    <div className="flex flex-col items-end gap-2">
+                                      <Pill label={days === Infinity ? "∞" : `${days}d`} tone={days !== Infinity && days <= 5 ? "warn" : "neutral"} />
+                                      <Button
+                                        variant="outline"
+                                        className="px-3 py-2 text-xs"
+                                        onClick={() => toast({ title: "Drill-down", message: `Open ${g.group} forecast details (${status}).`, kind: "info" })}
+                                      >
+                                        {status} <ChevronRight className="h-4 w-4" />
+                                      </Button>
+                                    </div>
                                   </div>
                                   <div className="mt-2">
                                     <ProgressBar valuePct={pct(g.usedUGX, g.amountUGX)} labelLeft="Used" labelRight={`${pct(g.usedUGX, g.amountUGX)}%`} />

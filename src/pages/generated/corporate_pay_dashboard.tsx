@@ -945,6 +945,7 @@ export default function CorporatePayDashboardV2() {
   ]);
 
   const [openActionId, setOpenActionId] = useState<string | null>(null);
+  const [peakMode, setPeakMode] = useState<"rides" | "delivery" | "both">("both");
 
   const approvalsPending = approvals.filter((a) => a.status !== "Escalated").length;
   const approvalsEscalated = approvals.filter((a) => a.status === "Escalated").length;
@@ -1368,6 +1369,9 @@ export default function CorporatePayDashboardV2() {
                     <div className="text-sm font-semibold text-slate-900 dark:text-white">Wallet Balance</div>
                   </div>
                   <div className="text-3xl font-bold text-slate-900 dark:text-white">{formatUGX(data.walletBalance)}</div>
+                  <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                    Budget is allowance; wallet is prepaid funds; credit is postpaid limit.
+                  </div>
                   <div className="mt-4">
                     <Button variant="outline" className="w-full justify-center bg-white dark:bg-slate-800" onClick={() => setAddFundsOpen(true)}>Top up</Button>
                   </div>
@@ -1385,6 +1389,11 @@ export default function CorporatePayDashboardV2() {
                   <div className="mt-4">
                     <ProgressBar value={creditUsedPct} labelLeft="Used" labelRight={`${Math.round(creditUsedPct)}%`} />
                   </div>
+                  {data.creditUsed > data.creditLimit ? (
+                    <div className="mt-3 rounded-2xl bg-rose-50 p-3 text-xs font-semibold text-rose-800 ring-1 ring-rose-200">
+                      Credit over-limit: {formatUGX(data.creditUsed - data.creditLimit)} above limit. Approvals and service access may be restricted.
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Services */}
@@ -1462,17 +1471,53 @@ export default function CorporatePayDashboardV2() {
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white">Peak Ride Times</h3>
                       <p className="text-sm text-slate-500">Ride volume heat distribution</p>
                     </div>
-                    <Button variant="outline" className="h-8 text-xs" onClick={() => toast({ title: "Updated", message: "Data refreshed", kind: "success" })}>
-                      <Download className="h-3 w-3 mr-2" />
-                      Import Data
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-950">
+                        <button
+                          type="button"
+                          onClick={() => setPeakMode("rides")}
+                          className={cn(
+                            "rounded-xl px-3 py-1.5 text-xs font-semibold transition",
+                            peakMode === "rides" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
+                          )}
+                        >
+                          Rides
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPeakMode("delivery")}
+                          className={cn(
+                            "rounded-xl px-3 py-1.5 text-xs font-semibold transition",
+                            peakMode === "delivery" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
+                          )}
+                        >
+                          Delivery
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPeakMode("both")}
+                          className={cn(
+                            "rounded-xl px-3 py-1.5 text-xs font-semibold transition",
+                            peakMode === "both" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
+                          )}
+                        >
+                          Both
+                        </button>
+                      </div>
+                      <Button variant="outline" className="h-8 text-xs" onClick={() => toast({ title: "Updated", message: "Data refreshed", kind: "success" })}>
+                        <Download className="h-3 w-3 mr-2" />
+                        Import Data
+                      </Button>
+                    </div>
                   </div>
                   <div className="overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
                     <div className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
                       <SimpleLineChart
                         data={heat.cols.map((col, i) => {
-                          // Aggregate rows for each column
-                          const total = heat.matrix.reduce((sum, row) => sum + row[i], 0);
+                          // Aggregate rows for each column, with demo switcher scaling.
+                          const rides = heat.matrix.reduce((sum, row) => sum + row[i], 0);
+                          const delivery = Math.round(rides * 0.65);
+                          const total = peakMode === "rides" ? rides : peakMode === "delivery" ? delivery : rides + delivery;
                           return { label: col, value: total };
                         })}
                       />
