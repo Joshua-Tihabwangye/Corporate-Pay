@@ -470,39 +470,66 @@ function TextArea({
   );
 }
 
-function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }> }) {
-  const [open, setOpen] = useState(false);
+function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger"; icon?: React.ReactNode }> }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      const onScroll = () => setIsOpen(false);
+      window.addEventListener("scroll", onScroll, true);
+      return () => window.removeEventListener("scroll", onScroll, true);
+    }
+  }, [isOpen]);
+
+  const rect = buttonRef.current?.getBoundingClientRect();
+  const top = rect ? rect.bottom + 4 : 0;
+  const right = rect ? window.innerWidth - rect.right : 0;
+
+  if (!actions.length) return null;
+
   return (
-    <div className="relative">
+    <>
       <button
-        onClick={() => setOpen(!open)}
-        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
+        ref={buttonRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:bg-slate-100 focus:outline-none"
       >
         <MoreVertical className="h-5 w-5" />
       </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-40 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200">
-            {actions.map((a, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  a.onClick();
-                  setOpen(false);
-                }}
-                className={cn(
-                  "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
-                  a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
-                )}
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+      <AnimatePresence>
+        {isOpen && rect && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ duration: 0.16 }}
+              className="fixed z-50 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+              style={{ top, right }}
+            >
+              {actions.map((a, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    a.onClick();
+                    setIsOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
+                    a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
+                  )}
+                >
+                  {a.icon}
+                  {a.label}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -1511,6 +1538,47 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                         </div>
                       </div>
 
+                      <div className="mt-6 mb-4 flex flex-col gap-3 border-t border-slate-100 pt-4 md:flex-row md:items-end">
+                        <div className="w-full md:w-64">
+                            <div className="text-xs font-semibold text-slate-600">Search groups</div>
+                            <div className="relative mt-2">
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                            <input
+                                value={forecastGroupQ}
+                                onChange={(e) => setForecastGroupQ(e.target.value)}
+                                placeholder="Search groups..."
+                                className="w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100"
+                            />
+                            </div>
+                        </div>
+                        <div className="w-full md:w-48">
+                            <div className="text-xs font-semibold text-slate-600">Department</div>
+                            <select
+                                value={forecastDept}
+                                onChange={(e) => setForecastDept(e.target.value as any)}
+                                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100"
+                            >
+                                <option value="All">All Departments</option>
+                                {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                        </div>
+                        <div className="w-full md:w-48">
+                            <div className="flex items-center gap-2">
+                                <div className="text-xs font-semibold text-slate-600">Forecast method</div>
+                                <div title="Run rate: Extrapolated from MTD. Last 7: Based on recent trend. Seasonality: Adjusted for bumps."><Info className="h-3.5 w-3.5 text-slate-400" /></div>
+                            </div>
+                            <select
+                                value={forecastMethod}
+                                onChange={(e) => setForecastMethod(e.target.value as any)}
+                                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100"
+                            >
+                                <option value="runrate">Run rate (linear)</option>
+                                <option value="last7">Last 7 days</option>
+                                <option value="seasonality">Seasonality (AI)</option>
+                            </select>
+                        </div>
+                      </div>
+
                       <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
                         <table className="min-w-full text-left text-sm">
                           <thead className="bg-slate-50 text-xs text-slate-600">
@@ -1521,7 +1589,7 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                               <th className="px-4 py-3 font-semibold">Cap type</th>
                               <th className="px-4 py-3 font-semibold">Used</th>
                               <th className="px-4 py-3 font-semibold">Limit</th>
-                              <th className="px-4 py-3 font-semibold">Usage</th>
+                              <th className="px-4 py-3 font-semibold">Variance</th>
                               <th className="px-4 py-3 font-semibold">Actions</th>
                             </tr>
                           </thead>
@@ -1529,6 +1597,12 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                             {budgets
                               .slice()
                               .sort((a, b) => (a.scope === "Org" ? -1 : b.scope === "Org" ? 1 : a.scope.localeCompare(b.scope)))
+                              .filter((b) => {
+                                 // Simple client side filter
+                                 if (forecastDept !== "All" && b.group !== forecastDept && b.scope === "Group") return false;
+                                 if (forecastGroupQ && b.scope === "Group" && !b.group?.toLowerCase().includes(forecastGroupQ.toLowerCase())) return false;
+                                 return true;
+                              })
                               .map((b) => {
                                 const usage = pct(b.usedUGX, b.amountUGX);
                                 const over = b.usedUGX > b.amountUGX;
@@ -1541,6 +1615,17 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                                       : b.scope === "Module"
                                         ? b.module
                                         : `${b.marketplace}`;
+                                
+                                // Forecast calc
+                                const burn = dayOfPeriod > 0 ? b.usedUGX / dayOfPeriod : 0;
+                                let forecast = burn * periodDays;
+                                if(forecastMethod === 'seasonality') forecast = forecast * 1.15;
+                                if(forecastMethod === 'last7') forecast = forecast * 0.95; // Mock variance
+
+                                const variance = forecast - b.amountUGX;
+                                const varPct = b.amountUGX > 0 ? Math.round((variance / b.amountUGX) * 100) : 0;
+                                const varTone = variance > 0 ? "text-rose-600" : "text-emerald-600";
+
                                 return (
                                   <tr key={b.id} className="border-t border-slate-100 hover:bg-slate-50/60">
                                     <td className="px-4 py-3"><Pill label={b.scope} tone="neutral" /></td>
@@ -1550,22 +1635,26 @@ export default function CorporatePayBudgetsSpendControlsV2() {
                                     <td className="px-4 py-3 text-slate-700">{formatUGX(b.usedUGX)}</td>
                                     <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(b.amountUGX)}</td>
                                     <td className="px-4 py-3">
-                                      <div className="flex flex-col gap-1">
-                                        <Pill label={`${usage}%`} tone={over ? "bad" : warn ? "warn" : "good"} />
-                                        <div className="text-xs text-slate-500">Updated {timeAgo(b.updatedAt)}</div>
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className={cn("font-medium", varTone)}>{variance > 0 ? "+" : ""}{formatUGX(variance)}</span>
+                                        <span className="text-xs text-slate-500">{variance > 0 ? "+" : ""}{varPct}%</span>
                                       </div>
                                     </td>
                                     <td className="px-4 py-3">
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openEditBudget(b)}>
-                                          Edit
-                                        </Button>
-                                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openNewException(b.scope === "Org" ? "Org" : b.scope === "Group" ? "Group" : b.scope === "Module" ? "Module" : "Marketplace", b.id)}>
-                                          <Shield className="h-4 w-4" /> Exception
-                                        </Button>
-                                        <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteBudget(b.id)}>
-                                          <X className="h-4 w-4" />
-                                        </Button>
+                                      <div className="flex items-center gap-2">
+                                        <button className={cn(
+                                            "flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition hover:opacity-80",
+                                            over ? "bg-rose-100 text-rose-700" : warn ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-700"
+                                        )}>
+                                            <span>{over ? "Over" : warn ? "Risk" : "OK"}</span>
+                                            <ChevronRight className="h-3 w-3" />
+                                        </button>
+                                        
+                                        <ActionMenu actions={[
+                                            { label: "Edit budget", icon: <FileText className="h-4 w-4" />, onClick: () => openEditBudget(b) },
+                                            { label: "Request exception", icon: <Shield className="h-4 w-4" />, onClick: () => openNewException(b.scope as any, b.id) },
+                                            { label: "Delete", icon: <X className="h-4 w-4" />, variant: "danger", onClick: () => deleteBudget(b.id) }
+                                        ]} />
                                       </div>
                                     </td>
                                   </tr>

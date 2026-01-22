@@ -394,6 +394,7 @@ function NavRow({
 
 
 
+
 function ActionMenu({
   actions,
 }: {
@@ -406,52 +407,68 @@ function ActionMenu({
   }>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    if (isOpen) {
+      const onScroll = () => setIsOpen(false);
+      window.addEventListener("scroll", onScroll, true);
+      return () => window.removeEventListener("scroll", onScroll, true);
+    }
+  }, [isOpen]);
+
+  const rect = buttonRef.current?.getBoundingClientRect();
+  const top = rect ? rect.bottom + 4 : 0;
+  // Ensure it doesn't go off-screen
+  const right = rect ? window.innerWidth - rect.right : 0;
 
   if (!actions.length) return null;
 
   return (
-    <div className="relative" ref={menuRef}>
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
       >
         <MoreVertical className="h-5 w-5" />
       </button>
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
-          {actions.map((action, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                action.onClick();
-                setIsOpen(false);
-              }}
-              disabled={action.disabled}
-              className={cn(
-                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50",
-                action.variant === "danger"
-                  ? "text-rose-600 hover:bg-rose-50"
-                  : "text-slate-700 hover:bg-slate-50"
-              )}
+      <AnimatePresence>
+        {isOpen && rect && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ duration: 0.16 }}
+              className="fixed z-50 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_38px_-10px_rgba(22,23,24,0.35),0_10px_20px_-15px_rgba(22,23,24,0.2)]"
+              style={{ top, right }}
             >
-              {action.icon}
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+              {actions.map((action, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    action.onClick();
+                    setIsOpen(false);
+                  }}
+                  disabled={action.disabled}
+                  className={cn(
+                    "flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors hover:bg-slate-50 disabled:opacity-50",
+                    action.variant === "danger"
+                      ? "text-rose-600 hover:bg-rose-50"
+                      : "text-slate-700"
+                  )}
+                >
+                  {action.icon}
+                  {action.label}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -477,6 +494,7 @@ function Modal({
     onClick: () => void;
     variant?: "default" | "danger";
     disabled?: boolean;
+    icon?: React.ReactNode;
   }>;
 }) {
   useEffect(() => {
@@ -848,6 +866,19 @@ export default function CorporatePayFinalAppShellV3() {
   // Request access modal
   const [accessModalOpen, setAccessModalOpen] = useState(false);
   const [accessReason, setAccessReason] = useState("");
+  
+  // Mobile drawer effect
+  useEffect(() => {
+    if (isDesktop) setMobileDrawer(false);
+  }, [isDesktop]);
+
+  // Close dropdowns when switching active
+  useEffect(() => {
+    setRoleOpen(false);
+    setOrgOpen(false);
+    setNotifOpen(false);
+    setCreateOpen(false);
+  }, [pageId]);
 
   const pages = useMemo<Record<string, PageDef>>(
     () => ({
