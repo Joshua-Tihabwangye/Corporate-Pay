@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BadgeCheck,
@@ -421,37 +422,73 @@ function TextArea({
 
 function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }> }) {
   const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, up: false });
+
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const menuHeight = actions.length * 40 + 20; // approx
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const up = spaceBelow < menuHeight && rect.top > menuHeight;
+
+      setPos({
+        top: up ? rect.top - 8 : rect.bottom + 8,
+        left: rect.right,
+        up,
+      });
+
+      const close = () => setOpen(false);
+      window.addEventListener("scroll", close, { capture: true });
+      window.addEventListener("resize", close);
+      return () => {
+        window.removeEventListener("scroll", close, { capture: true });
+        window.removeEventListener("resize", close);
+      };
+    }
+  }, [open, actions.length]);
+
   return (
-    <div className="relative">
+    <>
       <button
+        ref={btnRef}
         onClick={() => setOpen(!open)}
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none"
       >
         <MoreVertical className="h-5 w-5" />
       </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-40 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200">
-            {actions.map((a, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  a.onClick();
-                  setOpen(false);
-                }}
-                className={cn(
-                  "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
-                  a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
-                )}
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+      {open &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
+            <div
+              className="fixed z-[9999] w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-200"
+              style={{
+                top: pos.up ? "auto" : pos.top,
+                bottom: pos.up ? window.innerHeight - pos.top : "auto",
+                left: pos.left - 192, // align right edge to button right
+              }}
+            >
+              {actions.map((a, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    a.onClick();
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "block w-full px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
+                    a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
+                  )}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </>,
+          document.body
+        )}
+    </>
   );
 }
 
@@ -1401,8 +1438,8 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
 
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <div className="lg:col-span-7 space-y-4">
+            <div className="space-y-4">
+              <div className="space-y-4">
                 <AnimatePresence mode="wait">
                   {tab === "invoiceGroups" ? (
                     <motion.div key="invoiceGroups" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }} className="space-y-4">
@@ -1467,23 +1504,21 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
                                       )}
                                     </td>
                                     <td className="px-4 py-3">
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setPreviewGroupId(g.id); toast({ title: "Preview", message: "Invoice preview updated.", kind: "info" }); }}>
-                                          <FileText className="h-4 w-4" /> Preview
-                                        </Button>
-                                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openEditGroup(g)}>
-                                          <Pencil className="h-4 w-4" /> Edit
-                                        </Button>
-                                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => cloneGroup(g.id)}>
-                                          <Layers className="h-4 w-4" /> Clone
-                                        </Button>
-                                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => toggleGroupPause(g.id)}>
-                                          {g.status === "Active" ? "Pause" : "Activate"}
-                                        </Button>
-                                        <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteGroup(g.id)}>
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </div>
+                                      <ActionMenu
+                                        actions={[
+                                          {
+                                            label: "Preview",
+                                            onClick: () => {
+                                              setPreviewGroupId(g.id);
+                                              toast({ title: "Preview", message: "Invoice preview updated.", kind: "info" });
+                                            },
+                                          },
+                                          { label: "Edit", onClick: () => openEditGroup(g) },
+                                          { label: "Clone", onClick: () => cloneGroup(g.id) },
+                                          { label: g.status === "Active" ? "Pause" : "Activate", onClick: () => toggleGroupPause(g.id) },
+                                          { label: "Delete", onClick: () => deleteGroup(g.id), variant: "danger" },
+                                        ]}
+                                      />
                                     </td>
                                   </tr>
                                 );
@@ -1545,14 +1580,12 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
                                   <td className="px-4 py-3 text-slate-700">{e.billingEmail || "-"}</td>
                                   <td className="px-4 py-3">{e.isPrimary ? <Pill label="Primary" tone="good" /> : <Pill label="No" tone="neutral" />}</td>
                                   <td className="px-4 py-3">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openEditEntity(e)}>
-                                        <Pencil className="h-4 w-4" /> Edit
-                                      </Button>
-                                      <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => deleteEntity(e.id)}>
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
+                                    <ActionMenu
+                                      actions={[
+                                        { label: "Edit", onClick: () => openEditEntity(e) },
+                                        { label: "Delete", onClick: () => deleteEntity(e.id), variant: "danger" },
+                                      ]}
+                                    />
                                   </td>
                                 </tr>
                               ))}
@@ -1669,14 +1702,21 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
                                       <div className="mt-1 text-xs text-slate-500">Issue: {fmtDate(s.issueDate)} • Due: {fmtDate(s.dueDate)}</div>
                                     </td>
                                     <td className="px-4 py-3">
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => setPreviewGroupId(s.invoiceGroupId)}>
-                                          <FileText className="h-4 w-4" /> Preview
-                                        </Button>
-                                        <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { addSimLine(s.invoiceGroupId); toast({ title: "Added", message: "Line item added.", kind: "success" }); }}>
-                                          <Plus className="h-4 w-4" /> Line
-                                        </Button>
-                                      </div>
+                                      <ActionMenu
+                                        actions={[
+                                          {
+                                            label: "Preview",
+                                            onClick: () => setPreviewGroupId(s.invoiceGroupId),
+                                          },
+                                          {
+                                            label: "Add line item",
+                                            onClick: () => {
+                                              addSimLine(s.invoiceGroupId);
+                                              toast({ title: "Added", message: "Line item added.", kind: "success" });
+                                            },
+                                          },
+                                        ]}
+                                      />
                                     </td>
                                   </tr>
                                 );
@@ -1864,8 +1904,8 @@ export default function CorporatePayBillingSetupInvoiceGroupsV2() {
                 </AnimatePresence>
               </div>
 
-              {/* Right rail: preview */}
-              <div className="lg:col-span-5 space-y-4">
+              {/* Preview Section */}
+              <div className="space-y-4">
                 <Section title="Invoice preview" subtitle="Branded template preview for the selected invoice group." right={<Pill label="Premium" tone="info" />}>
                   <div className="grid grid-cols-1 gap-3">
                     <Select
