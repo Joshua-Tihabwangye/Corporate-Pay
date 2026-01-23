@@ -2481,60 +2481,64 @@ export default function CorporatePayRFQQuoteRequestsV2() {
             ) : null}
 
             {pageTab === "create" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Create RFQ" subtitle="Wizard for high value procurement." right={<Pill label={`Step ${createStep + 1}/5`} tone="info" />}>
-                    <div className="space-y-2">
-                      {[
-                        { i: 0, label: "Basics" },
-                        { i: 1, label: "Specs" },
-                        { i: 2, label: "Vendors" },
-                        { i: 3, label: "Budget and approvals" },
-                        { i: 4, label: "Review" },
-                      ].map((s) => (
-                        <button
-                          key={s.i}
-                          type="button"
-                          className={cn(
-                            "w-full rounded-3xl border bg-white p-4 text-left hover:bg-slate-50",
-                            createStep === s.i ? "border-emerald-300 ring-4 ring-emerald-100" : "border-slate-200"
-                          )}
-                          onClick={() => setCreateStep(s.i as any)}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">{s.label}</div>
-                              <div className="mt-1 text-xs text-slate-500">Configure {s.label.toLowerCase()}</div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-4">
+                    <Section title="Create RFQ" subtitle="Wizard for high value procurement." right={<Pill label={`Step ${createStep + 1}/5`} tone="info" />}>
+                      <div className="space-y-2">
+                        {[
+                          { i: 0, label: "Basics" },
+                          { i: 1, label: "Specs" },
+                          { i: 2, label: "Vendors" },
+                          { i: 3, label: "Budget and approvals" },
+                          { i: 4, label: "Review" },
+                        ].map((s) => (
+                          <button
+                            key={s.i}
+                            type="button"
+                            className={cn(
+                              "w-full rounded-3xl border bg-white p-4 text-left hover:bg-slate-50",
+                              createStep === s.i ? "border-emerald-300 ring-4 ring-emerald-100" : "border-slate-200"
+                            )}
+                            onClick={() => setCreateStep(s.i as any)}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-slate-900">{s.label}</div>
+                                <div className="mt-1 text-xs text-slate-500">Configure {s.label.toLowerCase()}</div>
+                              </div>
+                              {createStep === s.i ? <ChevronRight className="h-5 w-5 text-emerald-700" /> : null}
                             </div>
-                            {createStep === s.i ? <ChevronRight className="h-5 w-5 text-emerald-700" /> : null}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                        Premium: if estimate exceeds OpEx remaining, CapEx is recommended with executive approvals and milestones.
+                      </div>
+                    </Section>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Section title="Budget snapshot" subtitle="Helps decide OpEx vs CapEx." right={<Pill label="Premium" tone="info" />}>
+                      <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="text-xs text-slate-500">OpEx remaining</div>
+                        <div className="mt-1 text-lg font-semibold text-slate-900">{formatUGX(opExRemaining)}</div>
+                        <div className="mt-3 text-xs text-slate-500">CapEx remaining</div>
+                        <div className="mt-1 text-lg font-semibold text-slate-900">{formatUGX(capExRemaining)}</div>
+                        {draft.estimatedBudgetUGX > 0 ? (
+                          <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700 ring-1 ring-slate-200">
+                            Estimate: <span className="font-semibold">{formatUGX(draft.estimatedBudgetUGX)}</span>
+                            <div className="mt-1">Suggested: <span className="font-semibold">{suggestedFundingType}</span></div>
+                            {suggestedFundingType === "CapEx" ? <div className="mt-1 text-rose-700 font-semibold">Does not fit monthly OpEx.</div> : <div className="mt-1 text-emerald-700 font-semibold">Fits monthly OpEx.</div>}
                           </div>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                      Premium: if estimate exceeds OpEx remaining, CapEx is recommended with executive approvals and milestones.
-                    </div>
-                  </Section>
-
-                  <Section title="Budget snapshot" subtitle="Helps decide OpEx vs CapEx." right={<Pill label="Premium" tone="info" />}>
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                      <div className="text-xs text-slate-500">OpEx remaining</div>
-                      <div className="mt-1 text-lg font-semibold text-slate-900">{formatUGX(opExRemaining)}</div>
-                      <div className="mt-3 text-xs text-slate-500">CapEx remaining</div>
-                      <div className="mt-1 text-lg font-semibold text-slate-900">{formatUGX(capExRemaining)}</div>
-                      {draft.estimatedBudgetUGX > 0 ? (
-                        <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700 ring-1 ring-slate-200">
-                          Estimate: <span className="font-semibold">{formatUGX(draft.estimatedBudgetUGX)}</span>
-                          <div className="mt-1">Suggested: <span className="font-semibold">{suggestedFundingType}</span></div>
-                          {suggestedFundingType === "CapEx" ? <div className="mt-1 text-rose-700 font-semibold">Does not fit monthly OpEx.</div> : <div className="mt-1 text-emerald-700 font-semibold">Fits monthly OpEx.</div>}
-                        </div>
-                      ) : null}
-                    </div>
-                  </Section>
+                        ) : null}
+                      </div>
+                    </Section>
+                  </div>
                 </div>
 
-                <div className="lg:col-span-8 space-y-4">
+                <div className="space-y-4">
                   <Section
                     title="RFQ draft"
                     subtitle="Complete all steps then request approvals."
@@ -2721,77 +2725,73 @@ export default function CorporatePayRFQQuoteRequestsV2() {
             ) : null}
 
             {pageTab === "templates" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-5 space-y-4">
-                  <Section title="Templates" subtitle="Executive approval chain templates." right={<Pill label="Premium" tone="info" />}>
-                    <div className="space-y-2">
-                      {approvalTemplates
-                        .slice()
-                        .sort((a, b) => a.minAmountUGX - b.minAmountUGX)
-                        .map((t) => (
-                          <div key={t.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <div className="text-sm font-semibold text-slate-900">{t.name}</div>
-                                  <Pill label={t.appliesTo} tone={t.appliesTo === "CapEx" ? "info" : "neutral"} />
-                                  <Pill label={`Min ${formatUGX(t.minAmountUGX)}`} tone="neutral" />
-                                </div>
-                                <div className="mt-1 text-xs text-slate-500">{t.id}</div>
-                                <div className="mt-2 text-xs text-slate-600">{t.description}</div>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  {t.steps.map((s, idx) => (
-                                    <Pill key={`${t.id}-${idx}`} label={`${idx + 1}. ${s.role} (${s.slaHours}h)`} tone="neutral" />
-                                  ))}
-                                </div>
+              <div className="space-y-4">
+                <Section title="Templates" subtitle="Executive approval chain templates." right={<Pill label="Premium" tone="info" />}>
+                  <div className="space-y-2">
+                    {approvalTemplates
+                      .slice()
+                      .sort((a, b) => a.minAmountUGX - b.minAmountUGX)
+                      .map((t) => (
+                        <div key={t.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="text-sm font-semibold text-slate-900">{t.name}</div>
+                                <Pill label={t.appliesTo} tone={t.appliesTo === "CapEx" ? "info" : "neutral"} />
+                                <Pill label={`Min ${formatUGX(t.minAmountUGX)}`} tone="neutral" />
                               </div>
-                              <Button
-                                variant="outline"
-                                className="px-3 py-2 text-xs"
-                                onClick={() => {
-                                  // quick duplicate template
-                                  const copy: ApprovalTemplate = {
-                                    ...t,
-                                    id: uid("TPL"),
-                                    name: `${t.name} Copy`,
-                                  };
-                                  setApprovalTemplates((p) => [copy, ...p]);
-                                  toast({ title: "Duplicated", message: "Template duplicated.", kind: "success" });
-                                }}
-                              >
-                                <Copy className="h-4 w-4" /> Duplicate
-                              </Button>
+                              <div className="mt-1 text-xs text-slate-500">{t.id}</div>
+                              <div className="mt-2 text-xs text-slate-600">{t.description}</div>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {t.steps.map((s, idx) => (
+                                  <Pill key={`${t.id}-${idx}`} label={`${idx + 1}. ${s.role} (${s.slaHours}h)`} tone="neutral" />
+                                ))}
+                              </div>
                             </div>
+                            <Button
+                              variant="outline"
+                              className="px-3 py-2 text-xs"
+                              onClick={() => {
+                                // quick duplicate template
+                                const copy: ApprovalTemplate = {
+                                  ...t,
+                                  id: uid("TPL"),
+                                  name: `${t.name} Copy`,
+                                };
+                                setApprovalTemplates((p) => [copy, ...p]);
+                                toast({ title: "Duplicated", message: "Template duplicated.", kind: "success" });
+                              }}
+                            >
+                              <Copy className="h-4 w-4" /> Duplicate
+                            </Button>
                           </div>
-                        ))}
-                    </div>
+                        </div>
+                      ))}
+                  </div>
 
-                    <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                      Premium: chain templates can vary by module, marketplace, vendor risk, and funding type.
-                    </div>
-                  </Section>
-                </div>
+                  <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                    Premium: chain templates can vary by module, marketplace, vendor risk, and funding type.
+                  </div>
+                </Section>
 
-                <div className="lg:col-span-7 space-y-4">
-                  <Section title="Template guidance" subtitle="How to choose templates." right={<Pill label="Info" tone="info" />}>
-                    <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                      <ul className="space-y-1">
-                        <li>1) OpEx uses Manager then Finance for routine purchases.</li>
-                        <li>2) CapEx uses Manager then CFO then CEO for high value assets.</li>
-                        <li>3) High value OpEx can add CFO automatically when estimate is above threshold.</li>
-                        <li>4) Vendor risk score can require extra approvals.</li>
-                      </ul>
-                    </div>
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                      <div className="font-semibold text-slate-900">Next suggested additions</div>
-                      <ul className="mt-2 space-y-1">
-                        <li>• Template per Service Module (Travel, Medical) with stricter SLA</li>
-                        <li>• Template that includes EVzone Support for regulated categories</li>
-                        <li>• Escalation if SLA breached</li>
-                      </ul>
-                    </div>
-                  </Section>
-                </div>
+                <Section title="Template guidance" subtitle="How to choose templates." right={<Pill label="Info" tone="info" />}>
+                  <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                    <ul className="space-y-1">
+                      <li>1) OpEx uses Manager then Finance for routine purchases.</li>
+                      <li>2) CapEx uses Manager then CFO then CEO for high value assets.</li>
+                      <li>3) High value OpEx can add CFO automatically when estimate is above threshold.</li>
+                      <li>4) Vendor risk score can require extra approvals.</li>
+                    </ul>
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                    <div className="font-semibold text-slate-900">Next suggested additions</div>
+                    <ul className="mt-2 space-y-1">
+                      <li>• Template per Service Module (Travel, Medical) with stricter SLA</li>
+                      <li>• Template that includes EVzone Support for regulated categories</li>
+                      <li>• Escalation if SLA breached</li>
+                    </ul>
+                  </div>
+                </Section>
               </div>
             ) : null}
           </div>

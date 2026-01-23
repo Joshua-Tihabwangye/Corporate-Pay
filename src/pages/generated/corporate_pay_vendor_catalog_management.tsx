@@ -1417,94 +1417,89 @@ export default function CorporatePayVendorCatalogManagementV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "directory" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Filters" subtitle="Search and slice vendor directory." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <div className="text-xs font-semibold text-slate-600">Search</div>
-                      <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2">
-                        <Search className="h-4 w-4 text-slate-500" />
-                        <input
-                          value={q}
-                          onChange={(e) => setQ(e.target.value)}
-                          placeholder="Vendor name, module, marketplace..."
-                          className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
-                        />
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <Select
-                          label="Status"
-                          value={status}
-                          onChange={(v) => setStatus(v as any)}
-                          options={[
-                            { value: "All", label: "All" },
-                            { value: "Approved", label: "Approved" },
-                            { value: "Pending", label: "Pending" },
-                            { value: "Blocked", label: "Blocked" },
-                          ]}
-                        />
-                        <Select
-                          label="Risk"
-                          value={risk}
-                          onChange={(v) => setRisk(v as any)}
-                          options={[{ value: "All", label: "All" }, { value: "Low", label: "Low" }, { value: "Medium", label: "Medium" }, { value: "High", label: "High" }]}
-                        />
-                        <Select
-                          label="Module"
-                          value={moduleFilter}
-                          onChange={(v) => setModuleFilter(v as any)}
-                          options={[{ value: "All", label: "All" }, ...SERVICE_MODULES.map((m) => ({ value: m, label: m }))]}
-                        />
-                        <Select
-                          label="Marketplace"
-                          value={marketplaceFilter}
-                          onChange={(v) => setMarketplaceFilter(v as any)}
-                          options={[{ value: "All", label: "All" }, ...MARKETPLACES.map((m) => ({ value: m, label: m }))]}
-                          hint="E-Commerce"
-                        />
-                      </div>
-
-                      <div className="mt-3">
-                        <Toggle
-                          enabled={preferredOnly}
-                          onChange={setPreferredOnly}
-                          label="Preferred only"
-                          description="Show preferred vendors first"
-                        />
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setQ("");
-                            setStatus("All");
-                            setRisk("All");
-                            setModuleFilter("All");
-                            setMarketplaceFilter("All");
-                            setPreferredOnly(false);
-                            toast({ title: "Reset", message: "Filters reset.", kind: "info" });
-                          }}
-                        >
-                          <Filter className="h-4 w-4" /> Reset
-                        </Button>
-                        <Button variant="outline" onClick={() => setTab("risk")}>
-                          <ShieldAlert className="h-4 w-4" /> Risk
-                        </Button>
-                        <Button variant="outline" onClick={() => setTab("recommendations")}>
-                          <Star className="h-4 w-4" /> Recommendations
-                        </Button>
-                      </div>
+              <div className="space-y-4">
+                <Section title="Filters" subtitle="Search and slice vendor directory." right={<Pill label="Core" tone="neutral" />}>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div className="text-xs font-semibold text-slate-600">Search</div>
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2">
+                      <Search className="h-4 w-4 text-slate-500" />
+                      <input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Vendor name, module, marketplace..."
+                        className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+                      />
                     </div>
 
-                    <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                      Premium: Vendor risk scoring is logic-based initially. Later, you can enrich it with compliance signals and dispute history.
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <Select
+                        label="Status"
+                        value={status}
+                        onChange={(v) => setStatus(v as any)}
+                        options={[
+                          { value: "All", label: "All" },
+                          { value: "Approved", label: "Approved" },
+                          { value: "Pending", label: "Pending" },
+                          { value: "Blocked", label: "Blocked" },
+                        ]}
+                      />
+                      <Select
+                        label="Risk"
+                        value={risk}
+                        onChange={(v) => setRisk(v as any)}
+                        options={[{ value: "All", label: "All" }, { value: "Low", label: "Low" }, { value: "Medium", label: "Medium" }, { value: "High", label: "High" }]}
+                      />
+                      <Select
+                        label="Module"
+                        value={moduleFilter}
+                        onChange={(v) => setModuleFilter(v as any)}
+                        options={[{ value: "All", label: "All" }, ...SERVICE_MODULES.map((m) => ({ value: m, label: m }))]}
+                      />
+                      <Select
+                        label="Marketplace"
+                        value={marketplaceFilter}
+                        onChange={(v) => setMarketplaceFilter(v as any)}
+                        options={[{ value: "All", label: "All" }, ...MARKETPLACES.map((m) => ({ value: m, label: m }))]}
+                        hint="E-Commerce"
+                      />
                     </div>
-                  </Section>
-                </div>
 
-                <div className="lg:col-span-8 space-y-4">
+                    <div className="mt-3 flex flex-wrap items-center gap-4">
+                      <Toggle
+                        enabled={preferredOnly}
+                        onChange={setPreferredOnly}
+                        label="Preferred only"
+                        description="Show preferred vendors first"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setQ("");
+                          setStatus("All");
+                          setRisk("All");
+                          setModuleFilter("All");
+                          setMarketplaceFilter("All");
+                          setPreferredOnly(false);
+                          toast({ title: "Reset", message: "Filters reset.", kind: "info" });
+                        }}
+                      >
+                        <Filter className="h-4 w-4" /> Reset
+                      </Button>
+                      <Button variant="outline" onClick={() => setTab("risk")}>
+                        <ShieldAlert className="h-4 w-4" /> Risk
+                      </Button>
+                      <Button variant="outline" onClick={() => setTab("recommendations")}>
+                        <Star className="h-4 w-4" /> Recommendations
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                    Premium: Vendor risk scoring is logic-based initially. Later, you can enrich it with compliance signals and dispute history.
+                  </div>
+                </Section>
+
+                <div className="w-full">
                   <Section
                     title="Vendor directory"
                     subtitle="Approve vendors (allowlist) or block (denylist). Open a vendor to view compliance and contracts."
@@ -1567,26 +1562,38 @@ export default function CorporatePayVendorCatalogManagementV2() {
                                 </div>
                               </td>
                               <td className="px-4 py-3">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => togglePreferred(v.id)} disabled={v.status !== "Approved"} title={v.status !== "Approved" ? "Approve first" : ""}>
-                                    <Star className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openEditVendor(v)}>
-                                    <Settings2 className="h-4 w-4" /> Edit
-                                  </Button>
-                                  {v.status !== "Approved" ? (
-                                    <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => setVendorStatus(v.id, "Approved")}>
-                                      <ShieldCheck className="h-4 w-4" /> Approve
-                                    </Button>
-                                  ) : (
-                                    <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => setVendorStatus(v.id, "Blocked")}>
-                                      <ShieldAlert className="h-4 w-4" /> Block
-                                    </Button>
-                                  )}
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openVendor(v.id)}>
-                                    <ChevronRight className="h-4 w-4" /> Open
-                                  </Button>
-                                </div>
+                                <ActionMenu
+                                  actions={[
+                                    {
+                                      label: v.preferred ? "Remove preferred" : "Set preferred",
+                                      onClick: () => togglePreferred(v.id),
+                                      icon: <Star className="h-4 w-4" />,
+                                      disabled: v.status !== "Approved",
+                                    },
+                                    {
+                                      label: "Edit",
+                                      onClick: () => openEditVendor(v),
+                                      icon: <Settings2 className="h-4 w-4" />,
+                                    },
+                                    v.status !== "Approved"
+                                      ? {
+                                          label: "Approve",
+                                          onClick: () => setVendorStatus(v.id, "Approved"),
+                                          icon: <ShieldCheck className="h-4 w-4" />,
+                                        }
+                                      : {
+                                          label: "Block",
+                                          onClick: () => setVendorStatus(v.id, "Blocked"),
+                                          icon: <ShieldAlert className="h-4 w-4" />,
+                                          variant: "danger" as const,
+                                        },
+                                    {
+                                      label: "Open",
+                                      onClick: () => openVendor(v.id),
+                                      icon: <ChevronRight className="h-4 w-4" />,
+                                    },
+                                  ]}
+                                />
                               </td>
                             </tr>
                           ))}
@@ -1765,146 +1772,138 @@ export default function CorporatePayVendorCatalogManagementV2() {
             ) : null}
 
             {tab === "contracts" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Contracts and rate cards" subtitle="Premium: contract + rate-card storage." right={<Pill label="Premium" tone="info" />}>
-                    <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                      Open a vendor to add contract documents and rate cards. Use negotiated terms for approvals and savings insights.
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button variant="outline" onClick={() => setTab("directory")}>
-                        <ChevronRight className="h-4 w-4" /> Open directory
-                      </Button>
-                      <Button
-                        variant="primary"
-                        onClick={() => {
-                          if (!activeVendorId && vendors[0]) {
-                            setActiveVendorId(vendors[0].id);
-                          }
-                          setDrawerOpen(true);
-                        }}
-                      >
-                        <ChevronRight className="h-4 w-4" /> Open vendor
-                      </Button>
-                    </div>
-                  </Section>
-                </div>
+              <div className="space-y-4">
+                <Section title="Contracts and rate cards" subtitle="Premium: contract + rate-card storage." right={<Pill label="Premium" tone="info" />}>
+                  <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                    Open a vendor to add contract documents and rate cards. Use negotiated terms for approvals and savings insights.
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button variant="outline" onClick={() => setTab("directory")}>
+                      <ChevronRight className="h-4 w-4" /> Open directory
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        if (!activeVendorId && vendors[0]) {
+                          setActiveVendorId(vendors[0].id);
+                        }
+                        setDrawerOpen(true);
+                      }}
+                    >
+                      <ChevronRight className="h-4 w-4" /> Open vendor
+                    </Button>
+                  </div>
+                </Section>
 
-                <div className="lg:col-span-8">
-                  <Section title="Active contracts" subtitle="Across all vendors." right={<Pill label="Premium" tone="info" />}>
-                    <div className="space-y-2">
-                      {vendors
-                        .flatMap((v) => v.contracts.map((c) => ({ vendor: v, contract: c })))
-                        .sort((a, b) => b.contract.startAt - a.contract.startAt)
-                        .slice(0, 12)
-                        .map(({ vendor, contract }) => (
-                          <div key={contract.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <div className="text-sm font-semibold text-slate-900">{contract.title}</div>
-                                  <Pill label={vendor.name} tone="neutral" />
-                                  <Pill label={`${contract.discountPct}% discount`} tone={contract.discountPct ? "info" : "neutral"} />
-                                </div>
-                                <div className="mt-1 text-xs text-slate-500">{fmtDate(contract.startAt)} → {fmtDate(contract.endAt)} • {contract.paymentTerms}</div>
-                                <div className="mt-2 text-xs text-slate-600">Rate card: {contract.rateCardName || "-"}</div>
-                                {contract.slaText ? <div className="mt-2 text-xs text-slate-600">SLA: {contract.slaText}</div> : null}
-                              </div>
+                <Section title="Active contracts" subtitle="Across all vendors." right={<Pill label="Premium" tone="info" />}>
+                  <div className="space-y-2">
+                    {vendors
+                      .flatMap((v) => v.contracts.map((c) => ({ vendor: v, contract: c })))
+                      .sort((a, b) => b.contract.startAt - a.contract.startAt)
+                      .slice(0, 12)
+                      .map(({ vendor, contract }) => (
+                        <div key={contract.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openVendor(vendor.id)}>
-                                  <ChevronRight className="h-4 w-4" /> Open vendor
-                                </Button>
+                                <div className="text-sm font-semibold text-slate-900">{contract.title}</div>
+                                <Pill label={vendor.name} tone="neutral" />
+                                <Pill label={`${contract.discountPct}% discount`} tone={contract.discountPct ? "info" : "neutral"} />
                               </div>
+                              <div className="mt-1 text-xs text-slate-500">{fmtDate(contract.startAt)} → {fmtDate(contract.endAt)} • {contract.paymentTerms}</div>
+                              <div className="mt-2 text-xs text-slate-600">Rate card: {contract.rateCardName || "-"}</div>
+                              {contract.slaText ? <div className="mt-2 text-xs text-slate-600">SLA: {contract.slaText}</div> : null}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openVendor(vendor.id)}>
+                                <ChevronRight className="h-4 w-4" /> Open vendor
+                              </Button>
                             </div>
                           </div>
-                        ))}
-                      {!vendors.some((v) => v.contracts.length) ? (
-                        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">No contracts yet.</div>
-                      ) : null}
-                    </div>
-                  </Section>
-                </div>
+                        </div>
+                      ))}
+                    {!vendors.some((v) => v.contracts.length) ? (
+                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">No contracts yet.</div>
+                    ) : null}
+                  </div>
+                </Section>
               </div>
             ) : null}
 
             {tab === "recommendations" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="How recommendations work" subtitle="Premium: preferred vendor recommendations by spend category." right={<Pill label="Premium" tone="info" />}>
-                    <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                      Recommendations are based on:
-                      <ul className="mt-2 space-y-1">
-                        <li>1) Vendor fit (module/marketplace coverage)</li>
-                        <li>2) Quality (rating + SLA)</li>
-                        <li>3) Savings (negotiated discount)</li>
-                        <li>4) Risk score (compliance and history)</li>
-                        <li>5) Preferred flag (admin curated)</li>
-                      </ul>
-                    </div>
-                    <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                      Tip: Approvals can auto-route to preferred vendors, and non-preferred purchases can require additional approvals.
-                    </div>
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-8">
-                  <Section title="Recommended vendors" subtitle="Top 3 per spend category." right={<Pill label="Premium" tone="info" />}>
-                    <div className="space-y-3">
-                      {recommendations.map((r) => (
-                        <div key={r.category} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <Tag className="h-4 w-4 text-slate-500" />
-                                <div className="text-sm font-semibold text-slate-900">{r.category}</div>
-                              </div>
-                              <div className="mt-1 text-xs text-slate-500">Top vendors based on fit, savings, and risk.</div>
+              <div className="space-y-4">
+                <Section title="Recommended vendors" subtitle="Top 3 per spend category." right={<Pill label="Premium" tone="info" />}>
+                  <div className="space-y-3">
+                    {recommendations.map((r) => (
+                      <div key={r.category} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Tag className="h-4 w-4 text-slate-500" />
+                              <div className="text-sm font-semibold text-slate-900">{r.category}</div>
                             </div>
-                            <Pill label={r.top.length ? "Available" : "No vendors"} tone={r.top.length ? "good" : "warn"} />
+                            <div className="mt-1 text-xs text-slate-500">Top vendors based on fit, savings, and risk.</div>
                           </div>
-
-                          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-                            {r.top.map((x) => (
-                              <div key={x.vendor.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <div className="text-sm font-semibold text-slate-900">{x.vendor.name}</div>
-                                    <div className="mt-1 text-xs text-slate-500">Score {x.score}/100</div>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      <Pill label={x.vendor.riskLevel} tone={riskTone(x.vendor.riskLevel)} />
-                                      <Pill label={`${x.vendor.rating.toFixed(1)}★`} tone="neutral" />
-                                      <Pill label={`${x.vendor.slaOnTimePct}% SLA`} tone="neutral" />
-                                      <Pill label={`${x.vendor.negotiatedTerms.discountPct}% off`} tone={x.vendor.negotiatedTerms.discountPct ? "info" : "neutral"} />
-                                    </div>
-                                  </div>
-                                  {x.vendor.preferred ? <Star className="h-5 w-5 text-amber-500" /> : <Star className="h-5 w-5 text-slate-300" />}
-                                </div>
-                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openVendor(x.vendor.id)}>
-                                    <ChevronRight className="h-4 w-4" /> Open
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="px-3 py-2 text-xs"
-                                    onClick={() => togglePreferred(x.vendor.id)}
-                                    disabled={x.vendor.status !== "Approved"}
-                                  >
-                                    <Star className="h-4 w-4" /> Preferred
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                            {!r.top.length ? (
-                              <div className="md:col-span-3 rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
-                                No approved vendors match this category yet.
-                              </div>
-                            ) : null}
-                          </div>
+                          <Pill label={r.top.length ? "Available" : "No vendors"} tone={r.top.length ? "good" : "warn"} />
                         </div>
-                      ))}
-                    </div>
-                  </Section>
-                </div>
+
+                        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+                          {r.top.map((x) => (
+                            <div key={x.vendor.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-semibold text-slate-900">{x.vendor.name}</div>
+                                  <div className="mt-1 text-xs text-slate-500">Score {x.score}/100</div>
+                                  <div className="mt-2 flex flex-wrap gap-2">
+                                    <Pill label={x.vendor.riskLevel} tone={riskTone(x.vendor.riskLevel)} />
+                                    <Pill label={`${x.vendor.rating.toFixed(1)}★`} tone="neutral" />
+                                    <Pill label={`${x.vendor.slaOnTimePct}% SLA`} tone="neutral" />
+                                    <Pill label={`${x.vendor.negotiatedTerms.discountPct}% off`} tone={x.vendor.negotiatedTerms.discountPct ? "info" : "neutral"} />
+                                  </div>
+                                </div>
+                                {x.vendor.preferred ? <Star className="h-5 w-5 text-amber-500" /> : <Star className="h-5 w-5 text-slate-300" />}
+                              </div>
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openVendor(x.vendor.id)}>
+                                  <ChevronRight className="h-4 w-4" /> Open
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="px-3 py-2 text-xs"
+                                  onClick={() => togglePreferred(x.vendor.id)}
+                                  disabled={x.vendor.status !== "Approved"}
+                                >
+                                  <Star className="h-4 w-4" /> Preferred
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          {!r.top.length ? (
+                            <div className="md:col-span-3 rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
+                              No approved vendors match this category yet.
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+
+                <Section title="How recommendations work" subtitle="Premium: preferred vendor recommendations by spend category." right={<Pill label="Premium" tone="info" />}>
+                  <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                    Recommendations are based on:
+                    <ul className="mt-2 space-y-1">
+                      <li>1) Vendor fit (module/marketplace coverage)</li>
+                      <li>2) Quality (rating + SLA)</li>
+                      <li>3) Savings (negotiated discount)</li>
+                      <li>4) Risk score (compliance and history)</li>
+                      <li>5) Preferred flag (admin curated)</li>
+                    </ul>
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                    Tip: Approvals can auto-route to preferred vendors, and non-preferred purchases can require additional approvals.
+                  </div>
+                </Section>
               </div>
             ) : null}
           </div>

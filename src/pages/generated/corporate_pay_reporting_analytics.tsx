@@ -1820,48 +1820,111 @@ export default function CorporatePayReportingAnalyticsV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "overview" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-8 space-y-4">
-                  <Section title="KPIs" subtitle="High-level performance and spend signals." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                      <StatCard title="Approved spend" value={formatUGX(approvedSpend)} sub="Within selected range" icon={<BarChart3 className="h-5 w-5" />} tone="good" />
-                      <StatCard title="Transactions" value={`${totalCount}`} sub="All events" icon={<LineChart className="h-5 w-5" />} tone="neutral" />
-                      <StatCard title="Approvals" value={`${approvalMetrics.total}`} sub={`Avg ${approvalMetrics.avgMins}m • Median ${approvalMetrics.medMins}m`} icon={<Timer className="h-5 w-5" />} tone={approvalMetrics.breaches ? "warn" : "good"} />
-                      <StatCard title="SLA breaches" value={`${approvalMetrics.breaches}`} sub="Approval SLA" icon={<AlertTriangle className="h-5 w-5" />} tone={approvalMetrics.breaches ? "bad" : "good"} />
-                    </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                  <div className="lg:col-span-8 space-y-4">
+                    <Section title="KPIs" subtitle="High-level performance and spend signals." right={<Pill label="Core" tone="neutral" />}>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                        <StatCard title="Approved spend" value={formatUGX(approvedSpend)} sub="Within selected range" icon={<BarChart3 className="h-5 w-5" />} tone="good" />
+                        <StatCard title="Transactions" value={`${totalCount}`} sub="All events" icon={<LineChart className="h-5 w-5" />} tone="neutral" />
+                        <StatCard title="Approvals" value={`${approvalMetrics.total}`} sub={`Avg ${approvalMetrics.avgMins}m • Median ${approvalMetrics.medMins}m`} icon={<Timer className="h-5 w-5" />} tone={approvalMetrics.breaches ? "warn" : "good"} />
+                        <StatCard title="SLA breaches" value={`${approvalMetrics.breaches}`} sub="Approval SLA" icon={<AlertTriangle className="h-5 w-5" />} tone={approvalMetrics.breaches ? "bad" : "good"} />
+                      </div>
 
-                    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <Section
-                        title="Spend by module"
-                        subtitle="Top modules by approved spend."
-                        right={<Pill label="Core" tone="neutral" />}
-                      >
-                        <div className="space-y-2">
-                          {spendByModule.slice(0, 8).map((m) => (
-                            <BarRow key={m.key} label={m.key} value={m.spend} total={approvedSpend} right={formatUGX(m.spend)} />
-                          ))}
-                          {!spendByModule.length ? <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">No data.</div> : null}
-                        </div>
-                      </Section>
+                      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <Section
+                          title="Spend by module"
+                          subtitle="Top modules by approved spend."
+                          right={<Pill label="Core" tone="neutral" />}
+                        >
+                          <div className="space-y-2">
+                            {spendByModule.slice(0, 8).map((m) => (
+                              <BarRow key={m.key} label={m.key} value={m.spend} total={approvedSpend} right={formatUGX(m.spend)} />
+                            ))}
+                            {!spendByModule.length ? <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">No data.</div> : null}
+                          </div>
+                        </Section>
 
-                      <Section
-                        title="Top vendors"
-                        subtitle="Where most money goes."
-                        right={<Pill label="Premium" tone="info" />}
-                      >
-                        <div className="space-y-2">
-                          {topVendors.map((v) => (
-                            <BarRow key={v.vendor} label={v.vendor} value={v.spend} total={approvedSpend} right={formatUGX(v.spend)} />
-                          ))}
-                          {!topVendors.length ? <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">No vendor spend.</div> : null}
-                        </div>
-                        <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                          Premium: vendor consolidation suggestions appear in Savings.
-                        </div>
-                      </Section>
-                    </div>
-                  </Section>
+                        <Section
+                          title="Top vendors"
+                          subtitle="Where most money goes."
+                          right={<Pill label="Premium" tone="info" />}
+                        >
+                          <div className="space-y-2">
+                            {topVendors.map((v) => (
+                              <BarRow key={v.vendor} label={v.vendor} value={v.spend} total={approvedSpend} right={formatUGX(v.spend)} />
+                            ))}
+                            {!topVendors.length ? <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">No vendor spend.</div> : null}
+                          </div>
+                          <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                            Premium: vendor consolidation suggestions appear in Savings.
+                          </div>
+                        </Section>
+                      </div>
+                    </Section>
+                  </div>
 
+                  <div className="lg:col-span-4 space-y-4">
+                    <Section title="Quick exports" subtitle="CSV, JSON, and Print to PDF." right={<Pill label="Core" tone="neutral" />}>
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button variant="outline" onClick={exportTransactionsCSV}>
+                          <Download className="h-4 w-4" /> Export transactions CSV
+                        </Button>
+                        <Button variant="outline" onClick={exportAggregatesCSV}>
+                          <Download className="h-4 w-4" /> Export aggregate CSV
+                        </Button>
+                        <Button variant="outline" onClick={exportJSON}>
+                          <Download className="h-4 w-4" /> Export JSON
+                        </Button>
+                        <Button variant="outline" onClick={exportPDF} title={printHint}>
+                          <FileText className="h-4 w-4" /> Export PDF
+                        </Button>
+                      </div>
+                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                        Core exports: CSV/PDF/JSON. Premium: scheduled reports in Schedules.
+                      </div>
+                    </Section>
+
+                    <Section title="Premium signals" subtitle="Anomaly and savings snapshots." right={<Pill label="Premium" tone="info" />}>
+                      <div className="space-y-2">
+                        <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">High-risk spend</div>
+                              <div className="mt-1 text-xs text-slate-500">Share of spend marked High risk.</div>
+                            </div>
+                            <Pill label={`${anomalies.highRiskShare.pct}%`} tone={anomalies.highRiskShare.pct >= 20 ? "warn" : "good"} />
+                          </div>
+                          <div className="mt-2 text-xs text-slate-600">{formatUGX(anomalies.highRiskShare.high)} / {formatUGX(anomalies.highRiskShare.spend)}</div>
+                        </div>
+
+                        <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">Charging peak usage</div>
+                              <div className="mt-1 text-xs text-slate-500">Peak hour charging share.</div>
+                            </div>
+                            <Pill label={`${anomalies.chargingPeak.pct}%`} tone={anomalies.chargingPeak.pct >= 40 ? "warn" : "good"} />
+                          </div>
+                          <div className="mt-2 text-xs text-slate-600">Peak {anomalies.chargingPeak.peak} / Total {anomalies.chargingPeak.total}</div>
+                        </div>
+
+                        <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">Vendor consolidation</div>
+                              <div className="mt-1 text-xs text-slate-500">Modules with fragmented vendors.</div>
+                            </div>
+                            <Pill label={`${savings.vendorConsolidation.length}`} tone={savings.vendorConsolidation.length ? "info" : "good"} />
+                          </div>
+                          <div className="mt-2 text-xs text-slate-600">Open Savings tab for recommendations.</div>
+                        </div>
+                      </div>
+                    </Section>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
                   <Section title="Recent activity" subtitle="Sample of the most recent transactions." right={<Pill label="Core" tone="neutral" />}>
                     <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
                       <table className="min-w-full text-left text-sm">
@@ -1905,71 +1968,12 @@ export default function CorporatePayReportingAnalyticsV2() {
                     </div>
                   </Section>
                 </div>
-
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Quick exports" subtitle="CSV, JSON, and Print to PDF." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="grid grid-cols-1 gap-2">
-                      <Button variant="outline" onClick={exportTransactionsCSV}>
-                        <Download className="h-4 w-4" /> Export transactions CSV
-                      </Button>
-                      <Button variant="outline" onClick={exportAggregatesCSV}>
-                        <Download className="h-4 w-4" /> Export aggregate CSV
-                      </Button>
-                      <Button variant="outline" onClick={exportJSON}>
-                        <Download className="h-4 w-4" /> Export JSON
-                      </Button>
-                      <Button variant="outline" onClick={exportPDF} title={printHint}>
-                        <FileText className="h-4 w-4" /> Export PDF
-                      </Button>
-                    </div>
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Core exports: CSV/PDF/JSON. Premium: scheduled reports in Schedules.
-                    </div>
-                  </Section>
-
-                  <Section title="Premium signals" subtitle="Anomaly and savings snapshots." right={<Pill label="Premium" tone="info" />}>
-                    <div className="space-y-2">
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">High-risk spend</div>
-                            <div className="mt-1 text-xs text-slate-500">Share of spend marked High risk.</div>
-                          </div>
-                          <Pill label={`${anomalies.highRiskShare.pct}%`} tone={anomalies.highRiskShare.pct >= 20 ? "warn" : "good"} />
-                        </div>
-                        <div className="mt-2 text-xs text-slate-600">{formatUGX(anomalies.highRiskShare.high)} / {formatUGX(anomalies.highRiskShare.spend)}</div>
-                      </div>
-
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Charging peak usage</div>
-                            <div className="mt-1 text-xs text-slate-500">Peak hour charging share.</div>
-                          </div>
-                          <Pill label={`${anomalies.chargingPeak.pct}%`} tone={anomalies.chargingPeak.pct >= 40 ? "warn" : "good"} />
-                        </div>
-                        <div className="mt-2 text-xs text-slate-600">Peak {anomalies.chargingPeak.peak} / Total {anomalies.chargingPeak.total}</div>
-                      </div>
-
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Vendor consolidation</div>
-                            <div className="mt-1 text-xs text-slate-500">Modules with fragmented vendors.</div>
-                          </div>
-                          <Pill label={`${savings.vendorConsolidation.length}`} tone={savings.vendorConsolidation.length ? "info" : "good"} />
-                        </div>
-                        <div className="mt-2 text-xs text-slate-600">Open Savings tab for recommendations.</div>
-                      </div>
-                    </div>
-                  </Section>
-                </div>
               </div>
             ) : null}
 
             {tab === "spend" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <Section title="Explorer settings" subtitle="Choose dimensions and metric." right={<Pill label="Core" tone="neutral" />}>
                     <div className="grid grid-cols-1 gap-3">
                       <Select
@@ -2016,271 +2020,261 @@ export default function CorporatePayReportingAnalyticsV2() {
                   </Section>
                 </div>
 
-                <div className="lg:col-span-8 space-y-4">
-                  <Section
-                    title="Pivot table"
-                    subtitle={aggregation.pivot ? `${dimA} by ${dimB}` : "Enable a secondary dimension to show pivot."}
-                    right={<Pill label={aggregation.pivot ? "Premium" : "Off"} tone={aggregation.pivot ? "info" : "neutral"} />}
-                  >
-                    {!aggregation.pivot ? (
-                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
-                        Select a secondary dimension to build a pivot. Example: Module by Vendor.
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                        <table className="min-w-full text-left text-sm">
-                          <thead className="bg-slate-50 text-xs text-slate-600">
-                            <tr>
-                              <th className="px-4 py-3 font-semibold">{dimA}</th>
-                              {aggregation.pivot.columns.map((c) => (
-                                <th key={c} className="px-4 py-3 font-semibold">{c}</th>
-                              ))}
-                              <th className="px-4 py-3 font-semibold">Total</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {aggregation.pivot.rows.map((r) => (
-                              <tr key={r.rowKey} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                <td className="px-4 py-3 font-semibold text-slate-900">{r.rowKey}</td>
-                                {aggregation.pivot!.columns.map((c) => (
-                                  <td key={`${r.rowKey}-${c}`} className="px-4 py-3 text-slate-700">{formatUGX(r.cells[c] || 0)}</td>
-                                ))}
-                                <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(r.total)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </Section>
-
-                  <Section title="Raw transactions" subtitle="Drilldown view." right={<Pill label="Core" tone="neutral" />}>
+                <Section
+                  title="Pivot table"
+                  subtitle={aggregation.pivot ? `${dimA} by ${dimB}` : "Enable a secondary dimension to show pivot."}
+                  right={<Pill label={aggregation.pivot ? "Premium" : "Off"} tone={aggregation.pivot ? "info" : "neutral"} />}
+                >
+                  {!aggregation.pivot ? (
+                    <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
+                      Select a secondary dimension to build a pivot. Example: Module by Vendor.
+                    </div>
+                  ) : (
                     <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
                       <table className="min-w-full text-left text-sm">
                         <thead className="bg-slate-50 text-xs text-slate-600">
                           <tr>
-                            <th className="px-4 py-3 font-semibold">Time</th>
-                            <th className="px-4 py-3 font-semibold">Type</th>
-                            <th className="px-4 py-3 font-semibold">Module</th>
-                            <th className="px-4 py-3 font-semibold">Vendor</th>
-                            <th className="px-4 py-3 font-semibold">Requester</th>
-                            <th className="px-4 py-3 font-semibold">Amount</th>
-                            <th className="px-4 py-3 font-semibold">Approved</th>
+                            <th className="px-4 py-3 font-semibold">{dimA}</th>
+                            {aggregation.pivot.columns.map((c) => (
+                              <th key={c} className="px-4 py-3 font-semibold">{c}</th>
+                            ))}
+                            <th className="px-4 py-3 font-semibold">Total</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredTx.slice(0, 16).map((t) => (
-                            <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                              <td className="px-4 py-3 text-slate-700">{fmtDateTime(t.ts)}</td>
-                              <td className="px-4 py-3 text-slate-700">{t.type}</td>
-                              <td className="px-4 py-3 text-slate-700">{t.module}{t.marketplace ? ` • ${t.marketplace}` : ""}</td>
-                              <td className="px-4 py-3 text-slate-700">{t.vendor}</td>
-                              <td className="px-4 py-3 text-slate-700">{t.requesterName}</td>
-                              <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(t.amountUGX)}</td>
-                              <td className="px-4 py-3"><Pill label={t.approved ? "Yes" : "No"} tone={t.approved ? "good" : "warn"} /></td>
+                          {aggregation.pivot.rows.map((r) => (
+                            <tr key={r.rowKey} className="border-t border-slate-100 hover:bg-slate-50/60">
+                              <td className="px-4 py-3 font-semibold text-slate-900">{r.rowKey}</td>
+                              {aggregation.pivot!.columns.map((c) => (
+                                <td key={`${r.rowKey}-${c}`} className="px-4 py-3 text-slate-700">{formatUGX(r.cells[c] || 0)}</td>
+                              ))}
+                              <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(r.total)}</td>
                             </tr>
                           ))}
-                          {!filteredTx.length ? (
-                            <tr>
-                              <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-600">No transactions.</td>
-                            </tr>
-                          ) : null}
                         </tbody>
                       </table>
                     </div>
-                  </Section>
-                </div>
+                  )}
+                </Section>
+
+                <Section title="Raw transactions" subtitle="Drilldown view." right={<Pill label="Core" tone="neutral" />}>
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Time</th>
+                          <th className="px-4 py-3 font-semibold">Type</th>
+                          <th className="px-4 py-3 font-semibold">Module</th>
+                          <th className="px-4 py-3 font-semibold">Vendor</th>
+                          <th className="px-4 py-3 font-semibold">Requester</th>
+                          <th className="px-4 py-3 font-semibold">Amount</th>
+                          <th className="px-4 py-3 font-semibold">Approved</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredTx.slice(0, 16).map((t) => (
+                          <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                            <td className="px-4 py-3 text-slate-700">{fmtDateTime(t.ts)}</td>
+                            <td className="px-4 py-3 text-slate-700">{t.type}</td>
+                            <td className="px-4 py-3 text-slate-700">{t.module}{t.marketplace ? ` • ${t.marketplace}` : ""}</td>
+                            <td className="px-4 py-3 text-slate-700">{t.vendor}</td>
+                            <td className="px-4 py-3 text-slate-700">{t.requesterName}</td>
+                            <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(t.amountUGX)}</td>
+                            <td className="px-4 py-3"><Pill label={t.approved ? "Yes" : "No"} tone={t.approved ? "good" : "warn"} /></td>
+                          </tr>
+                        ))}
+                        {!filteredTx.length ? (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-600">No transactions.</td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                </Section>
               </div>
             ) : null}
 
             {tab === "approvals" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Approval KPIs" subtitle="Performance reports." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="grid grid-cols-1 gap-3">
-                      <StatCard title="Avg cycle time" value={`${approvalMetrics.avgMins}m`} sub="Mean" icon={<Timer className="h-5 w-5" />} tone={approvalMetrics.avgMins > 180 ? "warn" : "good"} />
-                      <StatCard title="Median" value={`${approvalMetrics.medMins}m`} sub="Median" icon={<Timer className="h-5 w-5" />} tone={approvalMetrics.medMins > 180 ? "warn" : "good"} />
-                      <StatCard title="SLA breaches" value={`${approvalMetrics.breaches}`} sub="Over SLA" icon={<AlertTriangle className="h-5 w-5" />} tone={approvalMetrics.breaches ? "bad" : "good"} />
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="text-xs font-semibold text-slate-500">Outcomes</div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <Pill label={`Auto: ${approvalMetrics.auto}`} tone="info" />
-                          <Pill label={`Approved: ${approvalMetrics.approved}`} tone="good" />
-                          <Pill label={`Rejected: ${approvalMetrics.rejected}`} tone={approvalMetrics.rejected ? "warn" : "good"} />
-                        </div>
+              <div className="space-y-4">
+                <Section title="Approval KPIs" subtitle="Performance reports." right={<Pill label="Core" tone="neutral" />}>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatCard title="Avg cycle time" value={`${approvalMetrics.avgMins}m`} sub="Mean" icon={<Timer className="h-5 w-5" />} tone={approvalMetrics.avgMins > 180 ? "warn" : "good"} />
+                    <StatCard title="Median" value={`${approvalMetrics.medMins}m`} sub="Median" icon={<Timer className="h-5 w-5" />} tone={approvalMetrics.medMins > 180 ? "warn" : "good"} />
+                    <StatCard title="SLA breaches" value={`${approvalMetrics.breaches}`} sub="Over SLA" icon={<AlertTriangle className="h-5 w-5" />} tone={approvalMetrics.breaches ? "bad" : "good"} />
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                      <div className="text-xs font-semibold text-slate-500">Outcomes</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Pill label={`Auto: ${approvalMetrics.auto}`} tone="info" />
+                        <Pill label={`Approved: ${approvalMetrics.approved}`} tone="good" />
+                        <Pill label={`Rejected: ${approvalMetrics.rejected}`} tone={approvalMetrics.rejected ? "warn" : "good"} />
                       </div>
                     </div>
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Core: approval performance reports. Premium: scheduled approvals performance reports via Schedules.
-                    </div>
-                  </Section>
-                </div>
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Core: approval performance reports. Premium: scheduled approvals performance reports via Schedules.
+                  </div>
+                </Section>
 
-                <div className="lg:col-span-8 space-y-4">
-                  <Section title="Approvals by module" subtitle="Cycle time, approval rate, SLA breaches." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">Module</th>
-                            <th className="px-4 py-3 font-semibold">Total</th>
-                            <th className="px-4 py-3 font-semibold">Approval rate</th>
-                            <th className="px-4 py-3 font-semibold">Avg mins</th>
-                            <th className="px-4 py-3 font-semibold">Rejected</th>
-                            <th className="px-4 py-3 font-semibold">Breaches</th>
+                <Section title="Approvals by module" subtitle="Cycle time, approval rate, SLA breaches." right={<Pill label="Core" tone="neutral" />}>
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Module</th>
+                          <th className="px-4 py-3 font-semibold">Total</th>
+                          <th className="px-4 py-3 font-semibold">Approval rate</th>
+                          <th className="px-4 py-3 font-semibold">Avg mins</th>
+                          <th className="px-4 py-3 font-semibold">Rejected</th>
+                          <th className="px-4 py-3 font-semibold">Breaches</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {approvalByModule.map((m) => (
+                          <tr key={m.module} className="border-t border-slate-100 hover:bg-slate-50/60">
+                            <td className="px-4 py-3 font-semibold text-slate-900">{m.module}</td>
+                            <td className="px-4 py-3 text-slate-700">{m.total}</td>
+                            <td className="px-4 py-3"><Pill label={`${m.approvalRate}%`} tone={m.approvalRate >= 90 ? "good" : m.approvalRate >= 75 ? "warn" : "bad"} /></td>
+                            <td className="px-4 py-3 text-slate-700">{m.avgMins}m</td>
+                            <td className="px-4 py-3 text-slate-700">{m.rejected}</td>
+                            <td className="px-4 py-3"><Pill label={`${m.breach}`} tone={m.breach ? "warn" : "good"} /></td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {approvalByModule.map((m) => (
-                            <tr key={m.module} className="border-t border-slate-100 hover:bg-slate-50/60">
-                              <td className="px-4 py-3 font-semibold text-slate-900">{m.module}</td>
-                              <td className="px-4 py-3 text-slate-700">{m.total}</td>
-                              <td className="px-4 py-3"><Pill label={`${m.approvalRate}%`} tone={m.approvalRate >= 90 ? "good" : m.approvalRate >= 75 ? "warn" : "bad"} /></td>
-                              <td className="px-4 py-3 text-slate-700">{m.avgMins}m</td>
-                              <td className="px-4 py-3 text-slate-700">{m.rejected}</td>
-                              <td className="px-4 py-3"><Pill label={`${m.breach}`} tone={m.breach ? "warn" : "good"} /></td>
-                            </tr>
-                          ))}
-                          {!approvalByModule.length ? (
-                            <tr>
-                              <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-600">No approvals.</td>
-                            </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Section>
+                        ))}
+                        {!approvalByModule.length ? (
+                          <tr>
+                            <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-600">No approvals.</td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                </Section>
 
-                  <Section title="Recent approvals" subtitle="Audit-friendly list." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="space-y-2">
-                      {filteredApprovals.slice(0, 10).map((a) => {
-                        const mins = Math.max(1, Math.round((a.decidedAt - a.requestedAt) / 60000));
-                        const breach = (a.decidedAt - a.requestedAt) / 3600000 > a.slaHours;
-                        return (
-                          <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Pill label={a.outcome} tone={a.outcome === "Rejected" ? "bad" : a.outcome === "Auto-approved" ? "info" : "good"} />
-                                  <Pill label={a.module} tone="neutral" />
-                                  {a.marketplace ? <Pill label={a.marketplace} tone="neutral" /> : null}
-                                  <Pill label={a.id} tone="neutral" />
-                                  {breach ? <Pill label="SLA breach" tone="warn" /> : <Pill label="SLA ok" tone="good" />}
-                                </div>
-                                <div className="mt-2 text-sm font-semibold text-slate-900">{formatUGX(a.amountUGX)} • {a.requesterName}</div>
-                                <div className="mt-1 text-xs text-slate-500">Approver: {a.approver} • Cycle: {mins}m • SLA: {a.slaHours}h</div>
-                                <div className="mt-2 text-xs text-slate-600">Reason: {a.reason}</div>
+                <Section title="Recent approvals" subtitle="Audit-friendly list." right={<Pill label="Core" tone="neutral" />}>
+                  <div className="space-y-2">
+                    {filteredApprovals.slice(0, 10).map((a) => {
+                      const mins = Math.max(1, Math.round((a.decidedAt - a.requestedAt) / 60000));
+                      const breach = (a.decidedAt - a.requestedAt) / 3600000 > a.slaHours;
+                      return (
+                        <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Pill label={a.outcome} tone={a.outcome === "Rejected" ? "bad" : a.outcome === "Auto-approved" ? "info" : "good"} />
+                                <Pill label={a.module} tone="neutral" />
+                                {a.marketplace ? <Pill label={a.marketplace} tone="neutral" /> : null}
+                                <Pill label={a.id} tone="neutral" />
+                                {breach ? <Pill label="SLA breach" tone="warn" /> : <Pill label="SLA ok" tone="good" />}
                               </div>
-                              <div className="text-right text-xs text-slate-500">Requested {timeAgo(a.requestedAt)}</div>
+                              <div className="mt-2 text-sm font-semibold text-slate-900">{formatUGX(a.amountUGX)} • {a.requesterName}</div>
+                              <div className="mt-1 text-xs text-slate-500">Approver: {a.approver} • Cycle: {mins}m • SLA: {a.slaHours}h</div>
+                              <div className="mt-2 text-xs text-slate-600">Reason: {a.reason}</div>
                             </div>
+                            <div className="text-right text-xs text-slate-500">Requested {timeAgo(a.requestedAt)}</div>
                           </div>
-                        );
-                      })}
-                      {!filteredApprovals.length ? <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">No approvals in this range.</div> : null}
-                    </div>
-                  </Section>
-                </div>
+                        </div>
+                      );
+                    })}
+                    {!filteredApprovals.length ? <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">No approvals in this range.</div> : null}
+                  </div>
+                </Section>
               </div>
             ) : null}
 
             {tab === "anomalies" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Anomaly dashboards" subtitle="Logic-based detection (initial)." right={<Pill label="Premium" tone="info" />}>
-                    <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                      Anomalies are detected using safe, explainable rules. Later you can add ML/AI.
-                      <ul className="mt-2 space-y-1">
-                        <li>1) Vendor spike: last 7 days &gt; 2x previous 7 days</li>
-                        <li>2) After-hours usage outside policy window</li>
-                        <li>3) High-risk share trends</li>
-                        <li>4) Charging peak-hour usage</li>
-                      </ul>
-                    </div>
-                    <Button variant="outline" onClick={() => toast({ title: "Tip", message: "Use Notifications Center for real-time alert routing.", kind: "info" })}>
-                      <Info className="h-4 w-4" /> Alert routing tip
-                    </Button>
-                  </Section>
+              <div className="space-y-4">
+                <Section title="Quick counters" subtitle="What needs attention." right={<Pill label="Premium" tone="info" />}>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatCard title="Vendor spikes" value={`${anomalies.vendorSpikes.length}`} sub="Last 7d vs previous 7d" icon={<Sparkles className="h-5 w-5" />} tone={anomalies.vendorSpikes.length ? "warn" : "good"} />
+                    <StatCard title="After-hours tx" value={`${anomalies.afterHours.length}`} sub="In selected range" icon={<CalendarClock className="h-5 w-5" />} tone={anomalies.afterHours.length ? "warn" : "good"} />
+                    <StatCard title="High-risk share" value={`${anomalies.highRiskShare.pct}%`} sub="Of approved spend" icon={<AlertTriangle className="h-5 w-5" />} tone={anomalies.highRiskShare.pct >= 20 ? "warn" : "good"} />
+                    <StatCard title="Charging peak" value={`${anomalies.chargingPeak.pct}%`} sub="Peak-hour sessions" icon={<Timer className="h-5 w-5" />} tone={anomalies.chargingPeak.pct >= 40 ? "warn" : "good"} />
+                  </div>
+                </Section>
 
-                  <Section title="Quick counters" subtitle="What needs attention." right={<Pill label="Premium" tone="info" />}>
-                    <div className="grid grid-cols-1 gap-3">
-                      <StatCard title="Vendor spikes" value={`${anomalies.vendorSpikes.length}`} sub="Last 7d vs previous 7d" icon={<Sparkles className="h-5 w-5" />} tone={anomalies.vendorSpikes.length ? "warn" : "good"} />
-                      <StatCard title="After-hours tx" value={`${anomalies.afterHours.length}`} sub="In selected range" icon={<CalendarClock className="h-5 w-5" />} tone={anomalies.afterHours.length ? "warn" : "good"} />
-                      <StatCard title="High-risk share" value={`${anomalies.highRiskShare.pct}%`} sub="Of approved spend" icon={<AlertTriangle className="h-5 w-5" />} tone={anomalies.highRiskShare.pct >= 20 ? "warn" : "good"} />
-                      <StatCard title="Charging peak" value={`${anomalies.chargingPeak.pct}%`} sub="Peak-hour sessions" icon={<Timer className="h-5 w-5" />} tone={anomalies.chargingPeak.pct >= 40 ? "warn" : "good"} />
-                    </div>
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-8 space-y-4">
-                  <Section title="Unusual vendor spend" subtitle="Spike detection." right={<Pill label="Premium" tone="info" />}>
-                    <div className="space-y-2">
-                      {anomalies.vendorSpikes.map((x) => (
-                        <div key={x.vendor} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Pill label="Vendor spike" tone="warn" />
-                                <Pill label={x.vendor} tone="neutral" />
-                              </div>
-                              <div className="mt-2 text-sm font-semibold text-slate-900">Last 7d: {formatUGX(x.last7)}</div>
-                              <div className="mt-1 text-xs text-slate-500">Previous 7d: {formatUGX(x.prev7)}</div>
-                              <div className="mt-2 text-xs text-slate-600">Why: spend more than 2x week-over-week</div>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Button variant="outline" onClick={() => { setVendorFilter(x.vendor); setTab("spend"); toast({ title: "Filtered", message: `Showing spend for ${x.vendor}.`, kind: "info" }); }}>
+                <Section title="After-hours transactions" subtitle="Outside policy window (6-22)." right={<Pill label="Premium" tone="info" />}>
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Time</th>
+                          <th className="px-4 py-3 font-semibold">Module</th>
+                          <th className="px-4 py-3 font-semibold">Vendor</th>
+                          <th className="px-4 py-3 font-semibold">Requester</th>
+                          <th className="px-4 py-3 font-semibold">Amount</th>
+                          <th className="px-4 py-3 font-semibold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {anomalies.afterHours.map((t) => (
+                          <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                            <td className="px-4 py-3 text-slate-700">{fmtDateTime(t.ts)}</td>
+                            <td className="px-4 py-3 text-slate-700">{t.module}</td>
+                            <td className="px-4 py-3 text-slate-700">{t.vendor}</td>
+                            <td className="px-4 py-3 text-slate-700">{t.requesterName}</td>
+                            <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(t.amountUGX)}</td>
+                            <td className="px-4 py-3">
+                              <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setRequesterFilter(t.requesterName); setTab("spend"); toast({ title: "Filtered", message: `Showing spend for ${t.requesterName}.`, kind: "info" }); }}>
                                 <ChevronRight className="h-4 w-4" /> Drill down
                               </Button>
-                              <Button variant="outline" onClick={() => toast({ title: "Rule", message: "Create rule from this event (demo).", kind: "info" })}>
-                                <Settings2 className="h-4 w-4" /> Create rule
-                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                        {!anomalies.afterHours.length ? (
+                          <tr>
+                            <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-600">No after-hours activity detected.</td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                </Section>
+
+                <Section title="Anomaly dashboards" subtitle="Logic-based detection (initial)." right={<Pill label="Premium" tone="info" />}>
+                  <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                    Anomalies are detected using safe, explainable rules. Later you can add ML/AI.
+                    <ul className="mt-2 space-y-1">
+                      <li>1) Vendor spike: last 7 days &gt; 2x previous 7 days</li>
+                      <li>2) After-hours usage outside policy window</li>
+                      <li>3) High-risk share trends</li>
+                      <li>4) Charging peak-hour usage</li>
+                    </ul>
+                  </div>
+                  <Button variant="outline" className="mt-3" onClick={() => toast({ title: "Tip", message: "Use Notifications Center for real-time alert routing.", kind: "info" })}>
+                    <Info className="h-4 w-4" /> Alert routing tip
+                  </Button>
+                </Section>
+
+                <Section title="Unusual vendor spend" subtitle="Spike detection." right={<Pill label="Premium" tone="info" />}>
+                  <div className="space-y-2">
+                    {anomalies.vendorSpikes.map((x) => (
+                      <div key={x.vendor} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Pill label="Vendor spike" tone="warn" />
+                              <Pill label={x.vendor} tone="neutral" />
                             </div>
+                            <div className="mt-2 text-sm font-semibold text-slate-900">Last 7d: {formatUGX(x.last7)}</div>
+                            <div className="mt-1 text-xs text-slate-500">Previous 7d: {formatUGX(x.prev7)}</div>
+                            <div className="mt-2 text-xs text-slate-600">Why: spend more than 2x week-over-week</div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button variant="outline" onClick={() => { setVendorFilter(x.vendor); setTab("spend"); toast({ title: "Filtered", message: `Showing spend for ${x.vendor}.`, kind: "info" }); }}>
+                              <ChevronRight className="h-4 w-4" /> Drill down
+                            </Button>
+                            <Button variant="outline" onClick={() => toast({ title: "Rule", message: "Create rule from this event (demo).", kind: "info" })}>
+                              <Settings2 className="h-4 w-4" /> Create rule
+                            </Button>
                           </div>
                         </div>
-                      ))}
-                      {!anomalies.vendorSpikes.length ? (
-                        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">No vendor spikes detected.</div>
-                      ) : null}
-                    </div>
-                  </Section>
-
-                  <Section title="After-hours transactions" subtitle="Outside policy window (6-22)." right={<Pill label="Premium" tone="info" />}>
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">Time</th>
-                            <th className="px-4 py-3 font-semibold">Module</th>
-                            <th className="px-4 py-3 font-semibold">Vendor</th>
-                            <th className="px-4 py-3 font-semibold">Requester</th>
-                            <th className="px-4 py-3 font-semibold">Amount</th>
-                            <th className="px-4 py-3 font-semibold">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {anomalies.afterHours.map((t) => (
-                            <tr key={t.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                              <td className="px-4 py-3 text-slate-700">{fmtDateTime(t.ts)}</td>
-                              <td className="px-4 py-3 text-slate-700">{t.module}</td>
-                              <td className="px-4 py-3 text-slate-700">{t.vendor}</td>
-                              <td className="px-4 py-3 text-slate-700">{t.requesterName}</td>
-                              <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(t.amountUGX)}</td>
-                              <td className="px-4 py-3">
-                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setRequesterFilter(t.requesterName); setTab("spend"); toast({ title: "Filtered", message: `Showing spend for ${t.requesterName}.`, kind: "info" }); }}>
-                                  <ChevronRight className="h-4 w-4" /> Drill down
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                          {!anomalies.afterHours.length ? (
-                            <tr>
-                              <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-600">No after-hours activity detected.</td>
-                            </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Section>
-                </div>
+                      </div>
+                    ))}
+                    {!anomalies.vendorSpikes.length ? (
+                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">No vendor spikes detected.</div>
+                    ) : null}
+                  </div>
+                </Section>
               </div>
             ) : null}
 

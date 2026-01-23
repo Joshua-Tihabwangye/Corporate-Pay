@@ -31,6 +31,9 @@ import {
   X,
 } from "lucide-react";
 
+// Logo imports
+import logoIcon from "../../assets/logos/logo-icon.png";
+
 const EVZ = {
   green: "#03CD8C",
   orange: "#F77F00",
@@ -396,9 +399,7 @@ export default function CorporatePayLandingPageV2Fixed() {
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 md:px-6">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-2xl text-white" style={{ background: EVZ.green }}>
-              <Sparkles className="h-5 w-5" />
-            </div>
+            <img src={logoIcon} alt="EVzone CorporatePay" className="h-10 w-10 rounded-2xl object-contain" />
             <div>
               <div className="text-sm font-semibold text-slate-900">CorporatePay</div>
               <div className="text-xs text-slate-500">EVzone corporate admin console</div>

@@ -1562,285 +1562,54 @@ export default function CorporatePayEVChargingSchedulingV2() {
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {tab === "overview" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-8 space-y-4">
-                  <Section
-                    title="Upcoming sessions"
-                    subtitle="Next scheduled sessions across all sites."
-                    right={<Pill label={`${upcoming.length} upcoming`} tone={upcoming.length ? "info" : "neutral"} />}
-                  >
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">When</th>
-                            <th className="px-4 py-3 font-semibold">Vehicle</th>
-                            <th className="px-4 py-3 font-semibold">Site</th>
-                            <th className="px-4 py-3 font-semibold">Connector</th>
-                            <th className="px-4 py-3 font-semibold">Purpose</th>
-                            <th className="px-4 py-3 font-semibold">Status</th>
-                            <th className="px-4 py-3 font-semibold">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {upcoming
-                            .slice()
-                            .sort((a, b) => a.scheduledAt - b.scheduledAt)
-                            .slice(0, 7)
-                            .map((s) => {
-                              const v = vehicleById[s.vehicleId];
-                              const site = siteById[s.siteId];
-                              const peakTariff = isPeakTariffHour(hourOf(s.scheduledAt));
-                              return (
-                                <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                  <td className="px-4 py-3 text-slate-700">{fmtDateTime(s.scheduledAt)}</td>
-                                  <td className="px-4 py-3">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <div className="font-semibold text-slate-900">{v?.label || s.vehicleId}</div>
-                                      {v?.vip ? <Pill label="VIP" tone="info" /> : null}
-                                      <Pill label={v ? v.ownerType : "-"} tone="neutral" />
-                                      {peakTariff ? <Pill label="Peak" tone="warn" /> : <Pill label="Off-peak" tone="good" />}
-                                    </div>
-                                    <div className="mt-1 text-xs text-slate-500">{v ? `${v.ownerName} • ${v.costCenter}` : "-"}</div>
-                                  </td>
-                                  <td className="px-4 py-3 text-slate-700">{site?.name || s.siteId}</td>
-                                  <td className="px-4 py-3">
-                                    <Pill label={s.connector} tone={s.connector.includes("DC") ? "info" : "neutral"} />
-                                    <div className="mt-1 text-xs text-slate-500">{s.expectedKWh} kWh • {s.durationMins} min</div>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <Pill label={s.purpose === "Other" ? s.purposeOther || "Other" : s.purpose} tone="neutral" />
-                                    <div className="mt-1 text-xs text-slate-500">{s.tags.slice(0, 3).join(", ")}{s.tags.length > 3 ? "…" : ""}</div>
-                                  </td>
-                                  <td className="px-4 py-3"><Pill label={s.status} tone={statusTone(s.status)} /></td>
-                                  <td className="px-4 py-3">
-                                    <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => openSession(s.id)}>
-                                      <ChevronRight className="h-4 w-4" /> Open
-                                    </Button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          {!upcoming.length ? (
-                            <tr>
-                              <td colSpan={7} className="px-4 py-10">
-                                <Empty title="No upcoming sessions" subtitle="Create a new charging session or run a recurring plan." />
-                              </td>
-                            </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {siteCapacityByHour.congested.length ? (
-                      <div className="mt-3 rounded-2xl bg-rose-50 p-3 text-xs text-rose-800 ring-1 ring-rose-200">
-                        Congestion risk: {siteById[siteCapacityByHour.congested[0].siteId]?.name || siteCapacityByHour.congested[0].siteId} at {siteCapacityByHour.congested[0].h}:00 is over capacity ({siteCapacityByHour.congested[0].count}/{siteCapacityByHour.congested[0].cap}).
-                      </div>
-                    ) : peakDetected ? (
-                      <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                        Smart scheduling: peak hour detected around {peakHour.hour}:00. Consider off-peak scheduling or distributing sessions across sites.
-                      </div>
-                    ) : (
-                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                        Smart scheduling: no peak congestion detected in upcoming sessions.
-                      </div>
-                    )}
-                  </Section>
-
-                  <Section title="Policy guardrails" subtitle="Purpose enforcement, limits, and approvals." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <Toggle enabled={policy.requirePurpose} onChange={(v) => setPolicy((p) => ({ ...p, requirePurpose: v }))} label="Require purpose" description="Purpose stored for reporting and audits." />
-                      <Toggle enabled={policy.requireProjectTag} onChange={(v) => setPolicy((p) => ({ ...p, requireProjectTag: v }))} label="Require project tag" description="Used for chargeback and analytics." />
-                      <Toggle enabled={policy.requireCostCenter} onChange={(v) => setPolicy((p) => ({ ...p, requireCostCenter: v }))} label="Require cost center" description="Enforced on creation." />
-                      <Toggle enabled={policy.dcRequiresApproval} onChange={(v) => setPolicy((p) => ({ ...p, dcRequiresApproval: v }))} label="DC requires approval" description="DC fast charging is approval-gated." />
-                      <Toggle enabled={policy.priorityRequiresApproval} onChange={(v) => setPolicy((p) => ({ ...p, priorityRequiresApproval: v }))} label="Priority requires approval" description="Priority slot requests require approval." />
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="text-sm font-semibold text-slate-900">Limits</div>
-                        <div className="mt-3 grid grid-cols-1 gap-3">
-                          <NumberField label="Max kWh per session" value={policy.maxKWhPerSession} onChange={(v) => setPolicy((p) => ({ ...p, maxKWhPerSession: Math.max(1, v) }))} hint="kWh" />
-                          <NumberField label="Max budget per session" value={policy.maxBudgetUGXPerSession} onChange={(v) => setPolicy((p) => ({ ...p, maxBudgetUGXPerSession: Math.max(0, v) }))} hint="UGX" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Working hours: {policy.workStart} to {policy.workEnd}. After-hours sessions require approval unless an exception is active.
-                    </div>
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Sites" subtitle="Operational health and pricing." right={<Pill label={`${sites.length}`} tone="neutral" />}>
-                    <div className="space-y-2">
-                      {sites.map((s) => (
-                        <div key={s.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{s.name}</div>
-                                <Pill label={s.status} tone={siteTone(s.status)} />
-                                <Pill label={`${s.reliabilityPct}%`} tone={s.reliabilityPct >= 90 ? "good" : s.reliabilityPct >= 80 ? "warn" : "bad"} />
-                              </div>
-                              <div className="mt-1 text-xs text-slate-500">{s.city} • {s.operator}</div>
-                              <div className="mt-2 text-xs text-slate-600">Connectors: {s.connectors.reduce((a, c) => a + c.count, 0)} total</div>
-                            </div>
-                            <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setTab("sites"); setSiteFilter(s.id); toast({ title: "Filtered", message: "Showing sessions for this site.", kind: "info" }); }}>
-                              <ChevronRight className="h-4 w-4" /> View
-                            </Button>
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {s.connectors.slice(0, 3).map((c) => (
-                              <Pill key={`${s.id}-${c.connector}`} label={`${c.connector} • ${c.powerKW}kW`} tone={c.connector.includes("DC") ? "info" : "neutral"} />
-                            ))}
-                            {s.connectors.length > 3 ? <Pill label="+more" tone="neutral" /> : null}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Section>
-
-                  <Section title="Approvals" subtitle="Policy exceptions and VIP handling." right={<Pill label={`${approvals.filter((a) => a.status === "Pending").length}`} tone={approvals.filter((a) => a.status === "Pending").length ? "warn" : "good"} />}>
-                    <div className="space-y-2">
-                      {approvals.filter((a) => a.status === "Pending").slice(0, 4).map((a) => (
-                        <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Pill label={a.scope} tone="neutral" />
-                                <Pill label={a.status} tone={approvalTone(a.status)} />
-                                <Pill label={`${a.steps.filter((s) => s.status === "Pending").length} step(s)`} tone="info" />
-                              </div>
-                              <div className="mt-2 text-sm font-semibold text-slate-900">{a.reason}</div>
-                              <div className="mt-1 text-xs text-slate-500">{timeAgo(a.createdAt)} • {a.createdBy}</div>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                              <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => approveNext(a.id)}>
-                                <Check className="h-4 w-4" /> Approve
-                              </Button>
-                              <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => rejectApproval(a.id)}>
-                                <X className="h-4 w-4" /> Reject
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {!approvals.filter((a) => a.status === "Pending").length ? <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">No pending approvals.</div> : null}
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button variant="outline" onClick={() => setTab("approvals")}>
-                        <ChevronRight className="h-4 w-4" /> Open approvals
-                      </Button>
-                      <Button variant="outline" onClick={() => setVipReqOpen(true)}>
-                        <Crown className="h-4 w-4" /> VIP exception
-                      </Button>
-                    </div>
-                  </Section>
-                </div>
-              </div>
-            ) : null}
-
-            {tab === "sessions" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Search and filters" subtitle="Coordinator view" right={<Pill label="Core" tone="neutral" />}>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                      <div className="text-xs font-semibold text-slate-600">Search</div>
-                      <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2">
-                        <Search className="h-4 w-4 text-slate-500" />
-                        <input
-                          value={q}
-                          onChange={(e) => setQ(e.target.value)}
-                          placeholder="ref, vehicle, site, tag..."
-                          className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
-                        />
-                      </div>
-                      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <Select
-                          label="Status"
-                          value={statusFilter}
-                          onChange={(v) => setStatusFilter(v as any)}
-                          options={[
-                            { value: "All", label: "All" },
-                            ...(["Draft", "Pending approval", "Confirmed", "In progress", "Completed", "Cancelled"] as SessionStatus[]).map((x) => ({ value: x, label: x })),
-                          ]}
-                        />
-                        <Select
-                          label="Vehicle"
-                          value={vehicleFilter}
-                          onChange={setVehicleFilter}
-                          options={[{ value: "All", label: "All" }, ...vehicles.map((v) => ({ value: v.id, label: v.label }))]}
-                        />
-                        <Select
-                          label="Site"
-                          value={siteFilter}
-                          onChange={setSiteFilter}
-                          options={[{ value: "All", label: "All" }, ...sites.map((s) => ({ value: s.id, label: s.name }))]}
-                        />
-                      </div>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setQ("");
-                            setStatusFilter("All");
-                            setVehicleFilter("All");
-                            setSiteFilter("All");
-                            toast({ title: "Reset", message: "Filters reset.", kind: "info" });
-                          }}
-                        >
-                          <Filter className="h-4 w-4" /> Reset
-                        </Button>
-                        <Button variant="outline" onClick={exportCSV}>
-                          <Download className="h-4 w-4" /> CSV
-                        </Button>
-                        <Button variant="primary" onClick={() => setCreateOpen(true)}>
-                          <Plus className="h-4 w-4" /> New
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Best practice: store purpose tags, cost center, and project tag on every charging session.
-                    </div>
-                  </Section>
-                </div>
-
-                <div className="lg:col-span-8">
-                  <Section title="Sessions" subtitle="Pre-booked corporate charging sessions." right={<Pill label={`${filteredSessions.length}`} tone="neutral" />}>
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">Ref</th>
-                            <th className="px-4 py-3 font-semibold">When</th>
-                            <th className="px-4 py-3 font-semibold">Vehicle</th>
-                            <th className="px-4 py-3 font-semibold">Site</th>
-                            <th className="px-4 py-3 font-semibold">kWh and budget</th>
-                            <th className="px-4 py-3 font-semibold">Status</th>
-                            <th className="px-4 py-3 font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredSessions.map((s) => {
+              <div className="flex flex-col gap-4">
+                <Section
+                  title="Upcoming sessions"
+                  subtitle="Next scheduled sessions across all sites."
+                  right={<Pill label={`${upcoming.length} upcoming`} tone={upcoming.length ? "info" : "neutral"} />}
+                >
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">When</th>
+                          <th className="px-4 py-3 font-semibold">Vehicle</th>
+                          <th className="px-4 py-3 font-semibold">Site</th>
+                          <th className="px-4 py-3 font-semibold">Connector</th>
+                          <th className="px-4 py-3 font-semibold">Purpose</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {upcoming
+                          .slice()
+                          .sort((a, b) => a.scheduledAt - b.scheduledAt)
+                          .slice(0, 7)
+                          .map((s) => {
                             const v = vehicleById[s.vehicleId];
                             const site = siteById[s.siteId];
+                            const peakTariff = isPeakTariffHour(hourOf(s.scheduledAt));
                             return (
                               <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                <td className="px-4 py-3">
-                                  <div className="font-semibold text-slate-900">{s.ref}</div>
-                                  <div className="mt-1 text-xs text-slate-500">{s.id}</div>
-                                </td>
                                 <td className="px-4 py-3 text-slate-700">{fmtDateTime(s.scheduledAt)}</td>
                                 <td className="px-4 py-3">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <div className="font-semibold text-slate-900">{v?.label || s.vehicleId}</div>
                                     {v?.vip ? <Pill label="VIP" tone="info" /> : null}
                                     <Pill label={v ? v.ownerType : "-"} tone="neutral" />
+                                    {peakTariff ? <Pill label="Peak" tone="warn" /> : <Pill label="Off-peak" tone="good" />}
                                   </div>
                                   <div className="mt-1 text-xs text-slate-500">{v ? `${v.ownerName} • ${v.costCenter}` : "-"}</div>
                                 </td>
                                 <td className="px-4 py-3 text-slate-700">{site?.name || s.siteId}</td>
                                 <td className="px-4 py-3">
-                                  <Pill label={`${s.expectedKWh} kWh`} tone="neutral" />
-                                  <div className="mt-1 text-xs text-slate-500">Budget {formatUGX(s.maxBudgetUGX)} • {s.connector}</div>
+                                  <Pill label={s.connector} tone={s.connector.includes("DC") ? "info" : "neutral"} />
+                                  <div className="mt-1 text-xs text-slate-500">{s.expectedKWh} kWh • {s.durationMins} min</div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Pill label={s.purpose === "Other" ? s.purposeOther || "Other" : s.purpose} tone="neutral" />
+                                  <div className="mt-1 text-xs text-slate-500">{s.tags.slice(0, 3).join(", ")}{s.tags.length > 3 ? "…" : ""}</div>
                                 </td>
                                 <td className="px-4 py-3"><Pill label={s.status} tone={statusTone(s.status)} /></td>
                                 <td className="px-4 py-3">
@@ -1851,92 +1620,310 @@ export default function CorporatePayEVChargingSchedulingV2() {
                               </tr>
                             );
                           })}
-                          {!filteredSessions.length ? (
-                            <tr>
-                              <td colSpan={7} className="px-4 py-10">
-                                <Empty title="No sessions" subtitle="Create a session or change filters." />
+                        {!upcoming.length ? (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-10">
+                              <Empty title="No upcoming sessions" subtitle="Create a new charging session or run a recurring plan." />
+                            </td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {siteCapacityByHour.congested.length ? (
+                    <div className="mt-3 rounded-2xl bg-rose-50 p-3 text-xs text-rose-800 ring-1 ring-rose-200">
+                      Congestion risk: {siteById[siteCapacityByHour.congested[0].siteId]?.name || siteCapacityByHour.congested[0].siteId} at {siteCapacityByHour.congested[0].h}:00 is over capacity ({siteCapacityByHour.congested[0].count}/{siteCapacityByHour.congested[0].cap}).
+                    </div>
+                  ) : peakDetected ? (
+                    <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                      Smart scheduling: peak hour detected around {peakHour.hour}:00. Consider off-peak scheduling or distributing sessions across sites.
+                    </div>
+                  ) : (
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                      Smart scheduling: no peak congestion detected in upcoming sessions.
+                    </div>
+                  )}
+                </Section>
+
+                <Section title="Policy guardrails" subtitle="Purpose enforcement, limits, and approvals." right={<Pill label="Core" tone="neutral" />}>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <Toggle enabled={policy.requirePurpose} onChange={(v) => setPolicy((p) => ({ ...p, requirePurpose: v }))} label="Require purpose" description="Purpose stored for reporting and audits." />
+                    <Toggle enabled={policy.requireProjectTag} onChange={(v) => setPolicy((p) => ({ ...p, requireProjectTag: v }))} label="Require project tag" description="Used for chargeback and analytics." />
+                    <Toggle enabled={policy.requireCostCenter} onChange={(v) => setPolicy((p) => ({ ...p, requireCostCenter: v }))} label="Require cost center" description="Enforced on creation." />
+                    <Toggle enabled={policy.dcRequiresApproval} onChange={(v) => setPolicy((p) => ({ ...p, dcRequiresApproval: v }))} label="DC requires approval" description="DC fast charging is approval-gated." />
+                    <Toggle enabled={policy.priorityRequiresApproval} onChange={(v) => setPolicy((p) => ({ ...p, priorityRequiresApproval: v }))} label="Priority requires approval" description="Priority slot requests require approval." />
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                      <div className="text-sm font-semibold text-slate-900">Limits</div>
+                      <div className="mt-3 grid grid-cols-1 gap-3">
+                        <NumberField label="Max kWh per session" value={policy.maxKWhPerSession} onChange={(v) => setPolicy((p) => ({ ...p, maxKWhPerSession: Math.max(1, v) }))} hint="kWh" />
+                        <NumberField label="Max budget per session" value={policy.maxBudgetUGXPerSession} onChange={(v) => setPolicy((p) => ({ ...p, maxBudgetUGXPerSession: Math.max(0, v) }))} hint="UGX" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Working hours: {policy.workStart} to {policy.workEnd}. After-hours sessions require approval unless an exception is active.
+                  </div>
+                </Section>
+                <Section title="Sites" subtitle="Operational health and pricing." right={<Pill label={`${sites.length}`} tone="neutral" />}>
+                  <div className="space-y-2">
+                    {sites.map((s) => (
+                      <div key={s.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-slate-900">{s.name}</div>
+                              <Pill label={s.status} tone={siteTone(s.status)} />
+                              <Pill label={`${s.reliabilityPct}%`} tone={s.reliabilityPct >= 90 ? "good" : s.reliabilityPct >= 80 ? "warn" : "bad"} />
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">{s.city} • {s.operator}</div>
+                            <div className="mt-2 text-xs text-slate-600">Connectors: {s.connectors.reduce((a, c) => a + c.count, 0)} total</div>
+                          </div>
+                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setTab("sites"); setSiteFilter(s.id); toast({ title: "Filtered", message: "Showing sessions for this site.", kind: "info" }); }}>
+                            <ChevronRight className="h-4 w-4" /> View
+                          </Button>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {s.connectors.slice(0, 3).map((c) => (
+                            <Pill key={`${s.id}-${c.connector}`} label={`${c.connector} • ${c.powerKW}kW`} tone={c.connector.includes("DC") ? "info" : "neutral"} />
+                          ))}
+                          {s.connectors.length > 3 ? <Pill label="+more" tone="neutral" /> : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+
+                <Section title="Approvals" subtitle="Policy exceptions and VIP handling." right={<Pill label={`${approvals.filter((a) => a.status === "Pending").length}`} tone={approvals.filter((a) => a.status === "Pending").length ? "warn" : "good"} />}>
+                  <div className="space-y-2">
+                    {approvals.filter((a) => a.status === "Pending").slice(0, 4).map((a) => (
+                      <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Pill label={a.scope} tone="neutral" />
+                              <Pill label={a.status} tone={approvalTone(a.status)} />
+                              <Pill label={`${a.steps.filter((s) => s.status === "Pending").length} step(s)`} tone="info" />
+                            </div>
+                            <div className="mt-2 text-sm font-semibold text-slate-900">{a.reason}</div>
+                            <div className="mt-1 text-xs text-slate-500">{timeAgo(a.createdAt)} • {a.createdBy}</div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => approveNext(a.id)}>
+                              <Check className="h-4 w-4" /> Approve
+                            </Button>
+                            <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => rejectApproval(a.id)}>
+                              <X className="h-4 w-4" /> Reject
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {!approvals.filter((a) => a.status === "Pending").length ? <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">No pending approvals.</div> : null}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button variant="outline" onClick={() => setTab("approvals")}>
+                      <ChevronRight className="h-4 w-4" /> Open approvals
+                    </Button>
+                    <Button variant="outline" onClick={() => setVipReqOpen(true)}>
+                      <Crown className="h-4 w-4" /> VIP exception
+                    </Button>
+                  </div>
+                </Section>
+              </div>
+            ) : null}
+
+            {tab === "sessions" ? (
+              <div className="flex flex-col gap-4">
+                <Section title="Search and filters" subtitle="Coordinator view" right={<Pill label="Core" tone="neutral" />}>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div className="text-xs font-semibold text-slate-600">Search</div>
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2">
+                      <Search className="h-4 w-4 text-slate-500" />
+                      <input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="ref, vehicle, site, tag..."
+                        className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <Select
+                        label="Status"
+                        value={statusFilter}
+                        onChange={(v) => setStatusFilter(v as any)}
+                        options={[
+                          { value: "All", label: "All" },
+                          ...(["Draft", "Pending approval", "Confirmed", "In progress", "Completed", "Cancelled"] as SessionStatus[]).map((x) => ({ value: x, label: x })),
+                        ]}
+                      />
+                      <Select
+                        label="Vehicle"
+                        value={vehicleFilter}
+                        onChange={setVehicleFilter}
+                        options={[{ value: "All", label: "All" }, ...vehicles.map((v) => ({ value: v.id, label: v.label }))]}
+                      />
+                      <Select
+                        label="Site"
+                        value={siteFilter}
+                        onChange={setSiteFilter}
+                        options={[{ value: "All", label: "All" }, ...sites.map((s) => ({ value: s.id, label: s.name }))]}
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setQ("");
+                          setStatusFilter("All");
+                          setVehicleFilter("All");
+                          setSiteFilter("All");
+                          toast({ title: "Reset", message: "Filters reset.", kind: "info" });
+                        }}
+                      >
+                        <Filter className="h-4 w-4" /> Reset
+                      </Button>
+                      <Button variant="outline" onClick={exportCSV}>
+                        <Download className="h-4 w-4" /> CSV
+                      </Button>
+                      <Button variant="primary" onClick={() => setCreateOpen(true)}>
+                        <Plus className="h-4 w-4" /> New
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Best practice: store purpose tags, cost center, and project tag on every charging session.
+                  </div>
+                </Section>
+
+                <Section title="Sessions" subtitle="Pre-booked corporate charging sessions." right={<Pill label={`${filteredSessions.length}`} tone="neutral" />}>
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Ref</th>
+                          <th className="px-4 py-3 font-semibold">When</th>
+                          <th className="px-4 py-3 font-semibold">Vehicle</th>
+                          <th className="px-4 py-3 font-semibold">Site</th>
+                          <th className="px-4 py-3 font-semibold">kWh and budget</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredSessions.map((s) => {
+                          const v = vehicleById[s.vehicleId];
+                          const site = siteById[s.siteId];
+                          return (
+                            <tr key={s.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                              <td className="px-4 py-3">
+                                <div className="font-semibold text-slate-900">{s.ref}</div>
+                                <div className="mt-1 text-xs text-slate-500">{s.id}</div>
+                              </td>
+                              <td className="px-4 py-3 text-slate-700">{fmtDateTime(s.scheduledAt)}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <div className="font-semibold text-slate-900">{v?.label || s.vehicleId}</div>
+                                  {v?.vip ? <Pill label="VIP" tone="info" /> : null}
+                                  <Pill label={v ? v.ownerType : "-"} tone="neutral" />
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500">{v ? `${v.ownerName} • ${v.costCenter}` : "-"}</div>
+                              </td>
+                              <td className="px-4 py-3 text-slate-700">{site?.name || s.siteId}</td>
+                              <td className="px-4 py-3">
+                                <Pill label={`${s.expectedKWh} kWh`} tone="neutral" />
+                                <div className="mt-1 text-xs text-slate-500">Budget {formatUGX(s.maxBudgetUGX)} • {s.connector}</div>
+                              </td>
+                              <td className="px-4 py-3"><Pill label={s.status} tone={statusTone(s.status)} /></td>
+                              <td className="px-4 py-3">
+                                <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => openSession(s.id)}>
+                                  <ChevronRight className="h-4 w-4" /> Open
+                                </Button>
                               </td>
                             </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Section>
-                </div>
+                          );
+                        })}
+                        {!filteredSessions.length ? (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-10">
+                              <Empty title="No sessions" subtitle="Create a session or change filters." />
+                            </td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                </Section>
               </div>
             ) : null}
 
             {tab === "sites" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-5 space-y-4">
-                  <Section title="Charging sites" subtitle="Status, reliability, and connectors." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="space-y-2">
-                      {sites.map((s) => (
-                        <div key={s.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{s.name}</div>
-                                <Pill label={s.status} tone={siteTone(s.status)} />
-                                <Pill label={`${s.reliabilityPct}%`} tone={s.reliabilityPct >= 90 ? "good" : s.reliabilityPct >= 80 ? "warn" : "bad"} />
-                              </div>
-                              <div className="mt-1 text-xs text-slate-500">{s.city} • {s.operator}</div>
-                              <div className="mt-1 text-xs text-slate-500">{s.address}</div>
+              <div className="flex flex-col gap-4">
+                <Section title="Charging sites" subtitle="Status, reliability, and connectors." right={<Pill label="Core" tone="neutral" />}>
+                  <div className="space-y-2">
+                    {sites.map((s) => (
+                      <div key={s.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-slate-900">{s.name}</div>
+                              <Pill label={s.status} tone={siteTone(s.status)} />
+                              <Pill label={`${s.reliabilityPct}%`} tone={s.reliabilityPct >= 90 ? "good" : s.reliabilityPct >= 80 ? "warn" : "bad"} />
                             </div>
-                            <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setSiteFilter(s.id); setTab("sessions"); toast({ title: "Filtered", message: "Showing sessions for this site.", kind: "info" }); }}>
-                              <ChevronRight className="h-4 w-4" /> Sessions
-                            </Button>
+                            <div className="mt-1 text-xs text-slate-500">{s.city} • {s.operator}</div>
+                            <div className="mt-1 text-xs text-slate-500">{s.address}</div>
                           </div>
-                          <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                            <table className="min-w-full text-left text-sm">
-                              <thead className="bg-slate-50 text-xs text-slate-600">
-                                <tr>
-                                  <th className="px-4 py-3 font-semibold">Connector</th>
-                                  <th className="px-4 py-3 font-semibold">Power</th>
-                                  <th className="px-4 py-3 font-semibold">Count</th>
-                                  <th className="px-4 py-3 font-semibold">Price</th>
+                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => { setSiteFilter(s.id); setTab("sessions"); toast({ title: "Filtered", message: "Showing sessions for this site.", kind: "info" }); }}>
+                            <ChevronRight className="h-4 w-4" /> Sessions
+                          </Button>
+                        </div>
+                        <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                          <table className="min-w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-xs text-slate-600">
+                              <tr>
+                                <th className="px-4 py-3 font-semibold">Connector</th>
+                                <th className="px-4 py-3 font-semibold">Power</th>
+                                <th className="px-4 py-3 font-semibold">Count</th>
+                                <th className="px-4 py-3 font-semibold">Price</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {s.connectors.map((c) => (
+                                <tr key={`${s.id}-${c.connector}-${c.powerKW}`} className="border-t border-slate-100">
+                                  <td className="px-4 py-3"><Pill label={c.connector} tone={c.connector.includes("DC") ? "info" : "neutral"} /></td>
+                                  <td className="px-4 py-3 text-slate-700">{c.powerKW} kW</td>
+                                  <td className="px-4 py-3 text-slate-700">{c.count}</td>
+                                  <td className="px-4 py-3 text-slate-700">{formatUGX(c.priceUGXPerKWh)} / kWh</td>
                                 </tr>
-                              </thead>
-                              <tbody>
-                                {s.connectors.map((c) => (
-                                  <tr key={`${s.id}-${c.connector}-${c.powerKW}`} className="border-t border-slate-100">
-                                    <td className="px-4 py-3"><Pill label={c.connector} tone={c.connector.includes("DC") ? "info" : "neutral"} /></td>
-                                    <td className="px-4 py-3 text-slate-700">{c.powerKW} kW</td>
-                                    <td className="px-4 py-3 text-slate-700">{c.count}</td>
-                                    <td className="px-4 py-3 text-slate-700">{formatUGX(c.priceUGXPerKWh)} / kWh</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+
+                <Section title="Site utilization" subtitle="Premium: detect over-capacity time windows." right={<Pill label="Premium" tone="info" />}>
+                  <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                    <div className="text-sm font-semibold text-slate-900">Over-capacity alerts</div>
+                    <div className="mt-1 text-xs text-slate-500">If sessions scheduled exceed connector capacity per hour.</div>
+                    <div className="mt-3 space-y-2">
+                      {siteCapacityByHour.congested.slice(0, 6).map((c) => (
+                        <div key={`${c.siteId}-${c.h}`} className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+                          {siteById[c.siteId]?.name || c.siteId} at {c.h}:00 is over capacity ({c.count}/{c.cap}).
                         </div>
                       ))}
+                      {!siteCapacityByHour.congested.length ? (
+                        <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">No over-capacity windows detected.</div>
+                      ) : null}
                     </div>
-                  </Section>
-                </div>
 
-                <div className="lg:col-span-7 space-y-4">
-                  <Section title="Site utilization" subtitle="Premium: detect over-capacity time windows." right={<Pill label="Premium" tone="info" />}>
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                      <div className="text-sm font-semibold text-slate-900">Over-capacity alerts</div>
-                      <div className="mt-1 text-xs text-slate-500">If sessions scheduled exceed connector capacity per hour.</div>
-                      <div className="mt-3 space-y-2">
-                        {siteCapacityByHour.congested.slice(0, 6).map((c) => (
-                          <div key={`${c.siteId}-${c.h}`} className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
-                            {siteById[c.siteId]?.name || c.siteId} at {c.h}:00 is over capacity ({c.count}/{c.cap}).
-                          </div>
-                        ))}
-                        {!siteCapacityByHour.congested.length ? (
-                          <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">No over-capacity windows detected.</div>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                        Premium: you can add load management rules and stagger sessions by connector power.
-                      </div>
+                    <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
+                      Premium: you can add load management rules and stagger sessions by connector power.
                     </div>
-                  </Section>
-                </div>
+                  </div>
+                </Section>
               </div>
             ) : null}
 
@@ -2067,175 +2054,167 @@ export default function CorporatePayEVChargingSchedulingV2() {
             ) : null}
 
             {tab === "vip" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-6 space-y-4">
-                  <Section title="Vehicles" subtitle="Company, employee, and visitor EVs." right={<Pill label={`${vehicles.length}`} tone="neutral" />}>
-                    <div className="space-y-2">
-                      {vehicles.map((v) => (
-                        <div key={v.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{v.label}</div>
-                                <Pill label={v.ownerType} tone="neutral" />
-                                {v.vip ? <Pill label="VIP" tone="info" /> : null}
-                                <Pill label={`${v.batteryKWh}kWh`} tone="neutral" />
-                              </div>
-                              <div className="mt-1 text-xs text-slate-500">Owner: {v.ownerName}</div>
-                              <div className="mt-1 text-xs text-slate-500">Cost center: {v.costCenter} • Group: {v.group}</div>
+              <div className="flex flex-col gap-4">
+                <Section title="Vehicles" subtitle="Company, employee, and visitor EVs." right={<Pill label={`${vehicles.length}`} tone="neutral" />}>
+                  <div className="space-y-2">
+                    {vehicles.map((v) => (
+                      <div key={v.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-slate-900">{v.label}</div>
+                              <Pill label={v.ownerType} tone="neutral" />
+                              {v.vip ? <Pill label="VIP" tone="info" /> : null}
+                              <Pill label={`${v.batteryKWh}kWh`} tone="neutral" />
                             </div>
-                            <Button
-                              variant="primary"
-                              className="px-3 py-2 text-xs"
-                              onClick={() => {
-                                setDraft((p) => ({
-                                  ...p,
-                                  vehicleId: v.id,
-                                  category: v.vip ? "Premium" : "Standard",
-                                  connector: v.vip ? "CCS2 (DC)" : "Type 2 (AC)",
-                                  purpose: v.ownerType === "Visitor" ? "Visitor" : "Operations",
-                                  tags: v.vip ? "VIP" : "Operations",
-                                  costCenter: v.costCenter,
-                                  projectTag: v.ownerType === "Visitor" ? "Visitor charging" : "Charging",
-                                  prioritySlot: v.vip,
-                                }));
-                                setCreateStep(1);
-                                setCreateOpen(true);
-                              }}
-                            >
-                              <Zap className="h-4 w-4" /> Schedule
-                            </Button>
+                            <div className="mt-1 text-xs text-slate-500">Owner: {v.ownerName}</div>
+                            <div className="mt-1 text-xs text-slate-500">Cost center: {v.costCenter} • Group: {v.group}</div>
                           </div>
+                          <Button
+                            variant="primary"
+                            className="px-3 py-2 text-xs"
+                            onClick={() => {
+                              setDraft((p) => ({
+                                ...p,
+                                vehicleId: v.id,
+                                category: v.vip ? "Premium" : "Standard",
+                                connector: v.vip ? "CCS2 (DC)" : "Type 2 (AC)",
+                                purpose: v.ownerType === "Visitor" ? "Visitor" : "Operations",
+                                tags: v.vip ? "VIP" : "Operations",
+                                costCenter: v.costCenter,
+                                projectTag: v.ownerType === "Visitor" ? "Visitor charging" : "Charging",
+                                prioritySlot: v.vip,
+                              }));
+                              setCreateStep(1);
+                              setCreateOpen(true);
+                            }}
+                          >
+                            <Zap className="h-4 w-4" /> Schedule
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  </Section>
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
 
-                <div className="lg:col-span-6 space-y-4">
-                  <Section title="VIP exceptions" subtitle="Premium: DC, priority slot, after-hours" right={<Pill label="Premium" tone="info" />}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="primary" onClick={() => setVipReqOpen(true)}>
-                        <Crown className="h-4 w-4" /> Request exception
-                      </Button>
-                      <Button variant="outline" onClick={() => setTab("approvals")}>
-                        <ChevronRight className="h-4 w-4" /> View approvals
-                      </Button>
-                    </div>
+                <Section title="VIP exceptions" subtitle="Premium: DC, priority slot, after-hours" right={<Pill label="Premium" tone="info" />}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="primary" onClick={() => setVipReqOpen(true)}>
+                      <Crown className="h-4 w-4" /> Request exception
+                    </Button>
+                    <Button variant="outline" onClick={() => setTab("approvals")}>
+                      <ChevronRight className="h-4 w-4" /> View approvals
+                    </Button>
+                  </div>
 
-                    <div className="mt-3 space-y-2">
-                      {vipExceptions.map((x) => (
-                        <div key={x.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Pill label={x.exceptionType} tone="neutral" />
-                                <Pill label={x.status} tone={approvalTone(x.status)} />
-                                <Pill label={`${fmtDate(x.validFrom)} to ${fmtDate(x.validTo)}`} tone="info" />
-                              </div>
-                              <div className="mt-2 text-sm font-semibold text-slate-900">{vehicleLabel(x.vehicleId)}</div>
-                              <div className="mt-1 text-xs text-slate-500">Requested by {x.requestedBy} • {x.reason}</div>
-                              {x.approvalId ? <div className="mt-2 text-xs text-slate-500">Approval: {x.approvalId}</div> : null}
+                  <div className="mt-3 space-y-2">
+                    {vipExceptions.map((x) => (
+                      <div key={x.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Pill label={x.exceptionType} tone="neutral" />
+                              <Pill label={x.status} tone={approvalTone(x.status)} />
+                              <Pill label={`${fmtDate(x.validFrom)} to ${fmtDate(x.validTo)}`} tone="info" />
                             </div>
-                            <Crown className={cn("h-5 w-5", x.status === "Approved" ? "text-amber-500" : "text-slate-300")} />
+                            <div className="mt-2 text-sm font-semibold text-slate-900">{vehicleLabel(x.vehicleId)}</div>
+                            <div className="mt-1 text-xs text-slate-500">Requested by {x.requestedBy} • {x.reason}</div>
+                            {x.approvalId ? <div className="mt-2 text-xs text-slate-500">Approval: {x.approvalId}</div> : null}
                           </div>
+                          <Crown className={cn("h-5 w-5", x.status === "Approved" ? "text-amber-500" : "text-slate-300")} />
                         </div>
-                      ))}
-                      {!vipExceptions.length ? <Empty title="No VIP exceptions" subtitle="Request an exception to allow DC, priority, or after-hours." /> : null}
-                    </div>
-                  </Section>
-                </div>
+                      </div>
+                    ))}
+                    {!vipExceptions.length ? <Empty title="No VIP exceptions" subtitle="Request an exception to allow DC, priority, or after-hours." /> : null}
+                  </div>
+                </Section>
               </div>
             ) : null}
 
             {tab === "approvals" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
-                  <Section title="Approvals" subtitle="Policy exceptions for DC, priority, after-hours." right={<Pill label="Core" tone="neutral" />}>
-                    <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
-                      Approvals are required before a session is sent to the station booking engine.
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button variant="primary" onClick={() => setVipReqOpen(true)}>
-                        <Crown className="h-4 w-4" /> VIP exception
-                      </Button>
-                      <Button variant="outline" onClick={() => toast({ title: "Tip", message: "Map these approvals to your global Approval Workflow Builder.", kind: "info" })}>
-                        <Info className="h-4 w-4" /> Tip
-                      </Button>
-                    </div>
-                  </Section>
-                </div>
+              <div className="flex flex-col gap-4">
+                <Section title="Approvals" subtitle="Policy exceptions for DC, priority, after-hours." right={<Pill label="Core" tone="neutral" />}>
+                  <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
+                    Approvals are required before a session is sent to the station booking engine.
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button variant="primary" onClick={() => setVipReqOpen(true)}>
+                      <Crown className="h-4 w-4" /> VIP exception
+                    </Button>
+                    <Button variant="outline" onClick={() => toast({ title: "Tip", message: "Map these approvals to your global Approval Workflow Builder.", kind: "info" })}>
+                      <Info className="h-4 w-4" /> Tip
+                    </Button>
+                  </div>
+                </Section>
 
-                <div className="lg:col-span-8 space-y-4">
-                  <Section title="Approval requests" subtitle="Approve or reject with audit trail." right={<Pill label={`${approvals.length}`} tone="neutral" />}>
-                    <div className="space-y-2">
-                      {approvals
-                        .slice()
-                        .sort((a, b) => b.createdAt - a.createdAt)
-                        .map((a) => {
-                          const pendingIdx = a.steps.findIndex((s) => s.status === "Pending");
-                          const pending = pendingIdx >= 0 ? a.steps[pendingIdx] : null;
-                          return (
-                            <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                                <div>
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <Pill label={a.scope} tone="neutral" />
-                                    <Pill label={a.status} tone={approvalTone(a.status)} />
-                                    <Pill label={a.id} tone="neutral" />
-                                  </div>
-                                  <div className="mt-2 text-sm font-semibold text-slate-900">{a.reason}</div>
-                                  <div className="mt-1 text-xs text-slate-500">Created {timeAgo(a.createdAt)} • {a.createdBy}</div>
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    {a.flags.map((f, idx) => <Pill key={`${a.id}-f-${idx}`} label={f} tone={f.toLowerCase().includes("vip") ? "info" : "neutral"} />)}
-                                  </div>
-                                  {pending ? (
-                                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700 ring-1 ring-slate-200">
-                                      Next: <span className="font-semibold">{pending.role}</span> ({pending.assignee}) • SLA {pending.slaHours}h
-                                    </div>
-                                  ) : null}
-                                </div>
-
+                <Section title="Approval requests" subtitle="Approve or reject with audit trail." right={<Pill label={`${approvals.length}`} tone="neutral" />}>
+                  <div className="space-y-2">
+                    {approvals
+                      .slice()
+                      .sort((a, b) => b.createdAt - a.createdAt)
+                      .map((a) => {
+                        const pendingIdx = a.steps.findIndex((s) => s.status === "Pending");
+                        const pending = pendingIdx >= 0 ? a.steps[pendingIdx] : null;
+                        return (
+                          <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                              <div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => approveNext(a.id)} disabled={a.status !== "Pending"}>
-                                    <Check className="h-4 w-4" /> Approve
-                                  </Button>
-                                  <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => rejectApproval(a.id)} disabled={a.status !== "Pending"}>
-                                    <X className="h-4 w-4" /> Reject
-                                  </Button>
-                                  {a.scope === "Session" ? (
-                                    <Button
-                                      variant="outline"
-                                      className="px-3 py-2 text-xs"
-                                      onClick={() => {
-                                        openSession(a.scopeId);
-                                      }}
-                                    >
-                                      <ChevronRight className="h-4 w-4" /> Open session
-                                    </Button>
-                                  ) : null}
+                                  <Pill label={a.scope} tone="neutral" />
+                                  <Pill label={a.status} tone={approvalTone(a.status)} />
+                                  <Pill label={a.id} tone="neutral" />
                                 </div>
+                                <div className="mt-2 text-sm font-semibold text-slate-900">{a.reason}</div>
+                                <div className="mt-1 text-xs text-slate-500">Created {timeAgo(a.createdAt)} • {a.createdBy}</div>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {a.flags.map((f, idx) => <Pill key={`${a.id}-f-${idx}`} label={f} tone={f.toLowerCase().includes("vip") ? "info" : "neutral"} />)}
+                                </div>
+                                {pending ? (
+                                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-700 ring-1 ring-slate-200">
+                                    Next: <span className="font-semibold">{pending.role}</span> ({pending.assignee}) • SLA {pending.slaHours}h
+                                  </div>
+                                ) : null}
                               </div>
 
-                              <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                                {a.steps.map((s) => (
-                                  <div key={s.id} className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                                    <div className="flex items-center justify-between gap-3">
-                                      <div className="text-sm font-semibold text-slate-800">{s.role}</div>
-                                      <Pill label={s.status} tone={approvalTone(s.status)} />
-                                    </div>
-                                    <div className="mt-1 text-xs text-slate-500">Assignee: {s.assignee} • SLA {s.slaHours}h</div>
-                                    {s.decidedAt ? <div className="mt-1 text-xs text-slate-500">Decided {fmtDateTime(s.decidedAt)} • {s.note || ""}</div> : null}
-                                  </div>
-                                ))}
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => approveNext(a.id)} disabled={a.status !== "Pending"}>
+                                  <Check className="h-4 w-4" /> Approve
+                                </Button>
+                                <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => rejectApproval(a.id)} disabled={a.status !== "Pending"}>
+                                  <X className="h-4 w-4" /> Reject
+                                </Button>
+                                {a.scope === "Session" ? (
+                                  <Button
+                                    variant="outline"
+                                    className="px-3 py-2 text-xs"
+                                    onClick={() => {
+                                      openSession(a.scopeId);
+                                    }}
+                                  >
+                                    <ChevronRight className="h-4 w-4" /> Open session
+                                  </Button>
+                                ) : null}
                               </div>
                             </div>
-                          );
-                        })}
-                      {!approvals.length ? <Empty title="No approvals" subtitle="Policy exceptions will appear here." /> : null}
-                    </div>
-                  </Section>
-                </div>
+
+                            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                              {a.steps.map((s) => (
+                                <div key={s.id} className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="text-sm font-semibold text-slate-800">{s.role}</div>
+                                    <Pill label={s.status} tone={approvalTone(s.status)} />
+                                  </div>
+                                  <div className="mt-1 text-xs text-slate-500">Assignee: {s.assignee} • SLA {s.slaHours}h</div>
+                                  {s.decidedAt ? <div className="mt-1 text-xs text-slate-500">Decided {fmtDateTime(s.decidedAt)} • {s.note || ""}</div> : null}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    {!approvals.length ? <Empty title="No approvals" subtitle="Policy exceptions will appear here." /> : null}
+                  </div>
+                </Section>
               </div>
             ) : null}
 

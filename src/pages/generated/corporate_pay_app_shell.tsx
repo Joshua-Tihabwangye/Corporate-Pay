@@ -44,6 +44,10 @@ import {
 
 import { consolePages } from "../pageRegistry";
 
+// Logo imports
+import logoIcon from "../../assets/logos/logo-icon.png";
+import logoHorizontal from "../../assets/logos/logo-horizontal.png";
+
 const EVZ = {
   green: "#03CD8C",
   orange: "#F77F00",
@@ -243,9 +247,7 @@ function Sidebar({
     <div className={cn("flex h-full flex-col", collapsed ? "px-1" : "px-2", bg)}>
       {/* Logo */}
       <div className={cn("flex items-center gap-2 border-b py-3", borderColor, collapsed ? "justify-center px-1" : "px-2")}>
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white" style={{ background: EVZ.green }}>
-          <Sparkles className="h-4 w-4" />
-        </div>
+        <img src={logoIcon} alt="EVzone CorporatePay" className="h-8 w-8 shrink-0 rounded-xl object-contain" />
         {!collapsed && (
           <div className="min-w-0">
             <div className={cn("truncate text-xs font-bold", textPrimary)}>CorporatePay</div>
@@ -703,9 +705,7 @@ function AuthLogin({
           <div className="border-b border-slate-200 bg-white px-6 py-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="grid h-12 w-12 place-items-center rounded-2xl text-white" style={{ background: EVZ.green }}>
-                  <Sparkles className="h-6 w-6" />
-                </div>
+                <img src={logoIcon} alt="EVzone CorporatePay" className="h-12 w-12 rounded-2xl object-contain" />
                 <div>
                   <div className="text-sm font-semibold text-slate-900">CorporatePay</div>
                   <div className="mt-1 text-xs text-slate-500">Login and org selector</div>
