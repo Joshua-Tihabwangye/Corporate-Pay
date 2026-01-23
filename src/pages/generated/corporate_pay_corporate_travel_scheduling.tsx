@@ -1753,8 +1753,8 @@ export default function CorporatePayCorporateTravelSchedulingV2() {
             ) : null}
 
             {tab === "bookings" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-4">
                   <Section title="Search and filters" subtitle="Coordinator view." right={<Pill label="Core" tone="neutral" />}>
                     <div className="rounded-2xl border border-slate-200 bg-white p-3">
                       <div className="text-xs font-semibold text-slate-600">Search</div>
@@ -1810,7 +1810,7 @@ export default function CorporatePayCorporateTravelSchedulingV2() {
                   </Section>
                 </div>
 
-                <div className="lg:col-span-8">
+                <div>
                   <Section title="Bookings" subtitle="Pre-booked rides and scheduled transfers." right={<Pill label={`${filteredBookings.length}`} tone="neutral" />}>
                     <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
                       <table className="min-w-full text-left text-sm">
@@ -2234,8 +2234,20 @@ export default function CorporatePayCorporateTravelSchedulingV2() {
             ) : null}
 
             {tab === "insights" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-5 space-y-4">
+              <div className="flex flex-col gap-4">
+                <Section title="Program insights" subtitle="Policy compliance and quality indicators." right={<Pill label="Premium" tone="info" />}>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <Metric title="After-hours" value={`${bookings.filter((b) => isAfterHours(b.scheduledAt, policy.workStart, policy.workEnd)).length}`} sub="Bookings outside window" icon={<Timer className="h-5 w-5" />} tone="warn" />
+                    <Metric title="Premium" value={`${bookings.filter((b) => b.category === "Premium").length}`} sub="Premium category" icon={<Crown className="h-5 w-5" />} tone="info" />
+                    <Metric title="Purpose missing" value={`${bookings.filter((b) => b.purpose === "Other" && !b.purposeOther).length}`} sub="Should be 0" icon={<AlertTriangle className="h-5 w-5" />} tone="bad" />
+                  </div>
+
+                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Premium: peak time detection can be expanded with traffic data and city events calendars.
+                  </div>
+                </Section>
+  
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <Section title="Peak time detection" subtitle="Premium: smart scheduling suggestions." right={<Pill label="Premium" tone="info" />}>
                     <div className="rounded-3xl border border-slate-200 bg-white p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -2283,26 +2295,12 @@ export default function CorporatePayCorporateTravelSchedulingV2() {
                     </div>
                   </Section>
                 </div>
-
-                <div className="lg:col-span-7 space-y-4">
-                  <Section title="Program insights" subtitle="Policy compliance and quality indicators." right={<Pill label="Premium" tone="info" />}>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <Metric title="After-hours" value={`${bookings.filter((b) => isAfterHours(b.scheduledAt, policy.workStart, policy.workEnd)).length}`} sub="Bookings outside window" icon={<Timer className="h-5 w-5" />} tone="warn" />
-                      <Metric title="Premium" value={`${bookings.filter((b) => b.category === "Premium").length}`} sub="Premium category" icon={<Crown className="h-5 w-5" />} tone="info" />
-                      <Metric title="Purpose missing" value={`${bookings.filter((b) => b.purpose === "Other" && !b.purposeOther).length}`} sub="Should be 0" icon={<AlertTriangle className="h-5 w-5" />} tone="bad" />
-                    </div>
-
-                    <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Premium: peak time detection can be expanded with traffic data and city events calendars.
-                    </div>
-                  </Section>
-                </div>
               </div>
             ) : null}
 
             {tab === "approvals" ? (
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                <div className="lg:col-span-4 space-y-4">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-4">
                   <Section title="Approvals" subtitle="VIP, premium, and after-hours exceptions." right={<Pill label="Core" tone="neutral" />}>
                     <div className="rounded-2xl bg-slate-50 p-3 text-xs text-slate-700">
                       Approvals are required before sending some bookings to dispatch.
@@ -2318,7 +2316,7 @@ export default function CorporatePayCorporateTravelSchedulingV2() {
                   </Section>
                 </div>
 
-                <div className="lg:col-span-8 space-y-4">
+                <div className="space-y-4">
                   <Section title="Approval requests" subtitle="Approve or reject with audit trail." right={<Pill label={`${approvals.length}`} tone="neutral" />}>
                     <div className="space-y-2">
                       {approvals
