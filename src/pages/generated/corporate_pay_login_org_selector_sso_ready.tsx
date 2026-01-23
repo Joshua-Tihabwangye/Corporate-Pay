@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ROUTES } from "../../routes/paths";
+import { useAuth } from "../../context/AuthContext";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -414,6 +415,9 @@ type AccessTicket = {
 
 export default function CorporatePayLoginOrgSelectorV2() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+  const from = location.state?.from?.pathname || ROUTES.CONSOLE.DASHBOARD;
   const [toasts, setToasts] = useState<
     Array<{ id: string; title: string; message?: string; kind: string }>
   >([]);
@@ -1071,8 +1075,9 @@ export default function CorporatePayLoginOrgSelectorV2() {
                     <Button
                       variant="primary"
                       onClick={() => {
-                        toast({ title: "Continue", message: "Routing to Corporate Dashboard...", kind: "success" });
-                        navigate(ROUTES.CONSOLE.DASHBOARD);
+                        login();
+                        toast({ title: "Continue", message: "Redirecting...", kind: "success" });
+                        navigate(from, { replace: true });
                       }}
                     >
                       <ChevronRight className="h-4 w-4" /> Continue to dashboard

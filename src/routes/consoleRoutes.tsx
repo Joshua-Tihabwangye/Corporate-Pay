@@ -4,6 +4,7 @@ import { RouteObject } from 'react-router-dom';
 import Console from '../pages/Console';
 import PagePreview from '../pages/PagePreview';
 import { ROUTES } from './paths';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 /**
  * Console routes - main dashboard area with dynamic page loading
@@ -11,15 +12,15 @@ import { ROUTES } from './paths';
 export const consoleRoutes: RouteObject[] = [
     {
         path: ROUTES.CONSOLE.ROOT,
-        element: React.createElement(Console),
+        element: <ProtectedRoute>{React.createElement(Console)}</ProtectedRoute>,
     },
     {
         path: `${ROUTES.CONSOLE.ROOT}/:pageId`,
-        element: React.createElement(Console),
+        element: <ProtectedRoute>{React.createElement(Console)}</ProtectedRoute>,
     },
     {
         path: `${ROUTES.CONSOLE.ROOT}/:pageId/:subPageId`,
-        element: React.createElement(Console),
+        element: <ProtectedRoute>{React.createElement(Console)}</ProtectedRoute>,
     },
 ];
 

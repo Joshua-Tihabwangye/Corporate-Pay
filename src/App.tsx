@@ -8,10 +8,12 @@ import {
   consoleRoutes,
   previewRoutes
 } from './routes';
+import { AuthProvider } from './context/AuthContext';
 
 export default function App() {
   return (
-    <Routes>
+    <AuthProvider>
+      <Routes>
       {/* Public routes */}
       {publicRoutes.map((route) => (
         <Route key={route.path} path={route.path} element={route.element} />
@@ -35,5 +37,6 @@ export default function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
     </Routes>
+    </AuthProvider>
   );
 }
