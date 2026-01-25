@@ -389,6 +389,11 @@ export default function ApprovalsInbox() {
 
   const [comment, setComment] = useState("");
 
+  // Review Modal state
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewAction, setReviewAction] = useState<"Approve" | "Reject" | null>(null);
+  const [reviewComment, setReviewComment] = useState("");
+
   const doBatch = (action: "Approve" | "Reject") => {
     if (!selectedIds.length) {
       toast({ kind: "warn", title: "No items selected" });
@@ -404,7 +409,17 @@ export default function ApprovalsInbox() {
 
   const doSingle = (action: "Approve" | "Reject") => {
     if (!active) return;
-    toast({ kind: "success", title: `${action}d`, message: `${active.id} updated.` });
+    // Open review modal instead of immediate action
+    setReviewAction(action);
+    setReviewComment("");
+    setReviewOpen(true);
+  };
+
+  const confirmReview = () => {
+    if (!active || !reviewAction) return;
+    toast({ kind: "success", title: `${reviewAction}d`, message: `${active.id} updated.${reviewComment ? " Comment added." : ""}` });
+    setReviewOpen(false);
+    setDrawerOpen(false);
   };
 
   const copy = async (text: string) => {
@@ -766,6 +781,129 @@ export default function ApprovalsInbox() {
           </div>
         ) : null}
       </Drawer>
+
+      {/* Review Modal */}
+      <Modal
+        open={reviewOpen}
+        title={reviewAction === "Approve" ? "Confirm Approval" : "Confirm Rejection"}
+        subtitle={active ? `${active.id} - ${active.requestType}` : undefined}
+        onClose={() => setReviewOpen(false)}
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setReviewOpen(false)}>Cancel</Button>
+            <Button variant={reviewAction === "Approve" ? "primary" : "accent"} onClick={confirmReview}>
+              {reviewAction === "Approve" ? <CheckCircle2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
+              Confirm {reviewAction}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+            <div className="flex gap-3">
+              <Info className="h-5 w-5 text-blue-700" />
+              <div className="text-sm text-blue-800">
+                {reviewAction === "Approve" 
+                  ? "This will approve the request and notify the requester." 
+                  : "This will reject the request. Please provide a reason."}
+              </div>
+            </div>
+          </div>
+          <TextArea
+            label={reviewAction === "Reject" ? "Rejection Reason (Required)" : "Comment (Optional)"}
+            value={reviewComment}
+            onChange={setReviewComment}
+            placeholder={reviewAction === "Reject" ? "Explain why this request is being rejected..." : "Add any notes for audit trail..."}
+            rows={4}
+          />
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+function Modal({
+  open,
+  title,
+  subtitle,
+  children,
+  onClose,
+  footer,
+}: {
+  open: boolean;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  onClose: () => void;
+  footer?: React.ReactNode;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => (e.key === "Escape" ? onClose() : null);
+    if (open) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open ? (
+        <>
+          <motion.div
+            className="fixed inset-0 z-40 bg-black/35"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-x-0 top-[10vh] z-50 mx-auto w-[min(600px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+              <div>
+                <div className="text-lg font-semibold text-slate-900">{title}</div>
+                {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
+              </div>
+              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5">{children}</div>
+            {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
+          </motion.div>
+        </>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-semibold text-slate-500">{label}</label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 transition focus:outline-none focus:ring-4 focus:ring-emerald-100"
+      />
     </div>
   );
 }
