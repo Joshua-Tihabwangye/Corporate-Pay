@@ -1436,7 +1436,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
 				</div>
 			</Modal>
 
-			<div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6">
+			<div className="mx-auto max-w-[95%] px-4 py-6 md:px-6">
 				<div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)]">
 					{/* Header */}
 					<div className="border-b border-slate-200 bg-white px-4 py-4 md:px-6">
@@ -2410,7 +2410,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
 			</Modal>
 
 			<footer className="border-t border-slate-200 bg-white/60 py-6">
-				<div className="mx-auto max-w-[1400px] px-4 text-xs text-slate-500 md:px-6">
+				<div className="mx-auto max-w-[95%] px-4 text-xs text-slate-500 md:px-6">
 					C Global Search & Command Center v2: unified search +
 					premium saved searches per role + operator shortcuts +
 					audited quick actions.

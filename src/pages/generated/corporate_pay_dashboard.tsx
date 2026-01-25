@@ -1199,7 +1199,7 @@ export default function CorporatePayDashboardV2() {
         onDismiss={(id) => setToasts((p) => p.filter((x) => x.id !== id))}
       />
 
-      <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6">
+      <div className="mx-auto max-w-[95%] px-4 py-6 md:px-6">
         <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)] transition-colors dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
           {/* Header */}
           <div className="border-b border-slate-200 bg-white px-4 py-4 transition-colors md:px-6 dark:border-slate-800 dark:bg-slate-900">
@@ -2072,7 +2072,7 @@ export default function CorporatePayDashboardV2() {
       </Modal>
 
       <footer className="border-t border-slate-200 bg-white/60 py-6">
-        <div className="mx-auto max-w-[1400px] px-4 text-xs text-slate-500 md:px-6">
+        <div className="mx-auto max-w-[95%] px-4 text-xs text-slate-500 md:px-6">
           A Corporate Dashboard v2: KPIs, account health, issues, heatmaps, quick actions, and premium insights with forecasts by group/module/marketplace.
         </div>
       </footer>

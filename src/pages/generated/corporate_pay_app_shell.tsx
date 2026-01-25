@@ -257,7 +257,7 @@ function Sidebar({
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto py-2 scroll-smooth scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
         <div className="space-y-0.5">
           {nav.map((item) => (
             <NavRow key={item.id} item={item} active={active} onSelect={onSelect} collapsed={collapsed} theme={theme} />
@@ -1411,7 +1411,7 @@ export default function CorporatePayFinalAppShellV3() {
       {/* Support role banner */}
       {isSupportRole ? (
         <div className="sticky top-0 z-30 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900">
-          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3">
+          <div className="mx-auto flex max-w-[95%] items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4" /> Support role active. Sessions are visible and auditable. No silent actions.
             </div>
@@ -1423,7 +1423,7 @@ export default function CorporatePayFinalAppShellV3() {
       {/* Suspended banner */}
       {health === "Suspended" ? (
         <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-900">
-          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3">
+          <div className="mx-auto flex max-w-[95%] items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" /> Services are currently suspended due to payment non-compliance.
             </div>
@@ -1437,7 +1437,7 @@ export default function CorporatePayFinalAppShellV3() {
       <div className="flex h-screen">
         <div className="flex flex-1 overflow-hidden bg-white transition-colors dark:bg-slate-950">
           {/* Desktop sidebar */}
-          <div className={cn("hidden h-full border-r border-slate-200 bg-slate-50 transition-colors lg:block dark:border-slate-800 dark:bg-slate-900", sidebarCollapsed ? "w-[56px]" : "w-[200px]")}>
+          <div className={cn("hidden h-screen sticky top-0 border-r border-slate-200 bg-slate-50 transition-colors lg:block dark:border-slate-800 dark:bg-slate-900", sidebarCollapsed ? "w-[56px]" : "w-[200px]")}>
             <Sidebar nav={nav} active={active} onSelect={(id) => navigate(`${ROUTES.CONSOLE.ROOT}/${id}`)} collapsed={sidebarCollapsed} theme={theme} onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))} />
           </div>
 

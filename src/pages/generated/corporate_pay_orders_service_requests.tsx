@@ -1432,7 +1432,7 @@ export default function CorporatePayOrdersFulfillmentV2() {
     <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
       <ToastStack toasts={toasts} onDismiss={(id) => setToasts((p) => p.filter((x) => x.id !== id))} />
 
-      <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6">
+      <div className="mx-auto max-w-[95%] px-4 py-6 md:px-6">
         <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)]">
           {/* Header */}
           <div className="border-b border-slate-200 bg-white px-4 py-4 md:px-6">
@@ -2045,7 +2045,7 @@ export default function CorporatePayOrdersFulfillmentV2() {
           </div>
 
           <footer className="border-t border-slate-200 bg-white/60 py-6">
-            <div className="mx-auto max-w-[1400px] px-4 text-xs text-slate-500 md:px-6">
+            <div className="mx-auto max-w-[95%] px-4 text-xs text-slate-500 md:px-6">
               T Orders, Service Requests and Fulfillment v2. Core: track POs, bookings, deliveries, and ride schedules with timelines and proofs plus exception handling. Premium: vendor SLA tracking and penalties, quality feedback loop, and automated dispute triggers.
             </div>
           </footer>

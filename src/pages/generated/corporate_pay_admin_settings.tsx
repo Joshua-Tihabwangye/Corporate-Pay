@@ -1091,7 +1091,7 @@ export default function CorporatePayAdminSettingsHubV2() {
     >
       <ToastStack toasts={toasts} onDismiss={(id) => setToasts((p) => p.filter((x) => x.id !== id))} />
 
-      <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6">
+      <div className="mx-auto max-w-[95%] px-4 py-6 md:px-6">
         <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)]">
           {/* Header */}
           <div className="border-b border-slate-200 bg-white px-4 py-4 md:px-6">
@@ -1544,7 +1544,7 @@ export default function CorporatePayAdminSettingsHubV2() {
           </div>
 
           <footer className="border-t border-slate-200 bg-white/60 py-6">
-            <div className="mx-auto max-w-[1400px] px-4 text-xs text-slate-500 md:px-6">
+            <div className="mx-auto max-w-[95%] px-4 text-xs text-slate-500 md:px-6">
               Admin Settings Hub v2: single umbrella page linking to all CorporatePay settings. Includes search, category
               filters, pinned shortcuts, role-gated access requests, and a readiness snapshot.
             </div>
