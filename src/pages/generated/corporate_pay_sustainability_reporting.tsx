@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowLeft,
   AlertTriangle,
   BadgeCheck,
   BarChart3,
@@ -654,6 +656,7 @@ function gradeFromScore(score: number) {
 }
 
 export default function CorporatePaySustainabilityESGReportingV2() {
+  const navigate = useNavigate();
   const GROUPS: GroupName[] = ["Operations", "Sales", "Finance", "Admin", "Procurement"];
   const COST_CENTERS = ["OPS-001", "SALES-TRAVEL", "FIN-OPS", "ADMIN-001", "PROC-001"];
 
@@ -1297,7 +1300,10 @@ export default function CorporatePaySustainabilityESGReportingV2() {
           {/* Header */}
           <div className="border-b border-slate-200 bg-white px-4 py-4 md:px-6">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
+                <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-slate-100 rounded-full text-slate-500">
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
                 <div className="grid h-12 w-12 place-items-center rounded-2xl text-white" style={{ background: EVZ.green }}>
                   <Leaf className="h-6 w-6" />
                 </div>

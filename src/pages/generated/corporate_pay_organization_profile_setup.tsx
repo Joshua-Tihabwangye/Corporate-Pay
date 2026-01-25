@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowLeft,
   AlertTriangle,
   BadgeCheck,
   Building2,
@@ -600,7 +601,10 @@ export default function OrganizationProfileKYB() {
           {/* Header */}
           <div className="border-b border-slate-200 px-4 py-4 md:px-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
+                <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-slate-100 rounded-full text-slate-500">
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
                 <div className="grid h-12 w-12 place-items-center rounded-2xl text-white" style={{ background: EVZ.green }}>
                   <Building2 className="h-6 w-6" />
                 </div>
