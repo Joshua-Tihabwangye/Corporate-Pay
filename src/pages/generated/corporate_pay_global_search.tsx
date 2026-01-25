@@ -437,7 +437,7 @@ function Drawer({
 								<X className="h-5 w-5" />
 							</button>
 						</div>
-						<div className="h-full min-h-0 overflow-auto px-5 py-4">
+						<div className="flex-1 min-h-0 overflow-auto px-5 py-4">
 							{children}
 						</div>
 						{footer ? (

@@ -602,7 +602,7 @@ function Drawer({
                 </button>
               </div>
             </div>
-            <div className="h-full min-h-0 overflow-auto px-5 py-4">{children}</div>
+            <div className="flex-1 min-h-0 overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
           </motion.div>
         </>
