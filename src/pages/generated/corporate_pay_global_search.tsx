@@ -1509,10 +1509,10 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
 								<button
 									type="button"
 									className={cn(
-										"rounded-2xl border px-3 py-2 text-sm font-semibold",
+										"rounded-2xl border px-3 py-2 text-sm font-semibold transition-colors",
 										operatorMode
-											? "border-amber-200 bg-amber-50 text-amber-900"
-											: "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+											? "border-[#064e3b] bg-[#064e3b] text-emerald-100 shadow-sm"
+											: "border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200",
 									)}
 									onClick={() => {
 										setOperatorMode((v) => !v);
@@ -1525,8 +1525,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
 										});
 									}}
 								>
-									<Sparkles className="h-4 w-4" /> Operator
-									mode
+									<Sparkles className="h-4 w-4" /> {operatorMode ? "Disable" : "Enable"} Operator mode
 								</button>
 
 								<Button

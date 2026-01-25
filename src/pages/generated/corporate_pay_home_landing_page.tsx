@@ -118,7 +118,7 @@ function Button({
   onClick?: () => void;
   href?: string;
 }) {
-  const base = "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-4";
+  const base = "inline-flex items-center justify-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold transition focus:outline-none focus:ring-4";
   const variants: Record<string, string> = {
     primary: "text-white shadow-[0_12px_24px_rgba(3,205,140,0.22)] hover:opacity-95 focus:ring-emerald-200",
     accent: "text-white shadow-[0_12px_24px_rgba(247,127,0,0.22)] hover:opacity-95 focus:ring-orange-200",
@@ -233,7 +233,7 @@ function ScrollSpyNav({ active, onJump }: { active: NavKey; onJump: (k: NavKey) 
   ];
 
   return (
-    <nav className="hidden items-center gap-1 lg:flex">
+    <nav className="hidden items-center gap-4 lg:flex">
       {items.map((i) => (
         <button
           key={i.k}
@@ -397,9 +397,9 @@ export default function CorporatePayLandingPageV2Fixed() {
     <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 md:px-6">
+        <div className="mx-auto flex w-full items-center justify-between gap-3 px-8 py-3 md:px-8">
           <div className="flex items-center gap-3">
-            <img src={logoIcon} alt="EVzone CorporatePay" className="h-10 w-10 rounded-2xl object-contain" />
+            <img src={logoIcon} alt="EVzone CorporatePay" className="h-8 w-8 rounded-2xl object-contain" />
             <div>
               <div className="text-sm font-semibold text-slate-900">CorporatePay</div>
               <div className="text-xs text-slate-500">EVzone corporate admin console</div>
@@ -455,7 +455,7 @@ export default function CorporatePayLandingPageV2Fixed() {
               transition={{ duration: 0.18 }}
               className="border-t border-slate-200 bg-white lg:hidden"
             >
-              <div className="mx-auto max-w-[1200px] px-4 py-3 md:px-6">
+              <div className="mx-auto max-w-[95%] px-4 py-3 md:px-6">
                 <div className="grid grid-cols-2 gap-2">
                   {(
                     [
@@ -490,7 +490,7 @@ export default function CorporatePayLandingPageV2Fixed() {
 
       {/* Hero */}
       <main>
-        <div className="mx-auto max-w-[1200px] px-4 py-10 md:px-6 md:py-14">
+        <div className="mx-auto max-w-[95%] px-4 py-10 md:px-6 md:py-14">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <div className="flex flex-wrap items-center gap-2">
@@ -621,7 +621,7 @@ export default function CorporatePayLandingPageV2Fixed() {
         </div>
 
         {/* Product */}
-        <div className="mx-auto max-w-[1200px] px-4 pb-10 md:px-6 md:pb-14">
+        <div className="mx-auto max-w-[95%] px-4 pb-10 md:px-6 md:pb-14">
           <Section
             id="product"
             eyebrow="Product"
