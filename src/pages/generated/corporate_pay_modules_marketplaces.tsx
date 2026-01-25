@@ -467,14 +467,14 @@ function Drawer({
             exit={{ opacity: 0, x: 16 }}
             transition={{ duration: 0.18 }}
             className={cn(
-              "fixed z-50 overflow-hidden border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]",
+              "fixed z-50 flex flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]",
               "left-2 right-2 bottom-2 top-[14vh] rounded-[28px]",
               "lg:left-auto lg:right-4 lg:top-4 lg:bottom-4 lg:w-[560px]"
             )}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 shrink-0">
               <div className="min-w-0">
                 <div className="truncate text-base font-semibold text-slate-900">{title}</div>
                 {subtitle ? <div className="mt-1 text-xs text-slate-600">{subtitle}</div> : null}
@@ -486,8 +486,8 @@ function Drawer({
                 </button>
               </div>
             </div>
-            <div className="h-full min-h-0 overflow-auto px-5 py-4">{children}</div>
-            {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
+            <div className="flex-1 min-h-0 overflow-auto px-5 py-4">{children}</div>
+            {footer ? <div className="border-t border-slate-200 px-5 py-4 shrink-0 bg-white">{footer}</div> : null}
           </motion.div>
         </>
       ) : null}

@@ -52,19 +52,19 @@ export const consoleRoutes: RouteObject[] = [
         element: <ProtectedRoute><AccessRequest /></ProtectedRoute>,
     },
     {
-        path: "/settings/org/entities",
+        path: "/console/settings/org/entities",
         element: <ProtectedRoute><EntityManager /></ProtectedRoute>,
     },
     {
-        path: "/settings/org/kyb",
+        path: "/console/settings/org/kyb",
         element: <ProtectedRoute><KYBManager /></ProtectedRoute>,
     },
     {
-        path: "/settings/modules",
+        path: "/console/settings/modules",
         element: <ProtectedRoute><ModuleManager /></ProtectedRoute>,
     },
     {
-        path: "/settings/org/go-live",
+        path: "/console/settings/org/go-live",
         element: <ProtectedRoute><GoLiveChecklist /></ProtectedRoute>,
     },
     {
@@ -72,55 +72,55 @@ export const consoleRoutes: RouteObject[] = [
         element: <ProtectedRoute><AdminSettings /></ProtectedRoute>,
     },
     {
-        path: "/settings/org/setup",
+        path: "/console/settings/org/setup",
         element: <ProtectedRoute><OrganizationProfileSetup /></ProtectedRoute>,
     },
     {
-        path: "/settings/users",
+        path: "/console/settings/users",
         element: <ProtectedRoute><UsersInvitations /></ProtectedRoute>,
     },
     {
-        path: "/settings/groups",
+        path: "/console/settings/groups",
         element: <ProtectedRoute><GroupsCostCenters /></ProtectedRoute>,
     },
     {
-        path: "/settings/roles",
+        path: "/console/settings/roles",
         element: <ProtectedRoute><RolesPermissions /></ProtectedRoute>,
     },
     {
-        path: "/settings/policies",
+        path: "/console/settings/policies",
         element: <ProtectedRoute><PolicyBuilder /></ProtectedRoute>,
     },
     {
-        path: "/settings/approvals/workflows",
+        path: "/console/settings/approvals/workflows",
         element: <ProtectedRoute><ApprovalWorkflow /></ProtectedRoute>,
     },
     {
-        path: "/settings/budgets",
+        path: "/console/settings/budgets",
         element: <ProtectedRoute><Budgets /></ProtectedRoute>,
     },
     {
-        path: "/settings/billing",
+        path: "/console/settings/billing",
         element: <ProtectedRoute><BillingSetup /></ProtectedRoute>,
     },
     {
-        path: "/reports",
+        path: "/console/reports",
         element: <ProtectedRoute><Reporting /></ProtectedRoute>,
     },
     {
-        path: "/reports/esg",
+        path: "/console/reports/esg",
         element: <ProtectedRoute><Sustainability /></ProtectedRoute>,
     },
     {
-        path: "/settings/integrations",
+        path: "/console/settings/integrations",
         element: <ProtectedRoute><Integrations /></ProtectedRoute>,
     },
     {
-        path: "/settings/security",
+        path: "/console/settings/security",
         element: <ProtectedRoute><Security /></ProtectedRoute>,
     },
     {
-        path: "/settings/support-tools",
+        path: "/console/settings/support-tools",
         element: <ProtectedRoute><SupportTools /></ProtectedRoute>,
     },
 ];

@@ -188,7 +188,7 @@ function Drawer({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 30, opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-y-0 right-0 z-50 w-full max-w-[560px] overflow-hidden border-l border-slate-200 bg-white shadow-[0_20px_70px_rgba(2,8,23,0.22)]"
+            className="fixed inset-y-0 right-0 z-50 w-full max-w-[560px] flex flex-col overflow-hidden border-l border-slate-200 bg-white shadow-[0_20px_70px_rgba(2,8,23,0.22)]"
             role="dialog"
             aria-modal="true"
           >
@@ -201,7 +201,7 @@ function Drawer({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="h-[calc(100vh-140px)] overflow-auto px-5 py-4">{children}</div>
+            <div className="flex-1 overflow-auto px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200 bg-slate-50 px-5 py-4">{footer}</div> : null}
           </motion.div>
         </>
