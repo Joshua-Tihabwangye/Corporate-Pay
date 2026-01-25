@@ -5,6 +5,27 @@ import Console from '../pages/Console';
 import PagePreview from '../pages/PagePreview';
 import { ROUTES } from './paths';
 import ProtectedRoute from '../components/ProtectedRoute';
+import WalletSwitcher from '../pages/generated/corporate_pay_wallet_switcher';
+import AccessRequest from '../pages/generated/corporate_pay_access_request';
+import EntityManager from '../pages/generated/corporate_pay_entity_manager';
+import KYBManager from '../pages/generated/corporate_pay_kyb_manager';
+import ModuleManager from '../pages/generated/corporate_pay_module_manager';
+import GoLiveChecklist from '../pages/generated/corporate_pay_go_live_checklist';
+
+import OrganizationProfileSetup from '../pages/generated/corporate_pay_organization_profile_setup';
+import UsersInvitations from '../pages/generated/corporate_pay_users_invitations';
+import GroupsCostCenters from '../pages/generated/corporate_pay_groups_cost_centers';
+import RolesPermissions from '../pages/generated/corporate_pay_roles_permissions_governance';
+import PolicyBuilder from '../pages/generated/corporate_pay_policy_builder_rides_services';
+import ApprovalWorkflow from '../pages/generated/corporate_pay_approval_workflow';
+import Budgets from '../pages/generated/corporate_pay_budgets_spend_limits_controls';
+import BillingSetup from '../pages/generated/corporate_pay_billing_setup_invoice';
+import Reporting from '../pages/generated/corporate_pay_reporting_analytics';
+import Sustainability from '../pages/generated/corporate_pay_sustainability_reporting';
+import Integrations from '../pages/generated/corporate_pay_integrations_developer_center';
+import Security from '../pages/generated/corporate_pay_security_audit_compliance';
+import SupportTools from '../pages/generated/corporate_pay__support_admin_tool';
+import AdminSettings from '../pages/generated/corporate_pay_admin_settings';
 
 /**
  * Console routes - main dashboard area with dynamic page loading
@@ -21,6 +42,86 @@ export const consoleRoutes: RouteObject[] = [
     {
         path: `${ROUTES.CONSOLE.ROOT}/:pageId/:subPageId`,
         element: <ProtectedRoute>{React.createElement(Console)}</ProtectedRoute>,
+    },
+    {
+        path: "/console/wallet-switch",
+        element: <ProtectedRoute><WalletSwitcher /></ProtectedRoute>,
+    },
+    {
+        path: "/console/access-request",
+        element: <ProtectedRoute><AccessRequest /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/org/entities",
+        element: <ProtectedRoute><EntityManager /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/org/kyb",
+        element: <ProtectedRoute><KYBManager /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/modules",
+        element: <ProtectedRoute><ModuleManager /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/org/go-live",
+        element: <ProtectedRoute><GoLiveChecklist /></ProtectedRoute>,
+    },
+    {
+        path: "/console/admin",
+        element: <ProtectedRoute><AdminSettings /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/org/setup",
+        element: <ProtectedRoute><OrganizationProfileSetup /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/users",
+        element: <ProtectedRoute><UsersInvitations /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/groups",
+        element: <ProtectedRoute><GroupsCostCenters /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/roles",
+        element: <ProtectedRoute><RolesPermissions /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/policies",
+        element: <ProtectedRoute><PolicyBuilder /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/approvals/workflows",
+        element: <ProtectedRoute><ApprovalWorkflow /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/budgets",
+        element: <ProtectedRoute><Budgets /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/billing",
+        element: <ProtectedRoute><BillingSetup /></ProtectedRoute>,
+    },
+    {
+        path: "/reports",
+        element: <ProtectedRoute><Reporting /></ProtectedRoute>,
+    },
+    {
+        path: "/reports/esg",
+        element: <ProtectedRoute><Sustainability /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/integrations",
+        element: <ProtectedRoute><Integrations /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/security",
+        element: <ProtectedRoute><Security /></ProtectedRoute>,
+    },
+    {
+        path: "/settings/support-tools",
+        element: <ProtectedRoute><SupportTools /></ProtectedRoute>,
     },
 ];
 

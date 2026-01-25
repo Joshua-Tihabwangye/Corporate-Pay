@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -480,7 +481,161 @@ function Empty({ title, subtitle }: { title: string; subtitle: string }) {
   );
 }
 
+function Input({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-semibold text-slate-500">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 transition focus:outline-none focus:ring-4 focus:ring-emerald-100"
+      />
+    </div>
+  );
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-semibold text-slate-500">{label}</label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 transition focus:outline-none focus:ring-4 focus:ring-emerald-100"
+      />
+    </div>
+  );
+}
+
+function ActionModal({
+  data,
+  onClose,
+  onSuccess,
+}: {
+  data: { kind: string; label: string } | null;
+  onClose: () => void;
+  onSuccess: (msg: string) => void;
+}) {
+  const [val1, setVal1] = useState("");
+  const [val2, setVal2] = useState("");
+  const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    if (data) {
+      setVal1("");
+      setVal2("");
+      setProcessing(false);
+    }
+  }, [data]);
+
+  if (!data) return null;
+
+  const handleSubmit = () => {
+    setProcessing(true);
+    setTimeout(() => {
+      setProcessing(false);
+      onSuccess(`Action '${data.label}' completed successfully.`);
+      onClose();
+    }, 1200);
+  };
+
+  let content = null;
+  if (data.kind === "invite" || (data.label && data.label.includes("Invite"))) {
+    content = (
+      <div className="space-y-4">
+        <Input label="Email address" value={val1} onChange={setVal1} placeholder="colleague@company.com" />
+        <Input label="Role" value={val2} onChange={setVal2} placeholder="Member, Admin..." />
+      </div>
+    );
+  } else if (data.kind === "simulate" || data.label.includes("Simulate")) {
+    content = (
+      <div className="space-y-4">
+        <TextArea label="Scenario description" value={val1} onChange={setVal1} placeholder="Describe the policy or approval flow to test..." rows={4} />
+      </div>
+    );
+  } else if (data.kind === "exception" || data.label.includes("Exception")) {
+    content = (
+      <div className="space-y-4">
+        <Input label="Amount / Limit" value={val1} onChange={setVal1} placeholder="e.g. 5000 USD" />
+        <TextArea label="Justification" value={val2} onChange={setVal2} placeholder="Reason for exception..." />
+      </div>
+    );
+  } else if (data.kind === "webhook" || data.label.includes("webhook")) {
+    content = (
+      <div className="space-y-4">
+        <Input label="Callback URL" value={val1} onChange={setVal1} placeholder="https://api.yoursystem.com/cb" />
+        <Input label="Secret Key (Optional)" value={val2} onChange={setVal2} placeholder="Signing key" />
+      </div>
+    );
+  } else if (data.kind === "posture" || (data.label && data.label.includes("posture"))) {
+    content = (
+      <div className="text-center py-8">
+        <ShieldCheck className="mx-auto h-12 w-12 text-emerald-500 animate-pulse" />
+        <div className="mt-4 text-sm font-semibold text-slate-900">Running security analysis...</div>
+        <div className="mt-1 text-xs text-slate-500">Checking MFA, IP policies, and audit logs.</div>
+      </div>
+    );
+  } else {
+    // Generic fallback
+    content = (
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          You are about to perform: <strong>{data.label}</strong>.
+        </div>
+        <TextArea label="Notes" value={val1} onChange={setVal1} placeholder="Optional notes for audit log..." />
+      </div>
+    );
+  }
+
+  return (
+    <Modal
+      open={!!data}
+      title={data.label}
+      onClose={onClose}
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button variant="ghost" onClick={onClose} disabled={processing}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={processing}>
+            {processing ? "Processing..." : "Confirm"}
+          </Button>
+        </div>
+      }
+    >
+      {content}
+    </Modal>
+  );
+}
+
 export default function CorporatePayAdminSettingsHubV2() {
+  const navigate = useNavigate();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toast = (t: Omit<Toast, "id">) => {
     const id = uid("toast");
@@ -781,6 +936,9 @@ export default function CorporatePayAdminSettingsHubV2() {
   const [accessModalOpen, setAccessModalOpen] = useState(false);
   const [accessItemId, setAccessItemId] = useState<string | null>(null);
   const [accessReason, setAccessReason] = useState("");
+  
+  // Generic action modal state
+  const [actionData, setActionData] = useState<{ kind: string; label: string } | null>(null);
 
   const selected = useMemo(
     () => items.find((i) => i.id === selectedId) || items[0],
@@ -882,7 +1040,11 @@ export default function CorporatePayAdminSettingsHubV2() {
       return;
     }
     setSelectedId(it.id);
-    toast({ title: "Navigate", message: `Open ${it.path}`, kind: "info" });
+    if(it.path) {
+       navigate("/console" + it.path);
+    } else {
+       toast({ title: "Navigate", message: `Open ${it.path}`, kind: "info" });
+    }
   };
 
   const togglePin = (id: string) => {
@@ -1220,6 +1382,17 @@ export default function CorporatePayAdminSettingsHubV2() {
                               openItem(selected);
                               return;
                             }
+                            if (a.kind === "action") {
+                               // For actions, we might have specific modals or pages.
+                               // Mapping common actions to existing pages where possible.
+                               if (a.id === "open") {
+                                   openItem(selected);
+                                   return;
+                               }
+                               // Fallback to generic action modal
+                               setActionData({ kind: a.id, label: a.label });
+                               return;
+                            }
                             toast({ title: "Action", message: a.hint || a.label, kind: "info" });
                           }}
                         >
@@ -1415,6 +1588,13 @@ export default function CorporatePayAdminSettingsHubV2() {
           <div className="mt-2 text-xs text-slate-600">Requests should be auditable and time-bounded in production.</div>
         </div>
       </Modal>
+
+      {/* Generic Action Modal */}
+      <ActionModal
+        data={actionData}
+        onClose={() => setActionData(null)}
+        onSuccess={(msg) => toast({ title: "Success", message: msg, kind: "success" })}
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -8,6 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  Download,
   FileText,
   Globe,
   Image as ImageIcon,
@@ -21,6 +23,7 @@ import {
   Upload,
   Users,
   X,
+  MoreVertical,
 } from "lucide-react";
 
 const EVZ = {
@@ -216,7 +219,182 @@ function copyToClipboardSafe(text: string) {
   return navigator.clipboard.writeText(text);
 }
 
+
+function Modal({
+  open,
+  title,
+  subtitle,
+  children,
+  onClose,
+  footer,
+  maxW = "600px",
+  actions,
+}: {
+  open: boolean;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  onClose: () => void;
+  footer?: React.ReactNode;
+  maxW?: string;
+  actions?: Array<{
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+    icon?: React.ReactNode;
+  }>;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    if (open) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open ? (
+        <>
+          <motion.div
+            className="fixed inset-0 z-40 bg-black/35"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-x-0 top-[10vh] z-50 mx-auto overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
+            style={{ maxWidth: maxW, width: "calc(100vw - 2rem)" }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
+              <div>
+                <div className="text-lg font-semibold text-slate-900">{title}</div>
+                {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
+              </div>
+              <div className="flex items-center gap-2">
+                {actions && <ActionMenu actions={actions} />}
+                <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
+            {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
+          </motion.div>
+        </>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-semibold text-slate-500">{label}</label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 transition focus:outline-none focus:ring-4 focus:ring-emerald-100"
+      />
+    </div>
+  );
+}
+
+function FileUploader({ onDrop }: { onDrop: (f: File) => void }) {
+  return (
+    <div className="flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center transition hover:bg-slate-100" onClick={() => onDrop(new File([""], "example.pdf"))}>
+      <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-emerald-600 shadow-sm">
+        <Upload className="h-6 w-6" />
+      </div>
+      <div className="mt-4 text-sm font-semibold text-slate-900">Click to upload or drag and drop</div>
+      <div className="mt-1 text-xs text-slate-500">PDF, PNG, JPG up to 10MB</div>
+    </div>
+  );
+}
+
+function ActionMenu({
+  actions,
+}: {
+  actions: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (!actions.length) return null;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+          {actions.map((action, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                action.onClick();
+                setIsOpen(false);
+              }}
+              disabled={action.disabled}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50",
+                action.variant === "danger"
+                  ? "text-rose-600 hover:bg-rose-50"
+                  : "text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function OrganizationProfileKYB() {
+  const navigate = useNavigate();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toast = (t: Omit<Toast, "id">) => {
     const id = uid("toast");
@@ -328,14 +506,96 @@ export default function OrganizationProfileKYB() {
   };
 
   const openAdminConsole = () => {
-    toast({ kind: "info", title: "Open Admin Console", message: "Deep link to CorporatePay Admin Console for editing." });
+    navigate("/console/admin");
   };
+
+  const [activeTab, setActiveTab] = useState<"Overview" | "Structure" | "Configuration" | "Compliance">("Overview");
+
+  // Modal states
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState<string | null>(null);
+  const [contactMsg, setContactMsg] = useState("");
 
   return (
     <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
       <ToastStack toasts={toasts} onDismiss={(id) => setToasts((p) => p.filter((x) => x.id !== id))} />
 
-      <div className="mx-auto max-w-[1180px] px-4 py-5 md:px-6">
+      {/* Upload Modal */}
+      <Modal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        title="Upload Document"
+        subtitle="Securely upload required verification documents."
+        footer={
+          <div className="flex justify-end gap-3">
+             <Button variant="ghost" onClick={() => setUploadOpen(false)}>Cancel</Button>
+             <Button variant="primary" onClick={() => {
+               toast({ kind: "success", title: "Upload complete", message: "Document sent for verification." });
+               setUploadOpen(false);
+             }}>Upload</Button>
+          </div>
+        }
+      >
+         <FileUploader onDrop={(f) => toast({ kind: "info", title: "File selected", message: f.name })} />
+         <div className="mt-4">
+            <TextArea label="Notes (Optional)" value="" onChange={() => {}} placeholder="Any additional context..." />
+         </div>
+      </Modal>
+
+      {/* Contact Admin Modal */}
+      <Modal
+        open={contactOpen}
+        onClose={() => setContactOpen(false)}
+        title="Contact Organization Admin"
+        subtitle="Send a secure message to the organization administrators."
+        footer={
+          <div className="flex justify-end gap-3">
+             <Button variant="ghost" onClick={() => setContactOpen(false)}>Cancel</Button>
+             <Button variant="primary" onClick={() => {
+               toast({ kind: "success", title: "Message sent", message: "Admins have been notified." });
+               setContactOpen(false);
+               setContactMsg("");
+             }}>Send Message</Button>
+          </div>
+        }
+      >
+         <div className="space-y-4">
+           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+              <div className="flex gap-3">
+                 <Info className="h-5 w-5 text-blue-700" />
+                 <div className="text-sm text-blue-800">Your message will be sent to <strong>3</strong> active admins via email and in-app notification.</div>
+              </div>
+           </div>
+           <TextArea label="Message" value={contactMsg} onChange={setContactMsg} placeholder="Describe your request..." rows={5} />
+         </div>
+      </Modal>
+
+       {/* Details Modal */}
+      <Modal
+        open={!!detailsOpen}
+        onClose={() => setDetailsOpen(null)}
+        title="Item Details"
+        subtitle={detailsOpen || ""}
+      >
+         <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-500">
+               Preview not available for this item type.
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <div className="text-xs text-slate-500">Created On</div>
+                  <div className="font-semibold text-slate-900">Oct 12, 2023</div>
+               </div>
+               <div>
+                  <div className="text-xs text-slate-500">Last Modified</div>
+                  <div className="font-semibold text-slate-900">2 mins ago</div>
+               </div>
+            </div>
+         </div>
+      </Modal>
+
+      <div className="mx-auto max-w-[95%] px-4 py-5 md:px-6">
         <div className="rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.10)]">
           {/* Header */}
           <div className="border-b border-slate-200 px-4 py-4 md:px-6">
@@ -364,20 +624,35 @@ export default function OrganizationProfileKYB() {
                     options={orgs.map((o) => ({ value: o.id, label: o.name }))}
                   />
                 </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Wallet Switcher", message: "This would open Wallet Switcher." })}>
-                  <ChevronRight className="h-4 w-4" /> Switch
-                </Button>
-                <Button variant="primary" onClick={openAdminConsole}>
-                  <ChevronRight className="h-4 w-4" /> Admin Console
-                </Button>
+                <ActionMenu
+                  actions={[
+                    { label: "Switch Wallet", onClick: () => navigate("/console/wallet-switch"), icon: <ChevronRight className="h-4 w-4" /> },
+                    { label: "Admin Console", onClick: openAdminConsole, icon: <Settings className="h-4 w-4" /> },
+                  ]}
+                />
               </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {(["Overview", "Structure", "Configuration", "Compliance"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                    activeTab === tab ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50 ring-1 ring-slate-200"
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Body */}
           <div className="bg-slate-50 px-4 py-5 md:px-6">
             {!canAdmin ? (
-              <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+              <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-5">
                 <div className="flex items-start gap-3">
                   <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-amber-800">
                     <Lock className="h-6 w-6" />
@@ -389,7 +664,7 @@ export default function OrganizationProfileKYB() {
                       <Button variant="accent" onClick={() => toast({ kind: "info", title: "Request access", message: "This would open the access request workflow." })}>
                         <ChevronRight className="h-4 w-4" /> Request access
                       </Button>
-                      <Button variant="outline" onClick={() => toast({ kind: "info", title: "Contact Admin", message: "This would show org Admin contacts." })}>
+                      <Button variant="outline" onClick={() => setContactOpen(true)}>
                         <ChevronRight className="h-4 w-4" /> Contact Admin
                       </Button>
                     </div>
@@ -398,210 +673,258 @@ export default function OrganizationProfileKYB() {
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              {/* Left */}
-              <div className="space-y-4 lg:col-span-8">
+            {activeTab === "Overview" && (
+              <div className="space-y-6">
+                {/* Company Profile - Full Width */}
                 <Section
                   title="Company profile"
                   subtitle="Legal details, contacts, and branding"
                   right={<Pill label={org.country} tone="neutral" />}
                 >
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-                    <div className="md:col-span-8 rounded-3xl border border-slate-200 bg-white p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-semibold text-slate-500">Legal name</div>
-                          <div className="mt-1 text-sm font-semibold text-slate-900">{org.legalName}</div>
-                          <div className="mt-3 text-xs font-semibold text-slate-500">Trading name</div>
-                          <div className="mt-1 text-sm font-semibold text-slate-900">{org.tradingName}</div>
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                    <div className="xl:col-span-8 rounded-3xl border border-slate-200 bg-white p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="w-full">
+                          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Legal Information</div>
+                          <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+                             <div>
+                                <div className="text-xs text-slate-500">Legal Name</div>
+                                <div className="font-semibold text-slate-900">{org.legalName}</div>
+                             </div>
+                             <div>
+                                <div className="text-xs text-slate-500">Trading Name</div>
+                                <div className="font-semibold text-slate-900">{org.tradingName}</div>
+                             </div>
+                          </div>
 
-                          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                               <div className="text-xs font-semibold text-slate-500">Registration</div>
                               <div className="mt-1 flex items-center justify-between gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{org.regNo}</div>
-                                <Button variant="outline" className="px-3 py-2" onClick={() => copy(org.regNo)}>
-                                  <Copy className="h-4 w-4" /> Copy
+                                <div className="font-mono text-sm font-semibold text-slate-900">{org.regNo}</div>
+                                <Button variant="ghost" className="h-6 w-6 p-0" onClick={() => copy(org.regNo)}>
+                                  <Copy className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
                             </div>
-                            <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                               <div className="text-xs font-semibold text-slate-500">Tax ID</div>
                               <div className="mt-1 flex items-center justify-between gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{org.taxId}</div>
-                                <Button variant="outline" className="px-3 py-2" onClick={() => copy(org.taxId)}>
-                                  <Copy className="h-4 w-4" /> Copy
+                                <div className="font-mono text-sm font-semibold text-slate-900">{org.taxId}</div>
+                                <Button variant="ghost" className="h-6 w-6 p-0" onClick={() => copy(org.taxId)}>
+                                  <Copy className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
                             </div>
                           </div>
 
-                          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                              <div className="text-xs font-semibold text-slate-500">Billing email</div>
-                              <div className="mt-1 flex items-center justify-between gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{org.billingEmail}</div>
-                                <Button variant="outline" className="px-3 py-2" onClick={() => copy(org.billingEmail)}>
-                                  <Copy className="h-4 w-4" /> Copy
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                              <div className="text-xs font-semibold text-slate-500">Billing phone</div>
-                              <div className="mt-1 text-sm font-semibold text-slate-900">{org.billingPhone}</div>
-                            </div>
-                          </div>
-
-                          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                            <div className="flex items-start gap-2">
-                              <MapPin className="mt-0.5 h-4 w-4" />
-                              <div>
-                                <div className="font-semibold text-slate-800">Billing address</div>
-                                <div className="mt-1">{org.billingAddress}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-50 text-slate-700">
-                          <Building2 className="h-6 w-6" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="md:col-span-4 space-y-3">
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Branding</div>
-                            <div className="mt-1 text-xs text-slate-500">Logo and colors</div>
-                          </div>
-                          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-50 text-slate-700">
-                            <ImageIcon className="h-5 w-5" />
-                          </div>
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                            <div className="text-xs font-semibold text-slate-500">Primary</div>
-                            <div className="mt-2 h-9 w-full rounded-xl" style={{ background: org.brandPrimary }} />
-                            <div className="mt-2 text-xs text-slate-600">{org.brandPrimary}</div>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                            <div className="text-xs font-semibold text-slate-500">Accent</div>
-                            <div className="mt-2 h-9 w-full rounded-xl" style={{ background: org.brandAccent }} />
-                            <div className="mt-2 text-xs text-slate-600">{org.brandAccent}</div>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <Button variant="outline" onClick={openAdminConsole}>
-                            <ChevronRight className="h-4 w-4" /> Edit branding
-                          </Button>
-                          <Button variant="outline" onClick={() => toast({ kind: "info", title: "Upload logo", message: "This would open logo upload." })}>
-                            <Upload className="h-4 w-4" /> Upload
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className={cn("rounded-3xl border p-4", org.kyb === "Approved" ? "border-emerald-200 bg-emerald-50" : org.kyb === "Needs action" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")}>
-                        <div className="flex items-start gap-3">
-                          <div className={cn("grid h-10 w-10 place-items-center rounded-2xl", org.kyb === "Approved" ? "bg-white text-emerald-700" : org.kyb === "Needs action" ? "bg-white text-amber-800" : "bg-slate-50 text-slate-700")}>
-                            {org.kyb === "Approved" ? <BadgeCheck className="h-5 w-5" /> : org.kyb === "Needs action" ? <AlertTriangle className="h-5 w-5" /> : <Info className="h-5 w-5" />}
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">KYB status</div>
-                            <div className="mt-1 text-sm text-slate-700">{org.kyb}</div>
-                            <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <Button variant={org.kyb === "Needs action" ? "accent" : "outline"} onClick={openAdminConsole}>
-                                <ChevronRight className="h-4 w-4" /> Manage KYB
-                              </Button>
-                              <Button variant="outline" onClick={() => toast({ kind: "info", title: "Requirements", message: "This would show KYB requirements." })}>
-                                <ChevronRight className="h-4 w-4" /> Requirements
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Section>
-
-                <Section
-                  title="Entities and invoice groups"
-                  subtitle="Multi-entity setup and invoice group mapping"
-                  right={<Pill label={`${org.entities.length} entities`} tone="neutral" />}
-                >
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                      <div className="text-sm font-semibold text-slate-900">Entities</div>
-                      <div className="mt-3 space-y-2">
-                        {org.entities.map((e) => (
-                          <div key={e.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <div className="text-sm font-semibold text-slate-900">{e.name}</div>
-                                  <Pill label={e.currency} tone="neutral" />
-                                  {e.isDefault ? <Pill label="Default" tone="info" /> : null}
+                          <div className="mt-6">
+                            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Contact Information</div>
+                             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3">
+                                <div className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-slate-500"><Mail className="h-4 w-4" /></div>
+                                <div>
+                                  <div className="text-xs text-slate-500">Billing Email</div>
+                                  <div className="text-sm font-semibold text-slate-900">{org.billingEmail}</div>
                                 </div>
-                                <div className="mt-1 text-xs text-slate-500">{e.country}</div>
                               </div>
-                              <Button variant="outline" className="px-3 py-2" onClick={openAdminConsole}>
-                                <ChevronRight className="h-4 w-4" /> Edit
-                              </Button>
-                            </div>
+                              <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3">
+                                <div className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-slate-500"><Building2 className="h-4 w-4" /></div>
+                                <div>
+                                  <div className="text-xs text-slate-500">Billing Address</div>
+                                  <div className="text-sm font-semibold text-slate-900 truncate">{org.billingAddress}</div>
+                                </div>
+                              </div>
+                             </div>
                           </div>
-                        ))}
-                      </div>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={openAdminConsole}>
-                          <ChevronRight className="h-4 w-4" /> Add entity
-                        </Button>
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Export", message: "This would export entity list." })}>
-                          <FileText className="h-4 w-4" /> Export
-                        </Button>
+                        </div>
+                        
                       </div>
                     </div>
 
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                      <div className="text-sm font-semibold text-slate-900">Invoice groups</div>
-                      <div className="mt-3 space-y-2">
-                        {org.invoiceGroups.map((g) => (
-                          <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <div className="text-sm font-semibold text-slate-900">{g.name}</div>
-                                <div className="mt-1 text-xs text-slate-500">Entity: {org.entities.find((e) => e.id === g.entityId)?.name ?? g.entityId}</div>
-                                <div className="mt-1 text-xs text-slate-500">Billing: {g.billingEmail}</div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" className="px-3 py-2" onClick={() => copy(g.billingEmail)}>
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" className="px-3 py-2" onClick={openAdminConsole}>
-                                  <ChevronRight className="h-4 w-4" />
-                                </Button>
-                              </div>
+                    <div className="xl:col-span-4 space-y-4">
+                      {/* KYB Status Card */}
+                       <div className={cn("rounded-3xl border p-5", org.kyb === "Approved" ? "border-emerald-200 bg-emerald-50" : org.kyb === "Needs action" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")}>
+                        <div className="flex items-start gap-4">
+                          <div className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-2xl", org.kyb === "Approved" ? "bg-white text-emerald-700" : org.kyb === "Needs action" ? "bg-white text-amber-800" : "bg-slate-50 text-slate-700")}>
+                            {org.kyb === "Approved" ? <BadgeCheck className="h-6 w-6" /> : org.kyb === "Needs action" ? <AlertTriangle className="h-6 w-6" /> : <Info className="h-6 w-6" />}
+                          </div>
+                          <div>
+                            <div className="text-base font-semibold text-slate-900">KYB Status: {org.kyb}</div>
+                            <div className="mt-1 text-sm text-slate-700">Verification is required for full feature access.</div>
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                              <Button variant={org.kyb === "Needs action" ? "accent" : "outline"} onClick={openAdminConsole} className="text-xs h-8">
+                                Manage KYB
+                              </Button>
+                              <Button variant="outline" onClick={() => toast({ kind: "info", title: "Requirements", message: "Shown" })} className="text-xs h-8">
+                                Requirements
+                              </Button>
                             </div>
                           </div>
-                        ))}
+                        </div>
                       </div>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={openAdminConsole}>
-                          <ChevronRight className="h-4 w-4" /> Add group
-                        </Button>
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Invoice settings", message: "This would open invoice settings." })}>
-                          <Settings className="h-4 w-4" /> Settings
-                        </Button>
+
+                      {/* Branding Card */}
+                      <div className="rounded-3xl border border-slate-200 bg-white p-5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">Brand Identity</div>
+                              <div className="mt-1 text-xs text-slate-500">Primary and Accent colors</div>
+                            </div>
+                            <Button variant="ghost" className="px-2 py-1 text-xs" onClick={openAdminConsole}><Settings className="h-4 w-4" /></Button>
+                          </div>
+                          <div className="mt-4 grid grid-cols-2 gap-3">
+                            <div>
+                               <div className="h-12 w-full rounded-xl border border-slate-100 shadow-sm" style={{ background: org.brandPrimary }} />
+                               <div className="mt-1 text-center text-xs font-mono text-slate-500">{org.brandPrimary}</div>
+                            </div>
+                            <div>
+                               <div className="h-12 w-full rounded-xl border border-slate-100 shadow-sm" style={{ background: org.brandAccent }} />
+                               <div className="mt-1 text-center text-xs font-mono text-slate-500">{org.brandAccent}</div>
+                            </div>
+                          </div>
                       </div>
                     </div>
                   </div>
                 </Section>
 
+                {/* Go-live Readiness - Full Width */}
                 <Section
-                  title="Module enablement and scope"
-                  subtitle="Enable modules and define marketplace scope"
-                  right={<Pill label={`${org.modules.filter((m) => m.enabled).length}/${org.modules.length} enabled`} tone="neutral" />}
+                  title="Go-live readiness"
+                  subtitle="Checklist with progress"
+                  right={<Pill label={`${Math.round((readinessDone / readinessTotal) * 100)}%`} tone={readinessDone === readinessTotal ? "good" : "warn"} />}
                 >
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6">
+                    <div className="flex items-center justify-between gap-6 mb-6">
+                       <div className="flex-1">
+                          <div className="flex justify-between text-sm font-semibold mb-2">
+                            <span text-slate-900>Readiness Progress</span>
+                            <span className="text-slate-600">{readinessDone}/{readinessTotal}</span>
+                          </div>
+                          <TinyBar value={readinessDone} max={readinessTotal} />
+                       </div>
+                       <Button variant="primary" onClick={() => toast({ kind: "info", title: "Run checks", message: "Running..." })}>
+                          <Sparkles className="h-4 w-4" /> Run Checks
+                       </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {org.readiness.map((r) => (
+                        <div key={r.key} className={cn("flex flex-col justify-between rounded-2xl border p-4 transition-all hover:bg-slate-50", r.done ? "border-emerald-100 bg-emerald-50/30" : "border-slate-200 bg-white")}>
+                          <div>
+                            <div className="flex items-start justify-between gap-2">
+                               <div className="font-semibold text-slate-900 text-sm">{r.label}</div>
+                               <div className={cn("grid h-5 w-5 place-items-center rounded-full", r.done ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400")}>
+                                  <Check className="h-3 w-3" />
+                               </div>
+                            </div>
+                            {r.hint && <div className="mt-1 text-xs text-slate-500">{r.hint}</div>}
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-slate-100/50">
+                             <button className="text-xs font-medium text-emerald-600 hover:underline flex items-center gap-1" onClick={openAdminConsole}>
+                                Resolve <ChevronRight className="h-3 w-3" />
+                             </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Section>
+
+                {/* Quick Links - Horizontal at Bottom */}
+                <div className="pt-4 border-t border-slate-200">
+                    <div className="text-sm font-semibold text-slate-900 mb-4 px-1">Quick Actions & Deep Links</div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {[
+                        { label: "Company Profile", icon: <Building2 className="h-4 w-4" />, path: "/settings/org/setup" },
+                        { label: "KYB Documents", icon: <FileText className="h-4 w-4" />, path: "/settings/org/kyb" },
+                        { label: "Entities & Groups", icon: <Globe className="h-4 w-4" />, path: "/settings/org/entities" },
+                        { label: "Module Settings", icon: <Settings className="h-4 w-4" />, path: "/settings/modules" },
+                        { label: "Go-live Checklist", icon: <ShieldCheck className="h-4 w-4" />, path: "/settings/org/go-live" },
+                      ].map((link, i) => (
+                        <button
+                          key={i}
+                          onClick={() => navigate(link.path)}
+                          className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-1 hover:shadow-md hover:border-emerald-200 group"
+                        >
+                          <div className="grid h-10 w-10 place-items-center rounded-full bg-slate-50 text-slate-600 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                            {link.icon}
+                          </div>
+                          <div className="text-xs font-semibold text-slate-700 group-hover:text-slate-900">{link.label}</div>
+                        </button>
+                      ))}
+                    </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "Structure" && (
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <Section
+                  title="Entities"
+                  subtitle="Legal entities under this organization"
+                  right={<Button variant="primary" onClick={openAdminConsole} className="px-3 py-1 text-xs">Add Entity</Button>}
+                >
+                  <div className="space-y-3">
+                    {org.entities.map((e) => (
+                      <div key={e.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="font-semibold text-slate-900">{e.name}</div>
+                              <Pill label={e.currency} tone="neutral" />
+                              {e.isDefault ? <Pill label="Default" tone="info" /> : null}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-500">{e.country}</div>
+                          </div>
+                          <ActionMenu
+                            actions={[
+                              { label: "Edit", onClick: openAdminConsole, icon: <Settings className="h-4 w-4" /> },
+                              { label: "View Details", onClick: () => setDetailsOpen(e.name), icon: <FileText className="h-4 w-4" /> },
+                            ]}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+
+                <Section
+                  title="Invoice Groups"
+                  subtitle="Billing groupings mapped to entities"
+                  right={<Button variant="primary" onClick={openAdminConsole} className="px-3 py-1 text-xs">Add Group</Button>}
+                >
+                  <div className="space-y-3">
+                    {org.invoiceGroups.map((g) => (
+                      <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-slate-900">{g.name}</div>
+                            <div className="mt-1 text-sm text-slate-500">Entity: {org.entities.find((e) => e.id === g.entityId)?.name ?? g.entityId}</div>
+                            <div className="mt-1 text-sm text-slate-500">Billing: {g.billingEmail}</div>
+                          </div>
+                          <ActionMenu
+                            actions={[
+                              { label: "Copy Email", onClick: () => copy(g.billingEmail), icon: <Copy className="h-4 w-4" /> },
+                              { label: "Settings", onClick: openAdminConsole, icon: <Settings className="h-4 w-4" /> },
+                            ]}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+              </div>
+            )}
+
+            {activeTab === "Configuration" && (
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <Section
+                  title="Module Enablement"
+                  subtitle="Active modules for this organization"
+                  right={<Pill label={`${org.modules.filter((m) => m.enabled).length} Enabled`} tone="good" />}
+                >
+                  <div className="grid grid-cols-1 gap-3">
                     {org.modules.map((m) => (
                       <div key={m.key} className={cn("rounded-3xl border p-4", m.enabled ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
                         <div className="flex items-start justify-between gap-3">
@@ -612,184 +935,95 @@ export default function OrganizationProfileKYB() {
                             </div>
                             <div className="mt-1 text-sm text-slate-700">{m.note}</div>
                           </div>
-                          <Button variant="outline" onClick={openAdminConsole}>
-                            <ChevronRight className="h-4 w-4" /> Manage
+                          <Button variant="outline" onClick={openAdminConsole} className="px-3 py-2 text-xs">
+                            Manage
                           </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 </Section>
-
-                <Section
-                  title="Go-live readiness"
-                  subtitle="Checklist with progress"
-                  right={<Pill label={`${Math.round((readinessDone / readinessTotal) * 100)}%`} tone={readinessDone === readinessTotal ? "good" : "warn"} />}
-                >
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">Readiness progress</div>
-                        <div className="mt-1 text-sm text-slate-600">{readinessDone} of {readinessTotal} completed</div>
-                        <TinyBar value={readinessDone} max={readinessTotal} />
+                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                   <div className="flex items-start gap-3">
+                    <div className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-50 text-slate-700">
+                      <Settings className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">Advanced Configuration</div>
+                      <div className="mt-1 text-sm text-slate-600">
+                        Additional settings for APIs, Webhooks, and SSO are available in the integration settings.
                       </div>
-                      <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-50 text-slate-700">
-                        <ShieldCheck className="h-5 w-5" />
+                      <div className="mt-4">
+                         <Button variant="outline" onClick={() => toast({ kind: "info", title: "Integrations", message: "Redirecting..." })}>
+                            Go to Integrations
+                         </Button>
                       </div>
                     </div>
+                   </div>
+                </div>
+              </div>
+            )}
 
-                    <div className="mt-4 space-y-2">
-                      {org.readiness.map((r) => (
-                        <div key={r.key} className="rounded-2xl border border-slate-200 bg-white p-3">
+            {activeTab === "Compliance" && (
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                <div className="lg:col-span-8 space-y-4">
+                  <Section
+                    title="KYB Documents"
+                    subtitle="Verification documents and status"
+                    right={<Button variant="primary" onClick={() => setUploadOpen(true)} className="px-3 py-1 text-xs"><Upload className="h-3 w-3 mr-1" /> Upload</Button>}
+                  >
+                    <div className="space-y-2">
+                      {org.documents.map((d) => (
+                        <div key={d.id} className="rounded-3xl border border-slate-200 bg-white p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{r.label}</div>
-                                <Pill label={r.done ? "Done" : "Pending"} tone={r.done ? "good" : "warn"} />
+                                <div className="text-sm font-semibold text-slate-900">{d.name}</div>
+                                <Pill label={d.status} tone={d.status === "Approved" ? "good" : d.status === "Rejected" ? "bad" : "warn"} />
+                                <Pill label={d.kind} tone="neutral" />
                               </div>
-                              {r.hint ? <div className="mt-1 text-xs text-slate-500">{r.hint}</div> : null}
+                              <div className="mt-1 text-sm text-slate-600">{d.note}</div>
                             </div>
-                            <Button variant="outline" onClick={openAdminConsole} className="px-3 py-2">
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
+                            <ActionMenu
+                              actions={[
+                                { label: "Preview", onClick: () => setDetailsOpen(d.name), icon: <FileText className="h-4 w-4" /> },
+                                { label: "Download", onClick: () => toast({ kind: "success", title: "Download", message: "Downloading..." }), icon: <Download className="h-4 w-4" /> },
+                              ]}
+                            />
                           </div>
+                          {d.status === "Rejected" ? (
+                            <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle className="mt-0.5 h-4 w-4" />
+                                <div>
+                                  <div className="font-semibold">Action required</div>
+                                  <div className="mt-1 text-xs text-amber-800">Re-upload with correct details.</div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       ))}
                     </div>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button variant="primary" onClick={() => toast({ kind: "info", title: "Run checks", message: "This would run go-live checks." })}>
-                        <ChevronRight className="h-4 w-4" /> Run checks
-                      </Button>
-                      <Button variant="outline" onClick={openAdminConsole}>
-                        <ChevronRight className="h-4 w-4" /> Open checklist
-                      </Button>
-                    </div>
-                  </div>
-                </Section>
-              </div>
-
-              {/* Right */}
-              <div className="space-y-4 lg:col-span-4">
-                <Section
-                  title="Document upload"
-                  subtitle="KYB documents and review statuses"
-                  right={<Pill label={`${org.documents.length} file(s)`} tone="neutral" />}
-                >
-                  <div className="space-y-2">
-                    {org.documents.map((d) => (
-                      <div key={d.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-900">{d.name}</div>
-                              <Pill label={d.status} tone={d.status === "Approved" ? "good" : d.status === "Rejected" ? "bad" : "warn"} />
-                              <Pill label={d.kind} tone="neutral" />
-                            </div>
-                            <div className="mt-1 text-sm text-slate-600">{d.note}</div>
-                          </div>
-                          <Button variant="outline" className="px-3 py-2" onClick={() => toast({ kind: "info", title: "Preview", message: d.name })}>
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+                  </Section>
+                </div>
+                <div className="lg:col-span-4">
+                   <div className={cn("rounded-3xl border p-5", org.kyb === "Approved" ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50")}>
+                      <div className="flex items-start gap-3">
+                        <div className={cn("grid h-10 w-10 place-items-center rounded-2xl bg-white", org.kyb === "Approved" ? "text-emerald-700" : "text-amber-800")}>
+                          {org.kyb === "Approved" ? <BadgeCheck className="h-5 w-5" /> : <Info className="h-5 w-5" />}
                         </div>
-                        {d.status === "Rejected" ? (
-                          <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle className="mt-0.5 h-4 w-4" />
-                              <div>
-                                <div className="font-semibold">Action required</div>
-                                <div className="mt-1 text-xs text-amber-800">Re-upload with correct details.</div>
-                              </div>
-                            </div>
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">KYB Status: {org.kyb}</div>
+                          <div className="mt-1 text-sm text-slate-700">
+                            {org.kyb === "Approved" ? "Your organization is fully verified." : "Please complete the required document uploads."}
                           </div>
-                        ) : null}
+                        </div>
                       </div>
-                    ))}
-
-                    <div className="pt-2 flex flex-wrap items-center gap-2">
-                      <Button variant="primary" onClick={() => toast({ kind: "info", title: "Upload", message: "This would open document uploader." })}>
-                        <Upload className="h-4 w-4" /> Upload
-                      </Button>
-                      <Button variant="outline" onClick={openAdminConsole}>
-                        <ChevronRight className="h-4 w-4" /> Manage
-                      </Button>
-                      <Button variant="outline" onClick={() => toast({ kind: "info", title: "Download package", message: "This would download KYB package." })}>
-                        <FileText className="h-4 w-4" /> Package
-                      </Button>
-                    </div>
-                  </div>
-                </Section>
-
-                <Section
-                  title="Quick deep links"
-                  subtitle="Open Admin Console sections"
-                  right={<Pill label="Deep links" tone="info" />}
-                >
-                  <div className="grid grid-cols-1 gap-2">
-                    <Button variant="outline" onClick={openAdminConsole}>
-                      <ChevronRight className="h-4 w-4" /> Company profile
-                    </Button>
-                    <Button variant="outline" onClick={openAdminConsole}>
-                      <ChevronRight className="h-4 w-4" /> KYB and documents
-                    </Button>
-                    <Button variant="outline" onClick={openAdminConsole}>
-                      <ChevronRight className="h-4 w-4" /> Entities and invoice groups
-                    </Button>
-                    <Button variant="outline" onClick={openAdminConsole}>
-                      <ChevronRight className="h-4 w-4" /> Module enablement
-                    </Button>
-                    <Button variant="outline" onClick={openAdminConsole}>
-                      <ChevronRight className="h-4 w-4" /> Go-live checklist
-                    </Button>
-                  </div>
-                </Section>
-
-                <div
-                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
-                  style={{
-                    background:
-                      "radial-gradient(90% 80% at 10% 0%, rgba(247,127,0,0.20), rgba(255,255,255,0)), radial-gradient(90% 80% at 90% 0%, rgba(3,205,140,0.16), rgba(255,255,255,0))",
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="grid h-11 w-11 place-items-center rounded-2xl text-white" style={{ background: EVZ.orange }}>
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Premium org admin access</div>
-                      <div className="mt-1 text-sm text-slate-600">This page is a fast summary. Editing happens in the Admin Console.</div>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Pill label="KYB" tone="neutral" />
-                        <Pill label="Entities" tone="neutral" />
-                        <Pill label="Go-live" tone="neutral" />
-                      </div>
-                    </div>
-                  </div>
+                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
-                    <BadgeCheck className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">Tip</div>
-                    <div className="mt-1 text-sm text-slate-600">Complete settlement verification and policy setup to pass go-live checks.</div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button variant="outline" onClick={() => toast({ kind: "info", title: "Support", message: "Open support" })}>
-                    <ChevronRight className="h-4 w-4" /> Support
-                  </Button>
-                  <Button variant="primary" onClick={openAdminConsole}>
-                    <ChevronRight className="h-4 w-4" /> Admin Console
-                  </Button>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
