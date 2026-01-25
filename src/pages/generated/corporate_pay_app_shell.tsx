@@ -250,8 +250,8 @@ function Sidebar({
         <img src={logoIcon} alt="EVzone CorporatePay" className="h-8 w-8 shrink-0 rounded-xl object-contain" />
         {!collapsed && (
           <div className="min-w-0">
-            <div className={cn("truncate text-xs font-bold", textPrimary)}>CorporatePay</div>
-            <div className={cn("truncate text-[10px]", textSecondary)}>Console</div>
+            <div className={cn("truncate text-sm font-bold", textPrimary)}>CorporatePay</div>
+            <div className={cn("truncate text-xs", textSecondary)}>Console</div>
           </div>
         )}
       </div>
@@ -278,7 +278,7 @@ function Sidebar({
           title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
         >
           {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-          {!collapsed && <span className="text-xs font-medium">{theme === "light" ? "Dark mode" : "Light mode"}</span>}
+          {!collapsed && <span className="text-sm font-medium">{theme === "light" ? "Dark mode" : "Light mode"}</span>}
         </button>
 
         {/* Help */}
@@ -291,7 +291,7 @@ function Sidebar({
           )}
         >
           <HelpCircle className="h-4 w-4" />
-          {!collapsed && <span className="text-xs font-medium">Help & Support</span>}
+          {!collapsed && <span className="text-sm font-medium">Help & Support</span>}
         </button>
       </div>
     </div>
@@ -331,7 +331,7 @@ function NavRow({
           else onSelect(item.id);
         }}
         className={cn(
-          "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs font-medium transition-all hover-lift",
+          "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm font-medium transition-all hover-lift",
           textColor,
           collapsed && "justify-center px-1"
         )}
@@ -343,7 +343,7 @@ function NavRow({
         )}
         {!collapsed && item.badge && (
           <span className={cn(
-            "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+            "rounded-full px-1.5 py-0.5 text-xs font-semibold",
             isDirectActive ? "bg-white/20 text-white" : theme === "dark" ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-600"
           )}>
             {item.badge}
@@ -369,7 +369,7 @@ function NavRow({
                   key={c.id}
                   onClick={() => onSelect(c.id)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs transition-colors hover-lift",
+                    "flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-sm transition-colors hover-lift",
                     active === c.id
                       ? "bg-emerald-50 font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                       : theme === "dark" ? "text-slate-400 hover:bg-slate-800" : "text-slate-600 hover:bg-slate-100"
@@ -378,7 +378,7 @@ function NavRow({
                   <span className="truncate">{c.label}</span>
                   {c.badge && (
                     <span className={cn(
-                      "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                      "ml-1 rounded-full px-1.5 py-0.5 text-xs font-semibold",
                       theme === "dark" ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-600"
                     )}>
                       {c.badge}
@@ -1234,16 +1234,10 @@ export default function CorporatePayFinalAppShellV3() {
           { id: "rfq", label: "RFQs and quotes", icon: <div />, badge: `${counts.rfqs}` },
           { id: "fulfillment", label: "Orders and fulfillment", icon: <div /> },
           { id: "travel", label: "Travel and scheduling", icon: <div /> },
-        ],
-      },
-      {
-        id: "evs_charging",
-        label: "EVs & Charging",
-        icon: <Leaf className="h-4 w-4" />,
-        children: [
           { id: "ev_charging", label: "EV Charging", icon: <div />, badge: "EV" },
         ],
       },
+
       {
         id: "reports",
         label: "Reporting",
