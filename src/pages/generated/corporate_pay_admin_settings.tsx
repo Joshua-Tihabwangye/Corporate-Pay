@@ -565,7 +565,7 @@ function ActionModal({
     }, 1200);
   };
 
-  let content = null;
+  let content: React.ReactNode = null;
   if (data.kind === "invite" || (data.label && data.label.includes("Invite"))) {
     content = (
       <div className="space-y-4">
