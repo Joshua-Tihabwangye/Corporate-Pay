@@ -479,7 +479,7 @@ export default function IntegrationsDeveloperCenter() {
   return (
     <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
       <ToastStack toasts={toasts} onDismiss={(id) => setToasts((p) => p.filter((x) => x.id !== id))} />
-      <div className="mx-auto max-w-[1180px] px-4 py-5 md:px-6">
+      <div className="mx-auto max-w-[95%] px-4 py-5 md:px-6">
         <div className="rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.10)]">
           <div className="border-b border-slate-200 px-4 py-4 md:px-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

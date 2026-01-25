@@ -2714,7 +2714,7 @@ export default function CorporatePayReportingAnalyticsV2() {
           </div>
 
           <footer className="border-t border-slate-200 bg-white/60 py-6">
-            <div className="mx-auto max-w-[1400px] px-4 text-xs text-slate-500 md:px-6">
+            <div className="mx-auto max-w-[95%] px-4 text-xs text-slate-500 md:px-6">
               V Reporting & Analytics v2. Core: spend breakdowns + approvals performance + CSV/PDF/JSON export. Premium: anomalies, savings dashboard, custom report builder, scheduled report emails.
             </div>
           </footer>
