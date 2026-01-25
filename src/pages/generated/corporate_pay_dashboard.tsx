@@ -501,7 +501,17 @@ function ProgressBar({ value, labelLeft, labelRight }: { value: number; labelLef
   );
 }
 
-function SimpleLineChart({ data, height = 240 }: { data: { label: string; value: number }[]; height?: number }) {
+function SimpleLineChart({
+  data,
+  height = 240,
+  mode,
+  onModeChange,
+}: {
+  data: { label: string; value: number }[];
+  height?: number;
+  mode: "rides" | "delivery" | "both";
+  onModeChange: (m: "rides" | "delivery" | "both") => void;
+}) {
   if (!data?.length) return null;
 
   const max = Math.max(...data.map((d) => d.value)) || 1;
@@ -531,13 +541,40 @@ function SimpleLineChart({ data, height = 240 }: { data: { label: string; value:
   const linePath = getPath(points);
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-[#0B1120] p-4 text-white shadow-sm overflow-hidden relative">
-      <div className="flex items-center justify-between mb-4 z-10 relative">
+    <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-[#0B1120] p-4 text-white shadow-sm">
+      <div className="relative z-10 mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">Trip Trends</h3>
         <div className="flex rounded-lg bg-slate-800 p-0.5">
-          <span className="px-2 py-1 text-[10px] font-semibold text-slate-400">RIDES</span>
-          <span className="px-2 py-1 text-[10px] font-semibold text-slate-400">DELIVERY</span>
-          <span className="px-2 py-1 text-[10px] font-semibold text-slate-900 bg-[#03CD8C] rounded shadow">BOTH</span>
+          <button
+            type="button"
+            onClick={() => onModeChange("rides")}
+            className={cn(
+              "rounded px-2 py-1 text-[10px] font-semibold transition",
+              mode === "rides" ? "bg-[#03CD8C] text-slate-900 shadow" : "text-slate-400 hover:text-white"
+            )}
+          >
+            RIDES
+          </button>
+          <button
+            type="button"
+            onClick={() => onModeChange("delivery")}
+            className={cn(
+              "rounded px-2 py-1 text-[10px] font-semibold transition",
+              mode === "delivery" ? "bg-[#03CD8C] text-slate-900 shadow" : "text-slate-400 hover:text-white"
+            )}
+          >
+            DELIVERY
+          </button>
+          <button
+            type="button"
+            onClick={() => onModeChange("both")}
+            className={cn(
+              "rounded px-2 py-1 text-[10px] font-semibold transition",
+              mode === "both" ? "bg-[#03CD8C] text-slate-900 shadow" : "text-slate-400 hover:text-white"
+            )}
+          >
+            BOTH
+          </button>
         </div>
       </div>
 
@@ -979,18 +1016,18 @@ export default function CorporatePayDashboardV2() {
     [data.failedPayments, data.overdueInvoices, data.policyBreaches]
   );
 
-  // Heatmap demo data
+  // Heatmap demo data (24h in 2h blocks)
   const heat = useMemo(() => {
     const rows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const cols = ["06-09", "09-12", "12-15", "15-18", "18-21", "21-24"];
+    const cols = ["00-02", "02-04", "04-06", "06-08", "08-10", "10-12", "12-14", "14-16", "16-18", "18-20", "20-22", "22-24"];
     const matrix = [
-      [6, 10, 8, 9, 14, 3],
-      [5, 9, 7, 10, 12, 2],
-      [7, 11, 9, 12, 16, 4],
-      [6, 10, 8, 11, 15, 3],
-      [8, 13, 10, 14, 18, 5],
-      [3, 6, 7, 9, 12, 6],
-      [2, 4, 5, 7, 9, 4],
+      [2, 1, 3, 8, 14, 11, 9, 8, 12, 16, 10, 4],
+      [1, 1, 2, 9, 15, 12, 8, 9, 11, 15, 9, 3],
+      [2, 2, 4, 10, 16, 13, 9, 10, 13, 17, 11, 5],
+      [3, 1, 3, 9, 15, 12, 9, 11, 14, 18, 12, 4],
+      [4, 2, 4, 10, 14, 14, 10, 12, 16, 20, 15, 8],
+      [8, 5, 2, 4, 8, 12, 14, 13, 15, 18, 16, 10],
+      [7, 4, 1, 3, 6, 10, 12, 11, 13, 15, 12, 6],
     ];
     return { rows, cols, matrix };
   }, []);
@@ -1472,39 +1509,7 @@ export default function CorporatePayDashboardV2() {
                       <p className="text-sm text-slate-500">Ride volume heat distribution</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-950">
-                        <button
-                          type="button"
-                          onClick={() => setPeakMode("rides")}
-                          className={cn(
-                            "rounded-xl px-3 py-1.5 text-xs font-semibold transition",
-                            peakMode === "rides" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
-                          )}
-                        >
-                          Rides
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPeakMode("delivery")}
-                          className={cn(
-                            "rounded-xl px-3 py-1.5 text-xs font-semibold transition",
-                            peakMode === "delivery" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
-                          )}
-                        >
-                          Delivery
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPeakMode("both")}
-                          className={cn(
-                            "rounded-xl px-3 py-1.5 text-xs font-semibold transition",
-                            peakMode === "both" ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
-                          )}
-                        >
-                          Both
-                        </button>
-                      </div>
-                      <Button variant="outline" className="h-8 text-xs" onClick={() => toast({ title: "Updated", message: "Data refreshed", kind: "success" })}>
+                       <Button variant="outline" className="h-8 text-xs" onClick={() => toast({ title: "Updated", message: "Data refreshed", kind: "success" })}>
                         <Download className="h-3 w-3 mr-2" />
                         Import Data
                       </Button>
@@ -1513,6 +1518,8 @@ export default function CorporatePayDashboardV2() {
                   <div className="overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
                     <div className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
                       <SimpleLineChart
+                        mode={peakMode}
+                        onModeChange={setPeakMode}
                         data={heat.cols.map((col, i) => {
                           // Aggregate rows for each column, with demo switcher scaling.
                           const rides = heat.matrix.reduce((sum, row) => sum + row[i], 0);
