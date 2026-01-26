@@ -11,6 +11,7 @@ import EntityManager from '../pages/generated/corporate_pay_entity_manager';
 import KYBManager from '../pages/generated/corporate_pay_kyb_manager';
 import ModuleManager from '../pages/generated/corporate_pay_module_manager';
 import GoLiveChecklist from '../pages/generated/corporate_pay_go_live_checklist';
+import CorpayIssuedBudgets from '../pages/generated/corporate_pay_issued_budgets';
 
 import OrganizationProfileSetup from '../pages/generated/corporate_pay_organization_profile_setup';
 import UsersInvitations from '../pages/generated/corporate_pay_users_invitations';
@@ -98,6 +99,10 @@ export const consoleRoutes: RouteObject[] = [
     {
         path: "/console/settings/budgets",
         element: <ProtectedRoute><Budgets /></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/budgets-issued",
+        element: <ProtectedRoute><CorpayIssuedBudgets /></ProtectedRoute>,
     },
     {
         path: "/console/settings/billing",

@@ -870,6 +870,7 @@ export default function CorporatePayNotificationsCenterV2() {
 
   const triggerSendDigest = () => {
     toast({ title: "Digest sent", message: "Digest sent to configured channels (demo).", kind: "success" });
+    setDigestOpen(false);
   };
 
   const toggleDigestEnabled = (id: string) => {
@@ -1405,7 +1406,10 @@ export default function CorporatePayNotificationsCenterV2() {
         title="Routing rules"
         subtitle="Send finance alerts to Accountants, approvals to Approvers, etc."
         onClose={() => setRoutingOpen(false)}
-        actions={[{ label: "Save", onClick: () => toast({ title: "Saved", message: "Routing rules saved (demo).", kind: "success" }) }]}
+        actions={[{ label: "Save", onClick: () => {
+          toast({ title: "Saved", message: "Routing rules saved (demo).", kind: "success" });
+          setRoutingOpen(false);
+        } }]}
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
             <Button variant="outline" onClick={() => setRoutingOpen(false)}>Close</Button>
@@ -1413,7 +1417,10 @@ export default function CorporatePayNotificationsCenterV2() {
               <Button variant="outline" onClick={addRoutingRuleFromTemplate}>
                 <Plus className="h-4 w-4" /> Add template
               </Button>
-              <Button variant="primary" onClick={() => toast({ title: "Saved", message: "Routing rules saved (demo).", kind: "success" })}>
+              <Button variant="primary" onClick={() => {
+                toast({ title: "Saved", message: "Routing rules saved (demo).", kind: "success" });
+                setRoutingOpen(false);
+              }}>
                 <Check className="h-4 w-4" /> Save
               </Button>
             </div>
