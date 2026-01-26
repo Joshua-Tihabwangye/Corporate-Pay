@@ -10,6 +10,7 @@ import AccessRequest from '../pages/generated/corporate_pay_access_request';
 import EntityManager from '../pages/generated/corporate_pay_entity_manager';
 import KYBManager from '../pages/generated/corporate_pay_kyb_manager';
 import ModuleManager from '../pages/generated/corporate_pay_module_manager';
+import ModuleSettings from '../pages/generated/corporate_pay_module_settings';
 import GoLiveChecklist from '../pages/generated/corporate_pay_go_live_checklist';
 import CorpayIssuedBudgets from '../pages/generated/corporate_pay_issued_budgets';
 
@@ -63,6 +64,10 @@ export const consoleRoutes: RouteObject[] = [
     {
         path: "/console/settings/modules",
         element: <ProtectedRoute><ModuleManager /></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/modules/:moduleId",
+        element: <ProtectedRoute><ModuleSettings /></ProtectedRoute>,
     },
     {
         path: "/console/settings/org/go-live",
