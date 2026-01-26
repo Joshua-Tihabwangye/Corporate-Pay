@@ -815,6 +815,12 @@ export default function CorporatePayNotificationsCenterV2() {
         const blob = `${e.id} ${e.title} ${e.body} ${e.kind} ${e.severity} ${e.module} ${e.marketplace || "-"}`.toLowerCase();
         if (!blob.includes(query)) return false;
       }
+      
+      // Hide snoozed items if snooze time is in future
+      if (e.status === "Snoozed" && e.snoozeUntil && e.snoozeUntil > Date.now()) {
+        return false;
+      }
+
       return true;
     });
   }, [events, q, sev, kind, module, marketplace, includeQuotes, showMineOnly, assignee, marketplaceEnabled]);
@@ -898,6 +904,38 @@ export default function CorporatePayNotificationsCenterV2() {
     toast({ title: "Rule added", message: "Routing rule added from template.", kind: "success" });
   };
 
+  const handleExport = () => {
+    const headers = ["ID", "Timestamp", "Severity", "Kind", "Module", "Marketplace", "Title", "Body", "AssignedTo", "Status"];
+    const rows = filtered.map(e => [
+      e.id,
+      new Date(e.ts).toISOString(),
+      e.severity,
+      e.kind,
+      e.module,
+      e.marketplace || "-",
+      `"${e.title.replace(/"/g, '""')}"`,
+      `"${e.body.replace(/"/g, '""')}"`,
+      e.assignedTo || "",
+      e.status
+    ]);
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `notifications_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({ title: "Export ready", message: "Download started.", kind: "success" });
+  };
+
   return (
     <div
       className="min-h-screen"
@@ -935,7 +973,7 @@ export default function CorporatePayNotificationsCenterV2() {
                 <Button variant="outline" onClick={() => setRoutingOpen(true)}>
                   <ShuffleIcon /> Routing rules
                 </Button>
-                <Button variant="outline" onClick={() => toast({ title: "Export", message: "Exports are available in Reports and Audit (demo).", kind: "info" })}>
+                <Button variant="outline" onClick={handleExport}>
                   <FileText className="h-4 w-4" /> Export
                 </Button>
                 <Button variant="primary" onClick={() => toast({ title: "Refresh", message: "Feed refreshed (demo).", kind: "success" })}>
