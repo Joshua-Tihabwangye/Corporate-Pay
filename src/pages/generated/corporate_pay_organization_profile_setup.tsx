@@ -322,8 +322,20 @@ function TextArea({
 }
 
 function FileUploader({ onDrop }: { onDrop: (f: File) => void }) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      onDrop(e.target.files[0]);
+    }
+  };
+
   return (
-    <div className="flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center transition hover:bg-slate-100" onClick={() => onDrop(new File([""], "example.pdf"))}>
+    <div 
+      className="flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center transition hover:bg-slate-100" 
+      onClick={() => inputRef.current?.click()}
+    >
+      <input type="file" ref={inputRef} className="hidden" onChange={handleFile} />
       <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-emerald-600 shadow-sm">
         <Upload className="h-6 w-6" />
       </div>
@@ -390,6 +402,21 @@ function ActionMenu({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function CheckItem({ label, status }: { label: string; status: "Pass" | "Fail" | "Pending" }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-3">
+      <div className="flex items-center gap-3">
+        <div className={cn("grid h-6 w-6 place-items-center rounded-full", status === "Pass" ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400")}>
+           {status === "Pass" ? <Check className="h-3.5 w-3.5" /> : <div className="h-1.5 w-1.5 rounded-full bg-current" />}
+        </div>
+        <span className={cn("text-sm font-medium", status === "Pass" ? "text-slate-900" : "text-slate-500")}>{label}</span>
+      </div>
+      {status === "Pass" && <span className="text-xs font-semibold text-emerald-600">Passed</span>}
+      {status === "Pending" && <span className="text-xs text-slate-400">Waiting...</span>}
     </div>
   );
 }
@@ -491,6 +518,12 @@ export default function OrganizationProfileKYB() {
 
   const [orgId, setOrgId] = useState(orgs[0].id);
   const org = useMemo(() => orgs.find((o) => o.id === orgId) || orgs[0], [orgs, orgId]);
+  const [activeEntityId, setActiveEntityId] = useState(org.entities[0].id);
+
+  // Reset entity when org changes
+  useEffect(() => {
+     setActiveEntityId(org.entities[0].id);
+  }, [org]);
 
   const canAdmin = useMemo(() => ["Owner", "Admin", "Finance"].includes(org.role), [org.role]);
 
@@ -511,12 +544,54 @@ export default function OrganizationProfileKYB() {
   };
 
   const [activeTab, setActiveTab] = useState<"Overview" | "Structure" | "Configuration" | "Compliance">("Overview");
-
+  
   // Modal states
   const [uploadOpen, setUploadOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState<string | null>(null);
   const [contactMsg, setContactMsg] = useState("");
+
+  // Check runner state
+  const [runChecksOpen, setRunChecksOpen] = useState(false);
+  const [checkProgress, setCheckProgress] = useState(0);
+  const [checkStatus, setCheckStatus] = useState<"Idle" | "Running" | "Complete">("Idle");
+  const [localProgramStatus, setLocalProgramStatus] = useState<ProgramStatus>(org.program);
+
+  // Sync when org changes
+  useEffect(() => {
+    setLocalProgramStatus(org.program);
+  }, [org]);
+
+  const runChecks = () => {
+    if (localProgramStatus === "Active") {
+      toast({ kind: "success", title: "Already Live", message: "Organization is already active." });
+      return;
+    }
+    setRunChecksOpen(true);
+    setCheckStatus("Running");
+    setCheckProgress(0);
+    
+    let p = 0;
+    const interval = setInterval(() => {
+      p += Math.floor(Math.random() * 15) + 5;
+      if (p >= 100) {
+        p = 100;
+        clearInterval(interval);
+        setCheckStatus("Complete");
+        // Don't auto-toast, let user click Launch
+      }
+      setCheckProgress(p);
+    }, 400);
+  };
+
+  const handleLaunch = () => {
+    setLocalProgramStatus("Active");
+    setRunChecksOpen(false);
+    toast({ kind: "success", title: "You are Live!", message: "Welcome to CorporatePay." });
+    setTimeout(() => {
+      navigate("/console/dashboard");
+    }, 1000);
+  };
 
   return (
     <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
@@ -596,6 +671,46 @@ export default function OrganizationProfileKYB() {
          </div>
       </Modal>
 
+      {/* Run Checks Modal */}
+      <Modal
+        open={runChecksOpen}
+        onClose={() => setRunChecksOpen(false)}
+        title="Go-live Requirements Check"
+        subtitle="Verifying organization readiness for live transactions."
+        footer={
+          <div className="flex justify-end gap-3">
+             <Button variant="ghost" onClick={() => setRunChecksOpen(false)}>Cancel</Button>
+             {checkStatus === "Complete" ? (
+               <Button variant="primary" onClick={handleLaunch} className="bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200">
+                 <Sparkles className="h-4 w-4 mr-2" /> Launch CorporatePay
+               </Button>
+             ) : (
+               <Button variant="outline" disabled>
+                 {checkProgress < 100 ? `Scanning... ${checkProgress}%` : "Finalizing..."}
+               </Button>
+             )}
+          </div>
+        }
+      >
+        <div className="p-4">
+          <div className="mb-2 flex justify-between text-sm font-semibold">
+            <span>Overall Progress</span>
+            <span>{checkProgress}%</span>
+          </div>
+          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full bg-emerald-500 transition-all duration-300" style={{ width: `${checkProgress}%` }} />
+          </div>
+          
+          <div className="mt-6 space-y-3">
+             <CheckItem label="Company Profile Completeness" status={checkProgress > 10 ? "Pass" : "Pending"} />
+             <CheckItem label="KYB Verification" status={checkProgress > 30 ? "Pass" : "Pending"} />
+             <CheckItem label="Settlement Account Verified" status={checkProgress > 60 ? "Pass" : "Pending"} />
+             <CheckItem label="Admin Roles Assigned" status={checkProgress > 80 ? "Pass" : "Pending"} />
+             <CheckItem label="Transaction Limits Configured" status={checkProgress === 100 ? "Pass" : "Pending"} />
+          </div>
+        </div>
+      </Modal>
+
       <div className="mx-auto max-w-[95%] px-4 py-5 md:px-6">
         <div className="rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.10)]">
           {/* Header */}
@@ -614,7 +729,7 @@ export default function OrganizationProfileKYB() {
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <Pill label={`Role: ${org.role}`} tone={canAdmin ? "info" : "neutral"} />
                     <Pill label={`KYB: ${org.kyb}`} tone={toneForKYB(org.kyb)} />
-                    <Pill label={`Program: ${org.program}`} tone={toneForProgram(org.program)} />
+                    <Pill label={`Program: ${localProgramStatus}`} tone={toneForProgram(localProgramStatus)} />
                     <Pill label={`Readiness: ${readinessDone}/${readinessTotal}`} tone={readinessDone === readinessTotal ? "good" : "warn"} />
                   </div>
                 </div>
@@ -627,6 +742,13 @@ export default function OrganizationProfileKYB() {
                     onChange={setOrgId}
                     options={orgs.map((o) => ({ value: o.id, label: o.name }))}
                   />
+                </div>
+                <div className="min-w-[180px]">
+                   <Select
+                      value={activeEntityId}
+                      onChange={setActiveEntityId}
+                      options={org.entities.map((e) => ({ value: e.id, label: `${e.name} (${e.currency})` }))}
+                   />
                 </div>
                 <ActionMenu
                   actions={[
@@ -685,8 +807,9 @@ export default function OrganizationProfileKYB() {
                   subtitle="Legal details, contacts, and branding"
                   right={<Pill label={org.country} tone="neutral" />}
                 >
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-                    <div className="xl:col-span-8 rounded-3xl border border-slate-200 bg-white p-5">
+                  <div className="grid grid-cols-1 gap-6">
+                    {/* Legal Details - Full Width */}
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div className="w-full">
                           <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Legal Information</div>
@@ -742,11 +865,11 @@ export default function OrganizationProfileKYB() {
                              </div>
                           </div>
                         </div>
-                        
                       </div>
                     </div>
 
-                    <div className="xl:col-span-4 space-y-4">
+                    {/* KYB and Brand - Below */}
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                       {/* KYB Status Card */}
                        <div className={cn("rounded-3xl border p-5", org.kyb === "Approved" ? "border-emerald-200 bg-emerald-50" : org.kyb === "Needs action" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")}>
                         <div className="flex items-start gap-4">
@@ -757,7 +880,7 @@ export default function OrganizationProfileKYB() {
                             <div className="text-base font-semibold text-slate-900">KYB Status: {org.kyb}</div>
                             <div className="mt-1 text-sm text-slate-700">Verification is required for full feature access.</div>
                             <div className="mt-4 flex flex-wrap items-center gap-2">
-                              <Button variant={org.kyb === "Needs action" ? "accent" : "outline"} onClick={openAdminConsole} className="text-xs h-8">
+                              <Button variant={org.kyb === "Needs action" ? "accent" : "outline"} onClick={() => navigate("/console/settings/org/kyb")} className="text-xs h-8">
                                 Manage KYB
                               </Button>
                               <Button variant="outline" onClick={() => toast({ kind: "info", title: "Requirements", message: "Shown" })} className="text-xs h-8">
@@ -807,7 +930,7 @@ export default function OrganizationProfileKYB() {
                           </div>
                           <TinyBar value={readinessDone} max={readinessTotal} />
                        </div>
-                       <Button variant="primary" onClick={() => toast({ kind: "info", title: "Run checks", message: "Running..." })}>
+                       <Button variant="primary" onClick={runChecks}>
                           <Sparkles className="h-4 w-4" /> Run Checks
                        </Button>
                     </div>
@@ -825,8 +948,21 @@ export default function OrganizationProfileKYB() {
                             {r.hint && <div className="mt-1 text-xs text-slate-500">{r.hint}</div>}
                           </div>
                           <div className="mt-3 pt-3 border-t border-slate-100/50">
-                             <button className="text-xs font-medium text-emerald-600 hover:underline flex items-center gap-1" onClick={openAdminConsole}>
-                                Resolve <ChevronRight className="h-3 w-3" />
+                             <button 
+                                className="text-xs font-medium text-emerald-600 hover:underline flex items-center gap-1" 
+                                onClick={() => {
+                                  switch(r.key) {
+                                    case "profile": navigate("/console/settings/org/setup"); break;
+                                    case "docs": navigate("/console/settings/org/kyb"); break;
+                                    case "bank": navigate("/console/settings/billing"); break;
+                                    case "roles": navigate("/console/settings/roles"); break;
+                                    case "policy": navigate("/console/settings/policies"); break;
+                                    case "goLive": runChecks(); break;
+                                    default: openAdminConsole();
+                                  }
+                                }}
+                             >
+                                {r.key === "goLive" ? "Run Checks" : "Resolve"} <ChevronRight className="h-3 w-3" />
                              </button>
                           </div>
                         </div>
@@ -840,11 +976,11 @@ export default function OrganizationProfileKYB() {
                     <div className="text-sm font-semibold text-slate-900 mb-4 px-1">Quick Actions & Deep Links</div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                       {[
-                        { label: "Company Profile", icon: <Building2 className="h-4 w-4" />, path: "/settings/org/setup" },
-                        { label: "KYB Documents", icon: <FileText className="h-4 w-4" />, path: "/settings/org/kyb" },
-                        { label: "Entities & Groups", icon: <Globe className="h-4 w-4" />, path: "/settings/org/entities" },
-                        { label: "Module Settings", icon: <Settings className="h-4 w-4" />, path: "/settings/modules" },
-                        { label: "Go-live Checklist", icon: <ShieldCheck className="h-4 w-4" />, path: "/settings/org/go-live" },
+                        { label: "Company Profile", icon: <Building2 className="h-4 w-4" />, path: "/console/settings/org/setup" },
+                        { label: "KYB Documents", icon: <FileText className="h-4 w-4" />, path: "/console/settings/org/kyb" },
+                        { label: "Entities & Groups", icon: <Globe className="h-4 w-4" />, path: "/console/settings/org/entities" },
+                        { label: "Module Settings", icon: <Settings className="h-4 w-4" />, path: "/console/settings/modules" },
+                        { label: "Go-live Checklist", icon: <ShieldCheck className="h-4 w-4" />, path: "/console/settings/org/go-live" },
                       ].map((link, i) => (
                         <button
                           key={i}
@@ -939,7 +1075,7 @@ export default function OrganizationProfileKYB() {
                             </div>
                             <div className="mt-1 text-sm text-slate-700">{m.note}</div>
                           </div>
-                          <Button variant="outline" onClick={openAdminConsole} className="px-3 py-2 text-xs">
+                          <Button variant="outline" onClick={() => navigate("/console/settings/modules")} className="px-3 py-2 text-xs">
                             Manage
                           </Button>
                         </div>
