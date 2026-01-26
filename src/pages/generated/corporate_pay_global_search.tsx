@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
 	AlertTriangle,
@@ -500,6 +501,7 @@ type Command = {
 type ActionKind = "rfq" | "budget" | "freeze" | "export" | null;
 
 export default function CorporatePayGlobalSearchCommandCenterV2() {
+	const navigate = useNavigate();
 	const [toasts, setToasts] = useState<
 		Array<{ id: string; title: string; message?: string; kind: string }>
 	>([]);
@@ -1163,12 +1165,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
 				description: "Open the dashboard",
 				shortcut: "G D",
 				group: "Navigate",
-				run: () =>
-					toast({
-						title: "Navigate",
-						message: "Opening Corporate Dashboard (demo).",
-						kind: "info",
-					}),
+				run: () => navigate("/console/dashboard"),
 			},
 			{
 				id: "nav_approvals",
@@ -1176,12 +1173,7 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
 				description: "Open approvals queue",
 				shortcut: "G A",
 				group: "Navigate",
-				run: () =>
-					toast({
-						title: "Navigate",
-						message: "Opening Approvals Inbox (demo).",
-						kind: "info",
-					}),
+				run: () => navigate("/console/approvals_inbox"),
 			},
 			{
 				id: "tool_save",
@@ -1864,13 +1856,44 @@ export default function CorporatePayGlobalSearchCommandCenterV2() {
 							</div>
 							<Button
 								variant="primary"
-								onClick={() =>
-									toast({
-										title: "Open",
-										message: `Opening ${detail.id} (demo).`,
-										kind: "info",
-									})
-								}
+								onClick={() => {
+                  if (!detail) return;
+                  switch (detail.scope) {
+                    case "Users":
+                      navigate(`/console/settings/users?id=${detail.id}`);
+                      break;
+                    case "Groups":
+                      navigate(`/console/settings/groups?id=${detail.id}`);
+                      break;
+                    case "Cost centers":
+                      navigate(`/console/settings/groups?tab=cost_centers&id=${detail.id}`);
+                      break;
+                    case "Invoices":
+                      navigate(`/console/invoices?id=${detail.id}`);
+                      break;
+                    case "Trips":
+                      navigate(`/console/travel?id=${detail.id}`);
+                      break;
+                    case "Purchases":
+                      navigate(`/console/reporting?id=${detail.id}`);
+                      break;
+                    case "Vendors":
+                      navigate(`/console/vendors?id=${detail.id}`);
+                      break;
+                    case "RFQs":
+                      navigate(`/console/rfq?id=${detail.id}`);
+                      break;
+                    case "Approvals":
+                      navigate(`/console/approvals_inbox?id=${detail.id}`);
+                      break;
+                    default:
+                      toast({
+                        title: "Open",
+                        message: `Opening ${detail.id} (demo).`,
+                        kind: "info",
+                      });
+                  }
+                }}
 							>
 								<ChevronRight className="h-4 w-4" /> Open
 							</Button>
