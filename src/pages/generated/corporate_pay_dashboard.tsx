@@ -37,7 +37,9 @@ import {
   Wallet,
   X,
   MoreVertical,
+  ArrowRight,
 } from "lucide-react";
+import { BudgetStorage, type Budget } from '../../utils/budgetStorage';
 
 const EVZ = {
   green: "#03CD8C",
@@ -247,7 +249,7 @@ function Modal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-x-0 bottom-4 top-4 z-50 mx-auto flex w-[min(980px,calc(100vw-2rem))] flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+            className="fixed inset-x-0 top-[4vh] z-50 mx-auto flex w-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
             style={{ maxWidth: maxW, maxHeight: "92vh" }}
             role="dialog"
             aria-modal="true"
@@ -620,7 +622,7 @@ function ListCard({
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-  items: Array<{ title: string; meta: string; pill?: { label: string; tone: any } }>;
+  items: Array<{ title: string; meta: string; pill?: { label: string; tone: any }; onClick?: () => void }>;
   actionLabel?: string;
   onAction?: () => void;
 }) {
@@ -646,7 +648,15 @@ function ListCard({
       </div>
       <div className="mt-3 space-y-2">
         {items.map((it) => (
-          <div key={it.title} className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+          <button
+            key={it.title}
+            onClick={it.onClick}
+            type={it.onClick ? "button" : undefined}
+            className={cn(
+              "w-full text-left rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950",
+              it.onClick ? "cursor-pointer transition-all hover:bg-slate-50 hover:shadow-sm hover:border-slate-300 dark:hover:bg-slate-800" : ""
+            )}
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-200">{it.title}</div>
@@ -654,7 +664,7 @@ function ListCard({
               </div>
               {it.pill ? <Pill label={it.pill.label} tone={it.pill.tone} /> : null}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -703,6 +713,7 @@ type ApprovalItem = {
   ageMinutes: number;
   status: "Pending" | "Escalated";
   needsAttachment: boolean;
+  details?: Record<string, string | number | boolean | undefined>;
 };
 
 type NextAction = {
@@ -923,7 +934,16 @@ export default function CorporatePayDashboardV2() {
   }, [timeframe, customStartDate, customEndDate, walletBalance]);
 
   // Track issued budgets
-  const [issuedBudgets, setIssuedBudgets] = useState<Array<{ id: string; group: string; amount: number; period: string; timestamp: Date }>>([]);
+  const [issuedBudgets, setIssuedBudgets] = useState<Budget[]>(() => BudgetStorage.getAll());
+
+  // Subscribe to storage changes
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      setIssuedBudgets(BudgetStorage.getAll());
+    };
+    window.addEventListener('budget-storage-update', handleStorageUpdate);
+    return () => window.removeEventListener('budget-storage-update', handleStorageUpdate);
+  }, []);
 
   // Approvals
   const [approvals, setApprovals] = useState<ApprovalItem[]>(() => [
@@ -939,6 +959,13 @@ export default function CorporatePayDashboardV2() {
       ageMinutes: 120,
       status: "Pending",
       needsAttachment: true,
+      details: {
+        "Item": "MacBook Pro M3 x 2",
+        "Vendor": "Shenzhen Store",
+        "Unit Cost": 3270000,
+        "Warranty": "1 Year",
+        "Delivery": "3 Days"
+      }
     },
     {
       id: "RFQ-390",
@@ -952,6 +979,13 @@ export default function CorporatePayDashboardV2() {
       ageMinutes: 1440,
       status: "Escalated",
       needsAttachment: true,
+      details: {
+        "Title": "Company Fleet Expansion",
+        "Items": "Toyota Hiace x 5",
+        "Needed By": "2026-02-15",
+        "Est. Value": 285000000,
+        "Specs Attached": true
+      }
     },
     {
       id: "RD-0442",
@@ -965,6 +999,13 @@ export default function CorporatePayDashboardV2() {
       ageMinutes: 15,
       status: "Pending",
       needsAttachment: false,
+      details: {
+        "Pickup": "Acme HQ, Kampala",
+        "Dropoff": "Entebbe Intl Airport",
+        "Distance": "42km",
+        "Vehicle": "Premium Sedan",
+        "Passenger": "Client Guest"
+      }
     },
     {
       id: "SV-2201",
@@ -978,10 +1019,18 @@ export default function CorporatePayDashboardV2() {
       ageMinutes: 180,
       status: "Pending",
       needsAttachment: false,
+      details: {
+        "Service": "Fleet Charging Credits",
+        "Provider": "EVzone Charging",
+        "Units": "5000 kWh",
+        "Rate": "UGX 360/kWh",
+        "Valid Until": "2026-12-31"
+      }
     },
   ]);
 
   const [openActionId, setOpenActionId] = useState<string | null>(null);
+  const [viewingApproval, setViewingApproval] = useState<ApprovalItem | null>(null);
   const [peakMode, setPeakMode] = useState<"rides" | "delivery" | "both">("both");
 
   const approvalsPending = approvals.filter((a) => a.status !== "Escalated").length;
@@ -1497,6 +1546,8 @@ export default function CorporatePayDashboardV2() {
                 </div>
 
 
+
+
               </div>
 
               {/* Heatmaps & Leaders - Center/Right */}
@@ -1533,32 +1584,96 @@ export default function CorporatePayDashboardV2() {
                 </div>
 
                 {/* Leaders Lists - Side by Side internal */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <ListCard
+              </div>
+
+              {/* Leaders Lists - New Full Width Row */}
+              <div className="lg:col-span-6">
+                 <ListCard
                     title="Top Vendors"
                     subtitle="By spend volume"
                     icon={<Store className="h-4 w-4" />}
                     actionLabel="View All"
-                    onAction={() => navigate("/console/reporting")}
+                    onAction={() => navigate("/console/vendors")}
                     items={[
-                      { title: "Shenzhen Store", meta: `UGX ${formatUGX(5200000)}`, pill: { label: "Anomaly", tone: "warn" } },
-                      { title: "Kampala Office Mart", meta: `UGX ${formatUGX(3100000)}`, pill: { label: "Preferred", tone: "good" } },
-                      { title: "City Courier", meta: `UGX ${formatUGX(820000)}`, pill: { label: "OK", tone: "neutral" } },
+                      { title: "Shenzhen Store", meta: `UGX ${formatUGX(5200000)}`, pill: { label: "Anomaly", tone: "warn" }, onClick: () => navigate("/console/vendors") },
+                      { title: "Kampala Office Mart", meta: `UGX ${formatUGX(3100000)}`, pill: { label: "Preferred", tone: "good" }, onClick: () => navigate("/console/vendors") },
+                      { title: "City Courier", meta: `UGX ${formatUGX(820000)}`, pill: { label: "OK", tone: "neutral" }, onClick: () => navigate("/console/vendors") },
                     ]}
                   />
-                  <ListCard
+              </div>
+
+              <div className="lg:col-span-6">
+                <ListCard
                     title="Top Routes"
                     subtitle="Most frequent trips"
                     icon={<MapPin className="h-4 w-4" />}
                     actionLabel="View All"
                     onAction={() => navigate("/console/travel")}
                     items={[
-                      { title: "Office → Airport", meta: "36 trips • Avg UGX 82k", pill: { label: "Peak", tone: "warn" } },
-                      { title: "Office → Client HQ", meta: "29 trips • Avg UGX 41k", pill: { label: "OK", tone: "neutral" } },
-                      { title: "Office → Warehouse", meta: "18 trips • Avg UGX 35k", pill: { label: "OK", tone: "neutral" } },
+                      { title: "Office → Airport", meta: "36 trips • Avg UGX 82k", pill: { label: "Peak", tone: "warn" }, onClick: () => navigate("/console/travel") },
+                      { title: "Office → Client HQ", meta: "29 trips • Avg UGX 41k", pill: { label: "OK", tone: "neutral" }, onClick: () => navigate("/console/travel") },
+                      { title: "Office → Warehouse", meta: "18 trips • Avg UGX 35k", pill: { label: "OK", tone: "neutral" }, onClick: () => navigate("/console/travel") },
                     ]}
                   />
+              </div>
+
+              {/* Issued Budgets - New Full Width Row */}
+              <div className="lg:col-span-12 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Issued Budgets</h3>
+                    <p className="text-sm text-slate-500">Most recent allocations (Last 5)</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Pill label={`${issuedBudgets.length} total`} tone="neutral" />
+                    {issuedBudgets.length > 5 && (
+                      <Button variant="ghost" onClick={() => navigate('/console/settings/budgets-issued')} className="text-xs">
+                        View all
+                        <ArrowRight className="ml-1 h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
+
+                {issuedBudgets.length === 0 ? (
+                  <div className="py-8 text-center text-slate-500 dark:text-slate-400">
+                    No budgets have been issued yet. Start by identifying a group and amount.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs font-semibold text-slate-600 dark:bg-slate-950 dark:text-slate-400">
+                        <tr>
+                          <th className="px-5 py-3">Group</th>
+                          <th className="px-5 py-3">Module / Market</th>
+                          <th className="px-5 py-3 text-right">Amount</th>
+                          <th className="px-5 py-3">Period</th>
+                          <th className="px-5 py-3 text-center">Hard Cap</th>
+                          <th className="px-5 py-3 text-right">Time</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {issuedBudgets.slice(0, 5).map((b) => (
+                          <tr key={b.id} className="hover:bg-slate-50/50">
+                            <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">{b.group}</td>
+                            <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-medium">{b.module}</span>
+                                <span className="text-[10px] text-slate-400">{b.marketplace}</span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3 text-right font-semibold text-slate-900 dark:text-white">{formatUGX(b.amount)}</td>
+                            <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{b.period}</td>
+                            <td className="px-5 py-3 text-center">
+                              <span className={cn("inline-block h-2 w-2 rounded-full", b.hardCap ? "bg-emerald-500" : "bg-slate-300")} title={b.hardCap ? "Hard Cap Enabled" : "Soft Cap"} />
+                            </td>
+                            <td className="px-5 py-3 text-right text-slate-500">{new Date(b.timestamp).toLocaleTimeString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
               {/* Forecast table - Full Width */}
@@ -1733,13 +1848,16 @@ export default function CorporatePayDashboardV2() {
               variant="primary"
               onClick={() => {
                 setIssueBudgetOpen(false);
-                setIssuedBudgets(curr => [{
+                BudgetStorage.add({
                   id: uid('budget'),
                   group: budgetDraft.group,
+                  module: budgetDraft.module,
+                  marketplace: budgetDraft.marketplace,
                   amount: Number(budgetDraft.amount),
                   period: budgetDraft.period,
-                  timestamp: new Date()
-                }, ...curr]);
+                  hardCap: budgetDraft.hardCap,
+                  timestamp: new Date().toISOString()
+                });
                 toast({ title: "Budget issued", message: `${budgetDraft.group}: ${formatUGX(budgetDraft.amount)} (${budgetDraft.period})`, kind: "success" });
               }}
             >
@@ -1960,115 +2078,216 @@ export default function CorporatePayDashboardV2() {
 
       <Modal
         open={approvalsOpen}
-        title="Approvals inbox"
-        subtitle="Unified approvals: rides, purchases, services, and RFQs."
-        onClose={() => setApprovalsOpen(false)}
+        title={viewingApproval ? `Approval Details: ${viewingApproval.id}` : "Approvals inbox"}
+        subtitle={viewingApproval ? `${viewingApproval.type} request from ${viewingApproval.requester}` : "Unified approvals: rides, purchases, services, and RFQs."}
+        onClose={() => {
+          if (viewingApproval) {
+            setViewingApproval(null);
+          } else {
+            setApprovalsOpen(false);
+          }
+        }}
         footer={
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={() => setApprovalsOpen(false)}>Close</Button>
-          </div>
+          viewingApproval ? (
+            <div className="flex justify-between items-center w-full">
+              <Button variant="ghost" onClick={() => setViewingApproval(null)}>
+                Back to list
+              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="accent"
+                  onClick={() => {
+                    setApprovals((p) => p.filter((x) => x.id !== viewingApproval.id));
+                    toast({ title: "Rejected", message: `${viewingApproval.id} rejected.`, kind: "warn" });
+                    setViewingApproval(null);
+                  }}
+                >
+                  <X className="h-4 w-4" /> Reject
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setApprovals((p) => p.filter((x) => x.id !== viewingApproval.id));
+                    toast({ title: "Approved", message: `${viewingApproval.id} approved.`, kind: "success" });
+                    setViewingApproval(null);
+                  }}
+                >
+                  <Check className="h-4 w-4" /> Approve
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setApprovalsOpen(false)}>Close</Button>
+            </div>
+          )
         }
         maxW="95vw"
       >
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-md p-4"> {/* Added shadow and padding */}
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs text-slate-600">
-              <tr>
-                <th className="px-4 py-3 font-semibold">ID</th>
-                <th className="px-4 py-3 font-semibold">Type</th>
-                <th className="px-4 py-3 font-semibold">Module</th>
-                <th className="px-4 py-3 font-semibold">Marketplace</th>
-                <th className="px-4 py-3 font-semibold">Group</th>
-                <th className="px-4 py-3 font-semibold">Amount</th>
-                <th className="px-4 py-3 font-semibold">SLA</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Required</th>
-                <th className="px-4 py-3 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {approvals.map((a) => (
-                <tr key={a.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                  <td className="px-4 py-3 font-semibold text-slate-900">{a.id}</td>
-                  <td className="px-4 py-3 text-slate-700">{a.type}</td>
-                  <td className="px-4 py-3 text-slate-700">{a.module}</td>
-                  <td className="px-4 py-3 text-slate-700">{a.marketplace}</td>
-                  <td className="px-4 py-3 text-slate-700">{a.group}</td>
-                  <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(a.amount)}</td>
-                  <td className="px-4 py-3"><Pill label={`${a.slaHours}h`} tone={a.status === "Escalated" ? "bad" : "neutral"} /></td>
-                  <td className="px-4 py-3"><Pill label={a.status} tone={a.status === "Escalated" ? "bad" : "warn"} /></td>
-                  <td className="px-4 py-3">
-                    {a.needsAttachment ? <Pill label="Attachment" tone="warn" /> : <Pill label="OK" tone="good" />}
-                  </td>
-                  <td className="px-4 py-3 relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenActionId(openActionId === a.id ? null : a.id);
-                      }}
-                      className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                    <AnimatePresence>
-                      {openActionId === a.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setOpenActionId(null)} />
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: -5 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                            className="absolute right-8 top-1/2 -translate-y-1/2 z-20 w-32 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"
-                          >
-                            <button
-                              className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                              onClick={() => {
-                                toast({ title: "Open", message: `Opening ${a.id}...`, kind: "info" });
+        {viewingApproval ? (
+          <div className="space-y-6">
+            {/* Header info */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div>
+                  <div className="text-xs text-slate-500">Amount</div>
+                  <div className="text-lg font-bold text-slate-900 dark:text-white">{formatUGX(viewingApproval.amount)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Requester</div>
+                  <div className="font-medium text-slate-900 dark:text-white">{viewingApproval.requester}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Module</div>
+                  <div className="font-medium text-slate-900 dark:text-white">{viewingApproval.module}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Status</div>
+                  <Pill label={viewingApproval.status} tone={viewingApproval.status === "Escalated" ? "bad" : "warn"} />
+                </div>
+              </div>
+            </div>
+
+            {/* Dynamic Details Table */}
+            <div>
+              <h4 className="mb-3 text-sm font-bold text-slate-900 dark:text-white">Request Details</h4>
+              <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                <table className="w-full text-sm text-left">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {Object.entries(viewingApproval.details || {}).map(([key, value]) => (
+                      <tr key={key} className="bg-white dark:bg-slate-950">
+                        <td className="px-4 py-3 font-medium text-slate-500 bg-slate-50 w-1/3 dark:bg-slate-900 dark:text-slate-400">{key}</td>
+                        <td className="px-4 py-3 text-slate-900 dark:text-white font-semibold">
+                          {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+                        </td>
+                      </tr>
+                    ))}
+                    {!viewingApproval.details && (
+                      <tr>
+                        <td colSpan={2} className="px-4 py-4 text-center text-slate-500">No additional details provided.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Audit / Meta */}
+            <div className="rounded-2xl bg-slate-50 p-4 text-xs text-slate-500 dark:bg-slate-900/50">
+              <div className="flex gap-4">
+                 <span>ID: <span className="font-mono text-slate-700 dark:text-slate-300">{viewingApproval.id}</span></span>
+                 <span>Group: <span className="font-medium text-slate-700 dark:text-slate-300">{viewingApproval.group}</span></span>
+                 <span>Created: <span className="font-medium text-slate-700 dark:text-slate-300">{viewingApproval.ageMinutes} mins ago</span></span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-md p-4"> {/* Added shadow and padding */}
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs text-slate-600">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">ID</th>
+                    <th className="px-4 py-3 font-semibold">Type</th>
+                    <th className="px-4 py-3 font-semibold">Module</th>
+                    <th className="px-4 py-3 font-semibold">Marketplace</th>
+                    <th className="px-4 py-3 font-semibold">Group</th>
+                    <th className="px-4 py-3 font-semibold">Amount</th>
+                    <th className="px-4 py-3 font-semibold">SLA</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold">Required</th>
+                    <th className="px-4 py-3 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {approvals.map((a) => (
+                    <tr key={a.id} className="border-t border-slate-100 hover:bg-slate-50/60 cursor-pointer" onClick={() => setViewingApproval(a)}>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{a.id}</td>
+                      <td className="px-4 py-3 text-slate-700">{a.type}</td>
+                      <td className="px-4 py-3 text-slate-700">{a.module}</td>
+                      <td className="px-4 py-3 text-slate-700">{a.marketplace}</td>
+                      <td className="px-4 py-3 text-slate-700">{a.group}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(a.amount)}</td>
+                      <td className="px-4 py-3"><Pill label={`${a.slaHours}h`} tone={a.status === "Escalated" ? "bad" : "neutral"} /></td>
+                      <td className="px-4 py-3"><Pill label={a.status} tone={a.status === "Escalated" ? "bad" : "warn"} /></td>
+                      <td className="px-4 py-3">
+                        {a.needsAttachment ? <Pill label="Attachment" tone="warn" /> : <Pill label="OK" tone="good" />}
+                      </td>
+                      <td className="px-4 py-3 relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenActionId(openActionId === a.id ? null : a.id);
+                          }}
+                          className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                        <AnimatePresence>
+                          {openActionId === a.id && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={(e) => {
+                                e.stopPropagation();
                                 setOpenActionId(null);
-                              }}
-                            >
-                              Open details
-                            </button>
-                            <button
-                              className="w-full text-left px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50"
-                              onClick={() => {
-                                setApprovals((p) => p.filter((x) => x.id !== a.id));
-                                toast({ title: "Approved", message: `${a.id} approved.`, kind: "success" });
-                                setOpenActionId(null);
-                              }}
-                            >
-                              Approve
-                            </button>
-                            <button
-                              className="w-full text-left px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
-                              onClick={() => {
-                                setApprovals((p) => p.filter((x) => x.id !== a.id));
-                                toast({ title: "Rejected", message: `${a.id} rejected.`, kind: "warn" });
-                                setOpenActionId(null);
-                              }}
-                            >
-                              Reject
-                            </button>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
-                  </td>
-                </tr>
-              ))}
-              {!approvals.length ? (
-                <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-600">
-                    No approvals in queue.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-          Premium: SLA timers, delegation routing, and load balancing are configured in Approval Workflow Builder (Round 4J).
-        </div>
+                              }} />
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                className="absolute right-8 top-1/2 -translate-y-1/2 z-20 w-32 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                  onClick={() => {
+                                    setViewingApproval(a);
+                                    setOpenActionId(null);
+                                  }}
+                                >
+                                  Open details
+                                </button>
+                                <button
+                                  className="w-full text-left px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50"
+                                  onClick={() => {
+                                    setApprovals((p) => p.filter((x) => x.id !== a.id));
+                                    toast({ title: "Approved", message: `${a.id} approved.`, kind: "success" });
+                                    setOpenActionId(null);
+                                  }}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  className="w-full text-left px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                                  onClick={() => {
+                                    setApprovals((p) => p.filter((x) => x.id !== a.id));
+                                    toast({ title: "Rejected", message: `${a.id} rejected.`, kind: "warn" });
+                                    setOpenActionId(null);
+                                  }}
+                                >
+                                  Reject
+                                </button>
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
+                      </td>
+                    </tr>
+                  ))}
+                  {!approvals.length ? (
+                    <tr>
+                      <td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-600">
+                        No approvals in queue.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+              Premium: SLA timers, delegation routing, and load balancing are configured in Approval Workflow Builder (Round 4J).
+            </div>
+          </>
+        )}
       </Modal>
 
       <footer className="border-t border-slate-200 bg-white/60 py-6">
