@@ -741,6 +741,19 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
   const [publishAck, setPublishAck] = useState(false);
 
   const [exportOpen, setExportOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    action: () => void;
+    actionLabel?: string;
+    variant?: "default" | "danger";
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    action: () => {},
+  });
 
   const totalUsers = useMemo(() => GROUPS.reduce((a, g) => a + g.users, 0), [GROUPS]);
 
@@ -907,6 +920,7 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
     try {
       await navigator.clipboard.writeText(text);
       toast({ title: "Copied", message: "Config JSON copied to clipboard.", kind: "success" });
+      setExportOpen(false);
     } catch {
       toast({ title: "Copy failed", message: "Copy manually.", kind: "warn" });
     }
@@ -1004,10 +1018,23 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
                 <Button variant="outline" onClick={() => setExportOpen(true)}>
                   <Download className="h-4 w-4" /> Export
                 </Button>
-                <Button variant="outline" onClick={resetToPublished} disabled={!diffSummary}>
+                <Button variant="outline" onClick={() => {
+                  if (diffSummary) {
+                    setConfirmData({
+                      open: true,
+                      title: "Revert Changes",
+                      message: "Are you sure you want to revert all draft changes to the last published version?",
+                      action: resetToPublished,
+                      actionLabel: "Revert",
+                      variant: "danger"
+                    });
+                  }
+                }} disabled={!diffSummary}>
                   <X className="h-4 w-4" /> Revert
                 </Button>
-                <Button variant="outline" onClick={saveDraft}>
+                <Button variant="outline" onClick={() => {
+                  saveDraft();
+                }}>
                   <Save className="h-4 w-4" /> Save draft
                 </Button>
                 <Button variant="primary" onClick={openPublish} disabled={!diffSummary}>
@@ -1159,18 +1186,38 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
                     ) : null}
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button variant="outline" onClick={bulkApplyMarketplacesFromECommerce} disabled={!eCommerceEnabled}>
+                      <Button variant="outline" onClick={() => {
+                        setConfirmData({
+                          open: true,
+                          title: "Set All to Inherit",
+                          message: "Set all marketplaces to inherit settings from E-Commerce?",
+                          action: bulkApplyMarketplacesFromECommerce,
+                          actionLabel: "Set Inherit",
+                          variant: "default"
+                        });
+                      }} disabled={!eCommerceEnabled}>
                         <Sparkles className="h-4 w-4" /> Set all to inherit
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => {
-                          setDraft((prev) => {
-                            const next = deepClone(prev);
-                            MARKETPLACES.forEach((m) => (next.marketplaces[m].enabled = true));
-                            return next;
+                          setConfirmData({
+                            open: true,
+                            title: "Enable All Marketplaces",
+                            message: "Are you sure you want to enable all marketplaces?",
+                            action: () => {
+                              setDraft((prev) => {
+                                const next = deepClone(prev);
+                                MARKETPLACES.forEach((m) => {
+                                  if (m !== "Other Marketplace") next.marketplaces[m].enabled = true;
+                                });
+                                return next;
+                              });
+                              toast({ title: "Enabled", message: "All marketplaces enabled.", kind: "success" });
+                            },
+                            actionLabel: "Enable All",
+                            variant: "default"
                           });
-                          toast({ title: "Enabled", message: "All marketplaces enabled (demo).", kind: "success" });
                         }}
                         disabled={!eCommerceEnabled}
                       >
@@ -1179,14 +1226,23 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          setDraft((prev) => {
-                            const next = deepClone(prev);
-                            MARKETPLACES.forEach((m) => (next.marketplaces[m].enabled = false));
-                            // keep Other on by default
-                            next.marketplaces["Other Marketplace"].enabled = true;
-                            return next;
+                          setConfirmData({
+                            open: true,
+                            title: "Disable All Marketplaces",
+                            message: "Are you sure you want to disable all marketplaces (except 'Other')?",
+                            action: () => {
+                              setDraft((prev) => {
+                                const next = deepClone(prev);
+                                MARKETPLACES.forEach((m) => (next.marketplaces[m].enabled = false));
+                                // keep Other on by default
+                                next.marketplaces["Other Marketplace"].enabled = true;
+                                return next;
+                              });
+                              toast({ title: "Disabled", message: "All marketplaces disabled (except Other).", kind: "info" });
+                            },
+                            actionLabel: "Disable All",
+                            variant: "danger"
                           });
-                          toast({ title: "Disabled", message: "All marketplaces disabled (except Other).", kind: "info" });
                         }}
                         disabled={!eCommerceEnabled}
                       >
@@ -1227,27 +1283,54 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
                     <Pill label="Premium" tone="info" />
                   </div>
                   <div className="mt-4 space-y-2">
-                    <Button variant="outline" className="w-full" onClick={bulkApplyModuleDefaults}>
+                    <Button variant="outline" className="w-full" onClick={() => {
+                      setConfirmData({
+                        open: true,
+                        title: "Apply Module Defaults",
+                        message: "Apply defaults from the selected module to ALL other modules?",
+                        action: bulkApplyModuleDefaults,
+                        actionLabel: "Apply",
+                        variant: "default"
+                      });
+                    }}>
                       <Sparkles className="h-4 w-4" /> Apply selected module defaults to all
                     </Button>
-                    <Button variant="outline" className="w-full" onClick={bulkApplyMarketplacesFromECommerce} disabled={!eCommerceEnabled}>
+                    <Button variant="outline" className="w-full" onClick={() => {
+                       setConfirmData({
+                         open: true,
+                         title: "Bulk Inherit Marketplaces",
+                         message: "Set ALL marketplaces to inherit settings from E-Commerce?",
+                         action: bulkApplyMarketplacesFromECommerce,
+                         actionLabel: "Set to Inherit",
+                         variant: "default"
+                       });
+                    }} disabled={!eCommerceEnabled}>
                       <Sparkles className="h-4 w-4" /> Set all marketplaces to inherit
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full"
                       onClick={() => {
-                        setDraft((prev) => {
-                          const next = deepClone(prev);
-                          SERVICE_MODULES.forEach((m) => {
-                            next.modules[m].policy = "Balanced";
-                            next.modules[m].approval = "Auto under threshold";
-                          });
-                          next.modules["Finance & Payments"].policy = "Strict compliance";
-                          next.modules["Finance & Payments"].approval = "Finance approval";
-                          return next;
+                        setConfirmData({
+                          open: true,
+                          title: "Apply Balanced Template",
+                          message: "Apply 'Balanced' policy template to all modules (with specific overrides for Finance & Medical)?",
+                          action: () => {
+                            setDraft((prev) => {
+                              const next = deepClone(prev);
+                              SERVICE_MODULES.forEach((m) => {
+                                next.modules[m].policy = "Balanced";
+                                next.modules[m].approval = "Auto under threshold";
+                              });
+                              next.modules["Finance & Payments"].policy = "Strict compliance";
+                              next.modules["Finance & Payments"].approval = "Finance approval";
+                              return next;
+                            });
+                            toast({ title: "Template", message: "Balanced defaults applied.", kind: "success" });
+                          },
+                          actionLabel: "Apply Template",
+                          variant: "default"
                         });
-                        toast({ title: "Template", message: "Balanced defaults applied (demo).", kind: "success" });
                       }}
                     >
                       <Layers className="h-4 w-4" /> Apply Balanced template
@@ -1407,9 +1490,16 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
                                 setDraft((p) => {
                                   const next = deepClone(p);
                                   const cur = new Set(next.rollout.pilotGroups);
-                                  if (cur.has(g.id)) cur.delete(g.id);
-                                  else cur.add(g.id);
+                                  let msg = "";
+                                  if (cur.has(g.id)) {
+                                     cur.delete(g.id);
+                                     msg = `Removed ${g.id} from pilot`;
+                                  } else {
+                                     cur.add(g.id);
+                                     msg = `Added ${g.id} to pilot`;
+                                  }
                                   next.rollout.pilotGroups = Array.from(cur) as Group[];
+                                  toast({ title: "Updated", message: msg, kind: "info" });
                                   return next;
                                 });
                               }}
@@ -1674,7 +1764,7 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
               <Button variant="outline" onClick={() => setSelected(null)}>
                 Close
               </Button>
-              <Button variant="primary" onClick={saveDraft}>
+              <Button variant="primary" onClick={() => { saveDraft(); setSelected(null); }}>
                 <Save className="h-4 w-4" /> Save
               </Button>
             </div>
@@ -1839,7 +1929,11 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
             <div className="rounded-3xl border border-slate-200 bg-white p-4">
               <div className="text-sm font-semibold text-slate-900">Shortcuts</div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Button variant="outline" onClick={bulkApplyMarketplacesFromECommerce}>
+                <Button variant="outline" onClick={() => {
+                   if (window.confirm("Set all marketplaces to inherit from E-Commerce settings?")) {
+                     bulkApplyMarketplacesFromECommerce();
+                   }
+                }}>
                   <Sparkles className="h-4 w-4" /> Set all to inherit
                 </Button>
                 <Button
@@ -1922,6 +2016,40 @@ export default function CorporatePayModulesMarketplacesEnablementV2() {
           This export includes modules, marketplaces, labels, and rollout settings.
         </div>
         <pre className="mt-3 max-h-[360px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-800">{JSON.stringify(draft, null, 2)}</pre>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal
+        open={confirmData.open}
+        title={confirmData.title}
+        subtitle={confirmData.message}
+        onClose={() => setConfirmData((p) => ({ ...p, open: false }))}
+        actions={[{
+          label: confirmData.actionLabel || "Confirm",
+          onClick: () => {
+            confirmData.action();
+            setConfirmData((p) => ({ ...p, open: false }));
+          },
+          variant: confirmData.variant
+        }]}
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => setConfirmData((p) => ({ ...p, open: false }))}>Cancel</Button>
+            <Button
+              variant={confirmData.variant === "danger" ? "danger" : "primary"}
+              onClick={() => {
+                confirmData.action();
+                setConfirmData((p) => ({ ...p, open: false }));
+              }}
+            >
+              {confirmData.actionLabel || "Confirm"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="text-sm text-slate-600">
+          This action will update your draft configuration. Changes are not live until published.
+        </div>
       </Modal>
 
       <footer className="border-t border-slate-200 bg-white/60 py-6">
