@@ -16,6 +16,12 @@ import CorpayIssuedBudgets from '../pages/generated/corporate_pay_issued_budgets
 
 import OrganizationProfileSetup from '../pages/generated/corporate_pay_organization_profile_setup';
 import UsersInvitations from '../pages/generated/corporate_pay_users_invitations';
+import UserProfileDetail from '../pages/generated/corporate_pay_user_profile_detail';
+import UserEditProfile from '../pages/generated/corporate_pay_user_edit_profile';
+import UserSecuritySettings from '../pages/generated/corporate_pay_user_security_settings';
+import UserPermissionsEdit from '../pages/generated/corporate_pay_user_permissions_edit';
+import UserActivityLog from '../pages/generated/corporate_pay_user_activity_log';
+import RoleEdit from '../pages/generated/corporate_pay_role_edit';
 import GroupsCostCenters from '../pages/generated/corporate_pay_groups_cost_centers';
 import RolesPermissions from '../pages/generated/corporate_pay_roles_permissions_governance';
 import PolicyBuilder from '../pages/generated/corporate_pay_policy_builder_rides_services';
@@ -86,12 +92,40 @@ export const consoleRoutes: RouteObject[] = [
         element: <ProtectedRoute><UsersInvitations /></ProtectedRoute>,
     },
     {
+        path: "/console/users",
+        element: <ProtectedRoute><UsersInvitations /></ProtectedRoute>,
+    },
+    {
+        path: "/console/users/:userId",
+        element: <ProtectedRoute><UserProfileDetail /></ProtectedRoute>,
+    },
+    {
+        path: "/console/users/:userId/edit",
+        element: <ProtectedRoute><UserEditProfile /></ProtectedRoute>,
+    },
+    {
+        path: "/console/users/:userId/security",
+        element: <ProtectedRoute><UserSecuritySettings /></ProtectedRoute>,
+    },
+    {
+        path: "/console/users/:userId/permissions",
+        element: <ProtectedRoute><UserPermissionsEdit /></ProtectedRoute>,
+    },
+    {
+        path: "/console/users/:userId/activity",
+        element: <ProtectedRoute><UserActivityLog /></ProtectedRoute>,
+    },
+    {
         path: "/console/settings/groups",
         element: <ProtectedRoute><GroupsCostCenters /></ProtectedRoute>,
     },
     {
         path: "/console/settings/roles",
         element: <ProtectedRoute><RolesPermissions /></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/roles/:roleName/edit",
+        element: <ProtectedRoute><RoleEdit /></ProtectedRoute>,
     },
     {
         path: "/console/settings/policies",

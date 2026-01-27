@@ -19,6 +19,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { useRoles, useDualRules, useThresholds } from "../../utils/roleStorage";
 
 const EVZ = { green: "#03CD8C", orange: "#F77F00" };
 
@@ -293,41 +294,9 @@ export default function RolesPermissionsGovernance() {
   const org = useMemo(() => orgs.find((o) => o.id === orgId) || orgs[0], [orgs, orgId]);
   const canGovern = useMemo(() => ["Owner", "Admin", "Finance"].includes(org.role), [org.role]);
 
-  const roles = useMemo<RoleDef[]>(
-    () => [
-      {
-        role: "Owner",
-        summary: "Full control of org wallet and policies",
-        permissions: ["View wallet", "Pay", "Request", "Approve", "Withdraw", "Manage beneficiaries", "Batch payouts", "Refunds", "Export reports", "Manage users", "Manage policies"],
-      },
-      {
-        role: "Admin",
-        summary: "Manage users and policies",
-        permissions: ["View wallet", "Pay", "Request", "Approve", "Withdraw", "Manage beneficiaries", "Export reports", "Manage users", "Manage policies"],
-      },
-      {
-        role: "Finance",
-        summary: "Payout operations and reconciliation",
-        permissions: ["View wallet", "Pay", "Request", "Approve", "Withdraw", "Manage beneficiaries", "Batch payouts", "Export reports"],
-      },
-      {
-        role: "Approver",
-        summary: "Approve purchases and payouts",
-        permissions: ["View wallet", "Approve", "Pay", "Request"],
-      },
-      {
-        role: "Member",
-        summary: "Create requests and view own items",
-        permissions: ["View wallet", "Request", "Pay"],
-      },
-      {
-        role: "Viewer",
-        summary: "Read-only access",
-        permissions: ["View wallet"],
-      },
-    ],
-    []
-  );
+  const { roles } = useRoles();
+  const { dualRules, updateDualRule } = useDualRules();
+  const { thresholds, updateThreshold } = useThresholds();
 
   const [selectedRole, setSelectedRole] = useState<OrgRole>("Admin");
   const selectedRoleDef = useMemo(() => roles.find((r) => r.role === selectedRole) || roles[0], [roles, selectedRole]);
@@ -341,12 +310,6 @@ export default function RolesPermissionsGovernance() {
     { key: "High value payouts", enabled: true, note: "Extra approvals for payouts above threshold" },
   ]);
 
-  const [thresholds, setThresholds] = useState<ThresholdRule[]>([
-    { id: "T-1", label: "Purchases", currency: "UGX", threshold: 500000, approvers: 2, appliesTo: ["Purchases"] },
-    { id: "T-2", label: "Payouts", currency: "UGX", threshold: 300000, approvers: 2, appliesTo: ["Payouts"] },
-    { id: "T-3", label: "Refunds", currency: "UGX", threshold: 150000, approvers: 1, appliesTo: ["Refunds"] },
-  ]);
-
   const [audit] = useState<AuditEvent[]>([
     { id: "A-1", when: "Today 08:10", actor: "Ronald", action: "Role change", target: "procurement@acme.ug → Approver", outcome: "Success", why: "Admin role" },
     { id: "A-2", when: "Today 07:55", actor: "Finance Desk", action: "Policy update", target: "Approval threshold to UGX 500,000", outcome: "Success", why: "Dual-control satisfied" },
@@ -357,8 +320,11 @@ export default function RolesPermissionsGovernance() {
   const openAdmin = () => toast({ kind: "info", title: "Open Admin Console", message: "Deep link to full governance editor." });
 
   const toggleDual = (key: DualControlKey) => {
-    setDual((p) => p.map((d) => (d.key === key ? { ...d, enabled: !d.enabled } : d)));
-    toast({ kind: "success", title: "Rule updated" });
+    const rule = dualRules.find(d => d.key === key);
+    if (rule) {
+      updateDualRule(key, !rule.enabled);
+      toast({ kind: "success", title: "Rule updated" });
+    }
   };
 
   const [editOpen, setEditOpen] = useState(false);
@@ -376,7 +342,7 @@ export default function RolesPermissionsGovernance() {
   const saveThreshold = () => {
     const thr = Number(editThreshold.replace(/[^0-9]/g, "")) || 0;
     const appr = Number(editApprovers.replace(/[^0-9]/g, "")) || 1;
-    setThresholds((p) => p.map((t) => (t.id === editId ? { ...t, threshold: thr, approvers: Math.max(1, Math.min(5, appr)) } : t)));
+    updateThreshold(editId, { threshold: thr, approvers: Math.max(1, Math.min(5, appr)) });
     setEditOpen(false);
     toast({ kind: "success", title: "Threshold updated" });
   };
@@ -419,12 +385,12 @@ export default function RolesPermissionsGovernance() {
 
               <div className="flex flex-wrap items-center gap-2">
                 <div className="min-w-[220px]">
-                  <Select value={orgId} onChange={setOrgId} options={orgs.map((o) => o.id)} />
+                  <Select value={orgId} onChange={setOrgId} options={orgs.map((o) => o.name)} />
                 </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Switch", message: "Open wallet switcher" })}>
+                <Button variant="outline" onClick={() => navigate("/console/wallet-switch")}>
                   <ChevronRight className="h-4 w-4" /> Switch
                 </Button>
-                <Button variant="outline" onClick={openAdmin}>
+                <Button variant="outline" onClick={() => navigate("/console/admin")}>
                   <ChevronRight className="h-4 w-4" /> Admin Console
                 </Button>
                 <Button variant="primary" disabled={!canGovern} title={!canGovern ? "Admin role required" : "Save"} onClick={() => toast({ kind: "success", title: "Saved", message: "Governance settings saved." })}>
@@ -443,10 +409,10 @@ export default function RolesPermissionsGovernance() {
                     <div className="text-sm font-semibold text-slate-900">View-only access</div>
                     <div className="mt-1 text-sm text-amber-900">Editing roles and policies requires Admin or Finance role. Use deep links to request access.</div>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button variant="accent" onClick={() => toast({ kind: "info", title: "Request access", message: "Open request access flow" })}>
+                      <Button variant="accent" onClick={() => navigate("/console/access-request")}>
                         <ChevronRight className="h-4 w-4" /> Request access
                       </Button>
-                      <Button variant="outline" onClick={() => toast({ kind: "info", title: "Contact Admin", message: "Show org Admin contacts" })}>
+                      <Button variant="outline" onClick={() => navigate("/console/settings/support-tools")}>
                         <ChevronRight className="h-4 w-4" /> Contact Admin
                       </Button>
                     </div>
@@ -465,9 +431,11 @@ export default function RolesPermissionsGovernance() {
                       <button
                         key={r.role}
                         type="button"
-                        onClick={() => setSelectedRole(r.role)}
+                        onClick={() => navigate(`/console/settings/roles/${r.role}/edit`)}
                         className={cn(
-                          "rounded-3xl border bg-white p-4 text-left shadow-sm hover:bg-slate-50",
+                          "rounded-3xl border bg-white p-4 text-left transition-all duration-200",
+                          "hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-emerald-300 hover:-translate-y-1",
+                          "shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
                           selectedRole === r.role ? "border-emerald-200 ring-2 ring-emerald-100" : "border-slate-200"
                         )}
                       >
@@ -499,8 +467,8 @@ export default function RolesPermissionsGovernance() {
                         <div className="text-sm font-semibold text-slate-900">Permission details</div>
                         <div className="mt-1 text-sm text-slate-600">Role: {selectedRoleDef.role}</div>
                       </div>
-                      <Button variant="outline" onClick={openAdmin}>
-                        <ChevronRight className="h-4 w-4" /> Edit in Admin
+                      <Button variant="outline" onClick={() => navigate(`/console/settings/roles/${selectedRoleDef.role}/edit`)}>
+                        <ChevronRight className="h-4 w-4" /> Edit Permissions
                       </Button>
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -514,10 +482,10 @@ export default function RolesPermissionsGovernance() {
                 <Section
                   title="Dual-control rules"
                   subtitle="Maker-checker for sensitive actions"
-                  right={<Pill label={`${dual.filter((d) => d.enabled).length}/${dual.length} enabled`} tone="info" />}
+                  right={<Pill label={`${dualRules.filter((d) => d.enabled).length}/${dualRules.length} enabled`} tone="info" />}
                 >
                   <div className="space-y-2">
-                    {dual.map((d) => (
+                    {dualRules.map((d) => (
                       <div key={d.key} className={cn("rounded-3xl border p-4", d.enabled ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -548,11 +516,12 @@ export default function RolesPermissionsGovernance() {
                   </div>
                 </Section>
 
-                <Section
-                  title="Approval thresholds"
-                  subtitle="Approval required above threshold"
-                  right={<Pill label={`${thresholds.length} rules`} tone="neutral" />}
-                >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Section
+                    title="Approval thresholds"
+                    subtitle="Approval required above threshold"
+                    right={<Pill label={`${thresholds.length} rules`} tone="neutral" />}
+                  >
                   <div className="space-y-2">
                     {thresholds.map((t) => (
                       <div key={t.id} className="rounded-3xl border border-slate-200 bg-white p-4">
@@ -586,9 +555,9 @@ export default function RolesPermissionsGovernance() {
                       </div>
                     ))}
                   </div>
-                </Section>
-
-                <Section title="Audit trail" subtitle="Recent policy and permission changes" right={<Pill label={`${audit.length}`} tone="neutral" />}>
+                  </Section>
+                  
+                  <Section title="Audit trail" subtitle="Recent policy and permission changes" right={<Pill label={`${audit.length}`} tone="neutral" />}>
                   <div className="space-y-2">
                     {audit.map((a) => (
                       <div key={a.id} className={cn("rounded-3xl border p-4", a.outcome === "Blocked" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")}>
@@ -602,7 +571,7 @@ export default function RolesPermissionsGovernance() {
                             <div className="mt-1 text-sm text-slate-700">{a.target}</div>
                             <div className="mt-2 text-xs text-slate-500">{a.when} • {a.why}</div>
                           </div>
-                          <Button variant="outline" onClick={() => toast({ kind: "info", title: "Open audit", message: a.id })} className="px-3 py-2">
+                          <Button variant="outline" onClick={() => navigate("/console/settings/security")} className="px-3 py-2">
                             <ChevronRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -620,7 +589,8 @@ export default function RolesPermissionsGovernance() {
                       </div>
                     ))}
                   </div>
-                </Section>
+                  </Section>
+                </div>
               </div>
 
               <div className="space-y-4 lg:col-span-4">
@@ -633,7 +603,7 @@ export default function RolesPermissionsGovernance() {
                         <div>
                           <div className="text-sm font-semibold text-slate-900">Dual-control</div>
                           <div className="mt-1 text-sm text-slate-600">Enabled for high-risk actions</div>
-                          <div className="mt-2"><Pill label={`${dual.filter((d) => d.enabled).length} rules enabled`} tone="info" /></div>
+                          <Pill label={`${dualRules.filter((d) => d.enabled).length} rules enabled`} tone="info" />
                         </div>
                         <div className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
                           <ShieldCheck className="h-5 w-5" />
@@ -663,7 +633,7 @@ export default function RolesPermissionsGovernance() {
                           <div className="text-sm font-semibold text-slate-900">Admin controls</div>
                           <div className="mt-1 text-sm text-slate-700">{canGovern ? "You can edit governance" : "Request Admin access to edit"}</div>
                           <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <Button variant={canGovern ? "outline" : "accent"} onClick={() => (canGovern ? openAdmin() : toast({ kind: "info", title: "Request access", message: "Open request access" }))}>
+                            <Button variant={canGovern ? "outline" : "accent"} onClick={() => navigate(canGovern ? "/console/admin" : "/console/access-request")}>
                               <ChevronRight className="h-4 w-4" /> {canGovern ? "Open Admin" : "Request access"}
                             </Button>
                           </div>
@@ -675,10 +645,10 @@ export default function RolesPermissionsGovernance() {
                       <div className="text-sm font-semibold text-slate-900">Exports and reporting</div>
                       <div className="mt-1 text-sm text-slate-600">Audit-ready exports and receipts</div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Export", message: "Open export center" })}>
+                        <Button variant="outline" onClick={() => navigate("/console/reports")}>
                           <ChevronRight className="h-4 w-4" /> Export
                         </Button>
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Statements", message: "Open statements" })}>
+                        <Button variant="outline" onClick={() => navigate("/console/invoices")}>
                           <ChevronRight className="h-4 w-4" /> Statements
                         </Button>
                       </div>
@@ -706,7 +676,7 @@ export default function RolesPermissionsGovernance() {
                         <Pill label="Thresholds" tone="neutral" />
                       </div>
                       <div className="mt-3">
-                        <Button variant="outline" onClick={openAdmin}>
+                        <Button variant="outline" onClick={() => navigate("/console/admin")}>
                           <ChevronRight className="h-4 w-4" /> Open Admin
                         </Button>
                       </div>
@@ -727,7 +697,7 @@ export default function RolesPermissionsGovernance() {
                     <div className="mt-1 text-sm text-slate-600">Enable dual-control for beneficiary edits and batch payouts to reduce payout fraud.</div>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Support", message: "Open support" })}>
+                <Button variant="outline" onClick={() => navigate("/console/settings/support-tools")}>
                   <ChevronRight className="h-4 w-4" /> Support
                 </Button>
               </div>
@@ -816,7 +786,7 @@ export default function RolesPermissionsGovernance() {
               })()}
             </div>
             <div className="mt-4">
-              <Button variant="outline" onClick={openAdmin}>
+              <Button variant="outline" onClick={() => navigate("/console/admin")}>
                 <ChevronRight className="h-4 w-4" /> Advanced rules
               </Button>
             </div>
