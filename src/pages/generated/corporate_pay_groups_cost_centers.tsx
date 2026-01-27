@@ -1,58 +1,23 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   AlertTriangle,
   BadgeCheck,
-  Building2,
   Check,
   ChevronRight,
-  Copy,
   Info,
   Layers,
   Plus,
-  ShieldCheck,
   Sparkles,
   Tag,
   Users,
   X,
 } from "lucide-react";
+import { useGroupsData, Group, CostCenter, Mapping } from "../../utils/groupsStorage";
 
 const EVZ = { green: "#03CD8C", orange: "#F77F00" };
-
-type OrgRole = "Viewer" | "Member" | "Approver" | "Finance" | "Admin" | "Owner";
-
-type OrgStatus = "Active" | "Deposit depleted" | "Suspended" | "Needs verification";
-
-type Org = { id: string; name: string; role: OrgRole; status: OrgStatus };
-
-type Group = {
-  id: string;
-  name: string;
-  description: string;
-  defaultCostCenterId?: string;
-  membersCount: number;
-  visibility: "All" | "Group only" | "Managers only";
-  taggingEnforced: boolean;
-};
-
-type CostCenter = {
-  id: string;
-  code: string;
-  name: string;
-  defaultFor?: string; // group id
-  spendLimitUGX?: number;
-  tagsRequired: boolean;
-};
-
-type Mapping = {
-  id: string;
-  rule: string;
-  targetCostCenterId: string;
-  default: boolean;
-  note: string;
-};
 
 type Toast = { id: string; title: string; message?: string; kind: "success" | "warn" | "error" | "info" };
 
@@ -77,13 +42,6 @@ function Pill({ label, tone = "neutral" }: { label: string; tone?: "good" | "war
     neutral: "bg-slate-50 text-slate-700 ring-slate-200",
   };
   return <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1", map[tone])}>{label}</span>;
-}
-
-function toneForOrgStatus(s: OrgStatus) {
-  if (s === "Active") return "good" as const;
-  if (s === "Deposit depleted") return "warn" as const;
-  if (s === "Needs verification") return "warn" as const;
-  return "bad" as const;
 }
 
 function Button({
@@ -163,55 +121,30 @@ function Section({ title, subtitle, right, children }: { title: string; subtitle
   );
 }
 
-function Modal({
-  open,
-  title,
-  subtitle,
-  onClose,
-  children,
-  footer,
-}: {
-  open: boolean;
-  title: string;
-  subtitle?: string;
-  onClose: () => void;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => (e.key === "Escape" ? onClose() : null);
-    if (open) window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+function Modal({ open, title, subtitle, onClose, children, footer }: { open: boolean; title: string; subtitle?: string; onClose: () => void; children: React.ReactNode; footer?: React.ReactNode }) {
+  if (!open) return null;
   return (
-    <AnimatePresence>
-      {open ? (
-        <>
-          <motion.div className="fixed inset-0 z-40 bg-black/35" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            transition={{ duration: 0.18 }}
-            className="fixed inset-x-0 top-[10vh] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
-              <div>
-                <div className="text-lg font-semibold text-slate-900">{title}</div>
-                {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
-              </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
-            {footer ? <div className="border-t border-slate-200 bg-slate-50 px-5 py-4">{footer}</div> : null}
-          </motion.div>
-        </>
-      ) : null}
-    </AnimatePresence>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div className="fixed inset-0 bg-black/35" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+        className="relative w-full max-w-3xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl"
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-6 py-4">
+          <div>
+            <div className="text-lg font-semibold text-slate-900">{title}</div>
+            {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
+          </div>
+          <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="max-h-[70vh] overflow-auto px-6 py-6 bg-slate-50">{children}</div>
+        {footer ? <div className="border-t border-slate-200 bg-white px-6 py-4">{footer}</div> : null}
+      </motion.div>
+    </div>
   );
 }
 
@@ -244,6 +177,8 @@ function Input({ value, onChange, placeholder }: { value: string; onChange: (v: 
 
 export default function GroupsCostCenters() {
   const navigate = useNavigate();
+  const { groups, costCenters, mappings, members, addGroup, addCostCenter, addMapping, updateGroup, updateMapping } = useGroupsData();
+
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toast = (t: Omit<Toast, "id">) => {
     const id = uid("toast");
@@ -251,66 +186,12 @@ export default function GroupsCostCenters() {
     window.setTimeout(() => setToasts((p) => p.filter((x) => x.id !== id)), 3200);
   };
 
-  const orgs = useMemo<Org[]>(
-    () => [
-      { id: "org_acme", name: "Acme Group Ltd", role: "Admin", status: "Active" },
-      { id: "org_khl", name: "Kampala Holdings", role: "Viewer", status: "Deposit depleted" },
-    ],
-    []
-  );
-
-  const [orgId, setOrgId] = useState(orgs[0].id);
-  const org = useMemo(() => orgs.find((o) => o.id === orgId) || orgs[0], [orgs, orgId]);
-
-  const canAdmin = useMemo(() => ["Owner", "Admin", "Finance"].includes(org.role), [org.role]);
-
-  const [groups, setGroups] = useState<Group[]>([
-    {
-      id: "G-OPS",
-      name: "Operations",
-      description: "Daily operations spend",
-      defaultCostCenterId: "CC-OPS",
-      membersCount: 12,
-      visibility: "Managers only",
-      taggingEnforced: true,
-    },
-    {
-      id: "G-PROC",
-      name: "Procurement",
-      description: "Purchases and vendor payments",
-      defaultCostCenterId: "CC-PROC",
-      membersCount: 8,
-      visibility: "Group only",
-      taggingEnforced: true,
-    },
-    {
-      id: "G-MKT",
-      name: "Marketing",
-      description: "Campaigns and Shoppable Adz",
-      defaultCostCenterId: "CC-MKT",
-      membersCount: 6,
-      visibility: "All",
-      taggingEnforced: false,
-    },
-  ]);
-
-  const [costCenters, setCostCenters] = useState<CostCenter[]>([
-    { id: "CC-OPS", code: "OPS-001", name: "Operations", defaultFor: "G-OPS", spendLimitUGX: 3000000, tagsRequired: true },
-    { id: "CC-PROC", code: "PRC-001", name: "Procurement", defaultFor: "G-PROC", spendLimitUGX: 5000000, tagsRequired: true },
-    { id: "CC-MKT", code: "MKT-001", name: "Marketing", defaultFor: "G-MKT", spendLimitUGX: 2000000, tagsRequired: false },
-    { id: "CC-RND", code: "RND-001", name: "R&D", spendLimitUGX: 2500000, tagsRequired: true },
-  ]);
-
-  const [mappings, setMappings] = useState<Mapping[]>([
-    { id: "M-1", rule: "Module: CorporatePay", targetCostCenterId: "CC-PROC", default: true, note: "Corporate purchases map to procurement" },
-    { id: "M-2", rule: "Module: Shoppable Adz", targetCostCenterId: "CC-MKT", default: true, note: "Ad spend maps to marketing" },
-    { id: "M-3", rule: "Vendor: EV Charging", targetCostCenterId: "CC-OPS", default: false, note: "Charging ops spend" },
-  ]);
-
-  const [activeGroupId, setActiveGroupId] = useState<string>(groups[0].id);
+  const [activeGroupId, setActiveGroupId] = useState<string>(groups[0]?.id || "");
   const activeGroup = useMemo(() => groups.find((g) => g.id === activeGroupId) || groups[0], [groups, activeGroupId]);
+  const activeCC = useMemo(() => costCenters.find((c) => c.id === activeGroup?.defaultCostCenterId) || null, [costCenters, activeGroup]);
 
-  const activeCC = useMemo(() => costCenters.find((c) => c.id === activeGroup.defaultCostCenterId) || null, [costCenters, activeGroup.defaultCostCenterId]);
+  // Derived members count
+  const getMembersCount = (gid: string) => members.filter(m => m.groupId === gid).length;
 
   const [addOpen, setAddOpen] = useState(false);
   const [addType, setAddType] = useState<"Group" | "Cost Center" | "Mapping">("Group");
@@ -320,61 +201,50 @@ export default function GroupsCostCenters() {
   const [draftCode, setDraftCode] = useState("NEW-001");
   const [draftLimit, setDraftLimit] = useState("1000000");
   const [draftRule, setDraftRule] = useState("Module: E-Commerce");
-  const [draftTarget, setDraftTarget] = useState(costCenters[0].id);
-
-  const openAdmin = () => toast({ kind: "info", title: "Open Admin Console", message: "Deep link to full cost center editor." });
+  const [draftTarget, setDraftTarget] = useState(costCenters[0]?.id || "");
 
   const addItem = () => {
-    if (!draftName.trim()) {
+    if (!draftName.trim() && addType !== 'Mapping') {
       toast({ kind: "warn", title: "Name required" });
       return;
     }
 
     if (addType === "Group") {
       const id = `G-${draftName.trim().slice(0, 3).toUpperCase()}-${Math.floor(Math.random() * 100)}`;
-      setGroups((p) => [
-        {
+      addGroup({
           id,
           name: draftName.trim(),
           description: draftDesc.trim(),
           defaultCostCenterId: costCenters[0]?.id,
-          membersCount: 0,
           visibility: "Group only",
-          taggingEnforced: true,
-        },
-        ...p,
-      ]);
+          taggingEnforced: true
+      });
       toast({ kind: "success", title: "Group created", message: draftName.trim() });
     }
 
     if (addType === "Cost Center") {
       const id = `CC-${draftCode.trim().replace(/\s+/g, "-")}`;
       const limit = Number(draftLimit.replace(/[^0-9]/g, "")) || 0;
-      setCostCenters((p) => [
-        {
+      addCostCenter({
           id,
           code: draftCode.trim(),
           name: draftName.trim(),
           spendLimitUGX: limit,
           tagsRequired: true,
-        },
-        ...p,
-      ]);
+          description: draftDesc.trim()
+      });
       toast({ kind: "success", title: "Cost center created", message: draftCode.trim() });
     }
 
     if (addType === "Mapping") {
       const id = `M-${Math.floor(10 + Math.random() * 90)}`;
-      setMappings((p) => [
-        {
+      addMapping({
           id,
           rule: draftRule.trim(),
           targetCostCenterId: draftTarget,
           default: false,
-          note: draftDesc.trim(),
-        },
-        ...p,
-      ]);
+          note: draftDesc.trim()
+      });
       toast({ kind: "success", title: "Mapping created" });
     }
 
@@ -383,26 +253,27 @@ export default function GroupsCostCenters() {
     setAddOpen(false);
   };
 
-  const copy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({ kind: "success", title: "Copied" });
-    } catch {
-      toast({ kind: "warn", title: "Copy failed", message: "Clipboard access blocked." });
-    }
-  };
-
   const resolveMappingTargetName = (id: string) => costCenters.find((c) => c.id === id)?.name || id;
 
   const setDefaultMapping = (id: string) => {
-    setMappings((p) => p.map((m) => ({ ...m, default: m.id === id ? true : m.default && m.rule !== (p.find((x) => x.id === id)?.rule ?? "") ? m.default : m.default })));
-    toast({ kind: "success", title: "Default mapping updated" });
+    // Unset others if rule matches? Assuming simplistic unique rule for now or manually managed.
+    // Logic: find mapping, set default true.
+    const m = mappings.find(x => x.id === id);
+    if(m) {
+        updateMapping(id, { default: true });
+        toast({ kind: "success", title: "Default mapping updated" });
+    }
   };
 
   const toggleEnforceTags = (groupId: string) => {
-    setGroups((p) => p.map((g) => (g.id === groupId ? { ...g, taggingEnforced: !g.taggingEnforced } : g)));
-    toast({ kind: "success", title: "Tag enforcement updated" });
+    const g = groups.find(x => x.id === groupId);
+    if(g) {
+        updateGroup(groupId, { taggingEnforced: !g.taggingEnforced });
+        toast({ kind: "success", title: "Tag enforcement updated" });
+    }
   };
+
+  if(!activeGroup) return <div className="p-10">Loading Groups...</div>;
 
   return (
     <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
@@ -423,9 +294,7 @@ export default function GroupsCostCenters() {
                   <div className="text-sm font-semibold text-slate-900">Groups & Cost Centers</div>
                   <div className="mt-1 text-xs text-slate-500">Spend segmentation, defaults, mapping, and tagging enforcement</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Pill label={`Org: ${org.name}`} tone="info" />
-                    <Pill label={`Role: ${org.role}`} tone={canAdmin ? "info" : "neutral"} />
-                    <Pill label={org.status} tone={toneForOrgStatus(org.status)} />
+                    <Pill label={`Org: Acme Group Ltd`} tone="info" />
                     <Pill label={`Groups: ${groups.length}`} tone="neutral" />
                     <Pill label={`Cost centers: ${costCenters.length}`} tone="neutral" />
                   </div>
@@ -433,34 +302,17 @@ export default function GroupsCostCenters() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <div className="min-w-[220px]">
-                  <Select value={orgId} onChange={setOrgId} options={orgs.map((o) => o.id)} />
-                </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Switch", message: "Open wallet switcher" })}>
+                <Button variant="outline" onClick={() => navigate("/console/wallet-switch")}>
                   <ChevronRight className="h-4 w-4" /> Switch
                 </Button>
-                <Button variant="outline" onClick={openAdmin}>
+                <Button variant="outline" onClick={() => navigate("/console/admin")}>
                   <ChevronRight className="h-4 w-4" /> Admin Console
                 </Button>
-                <Button variant="primary" disabled={!canAdmin} title={!canAdmin ? "Admin role required" : "Add"} onClick={() => setAddOpen(true)}>
+                <Button variant="primary" onClick={() => setAddOpen(true)}>
                   <Plus className="h-4 w-4" /> Add
                 </Button>
               </div>
             </div>
-
-            {!canAdmin ? (
-              <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-amber-800">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">View-only access</div>
-                    <div className="mt-1 text-sm text-amber-900">Editing groups, mappings, and enforcement requires Admin or Finance role.</div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <div className="bg-slate-50 px-4 py-5 md:px-6">
@@ -474,30 +326,47 @@ export default function GroupsCostCenters() {
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <div className="space-y-2">
                       {groups.map((g) => (
-                        <button
+                        <div
                           key={g.id}
-                          type="button"
-                          onClick={() => setActiveGroupId(g.id)}
                           className={cn(
-                            "w-full rounded-3xl border bg-white p-4 text-left shadow-sm hover:bg-slate-50",
+                            "relative w-full rounded-3xl border bg-white p-4 text-left shadow-sm transition-all hover:bg-slate-50 group",
                             activeGroupId === g.id ? "border-emerald-200 ring-2 ring-emerald-100" : "border-slate-200"
                           )}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/console/settings/groups/${g.id}/members`)}
+                            className="absolute inset-0 z-10 w-full h-full cursor-pointer focus:outline-none"
+                            title="Manage Group Members"
+                          />
+                          <div className="relative z-20 flex items-start justify-between gap-3 pointer-events-none">
+                            <div className="flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{g.name}</div>
+                                <div className="text-sm font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">{g.name}</div>
                                 <Pill label={g.visibility} tone="neutral" />
                                 <Pill label={g.taggingEnforced ? "Tag required" : "Tag optional"} tone={g.taggingEnforced ? "warn" : "neutral"} />
+                                {g.status === 'Inactive' && <Pill label="Inactive" tone="bad" />}
                               </div>
                               <div className="mt-1 text-sm text-slate-600">{g.description}</div>
-                              <div className="mt-2 text-xs text-slate-500">Members: {g.membersCount}</div>
+                              <div className="mt-2 text-xs text-slate-500">Members: {getMembersCount(g.id)}</div>
                             </div>
-                            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-50 text-slate-700">
-                              <Users className="h-5 w-5" />
+                            <div className="flex flex-col gap-2 pointer-events-auto">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setActiveGroupId(g.id); }}
+                                    className={cn(
+                                        "grid h-8 w-8 place-items-center rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 transition",
+                                        activeGroupId === g.id ? "text-emerald-600 bg-emerald-50" : "text-slate-400"
+                                    )}
+                                    title="Preview Details"
+                                >
+                                    <Info className="h-4 w-4" />
+                                </button>
+                                <div className="grid h-8 w-8 place-items-center rounded-xl bg-slate-50 text-slate-400">
+                                    <ChevronRight className="h-4 w-4" />
+                                </div>
                             </div>
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
 
@@ -506,7 +375,7 @@ export default function GroupsCostCenters() {
                       <div className="mt-2 text-sm text-slate-600">{activeGroup.description}</div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <Pill label={`Visibility: ${activeGroup.visibility}`} tone="neutral" />
-                        <Pill label={`Members: ${activeGroup.membersCount}`} tone="neutral" />
+                        <Pill label={`Members: ${getMembersCount(activeGroup.id)}`} tone="neutral" />
                       </div>
 
                       <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
@@ -519,10 +388,10 @@ export default function GroupsCostCenters() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button variant={activeGroup.taggingEnforced ? "primary" : "outline"} disabled={!canAdmin} title={!canAdmin ? "Admin required" : "Toggle"} onClick={() => toggleEnforceTags(activeGroup.id)}>
+                        <Button variant={activeGroup.taggingEnforced ? "primary" : "outline"} onClick={() => toggleEnforceTags(activeGroup.id)}>
                           <Tag className="h-4 w-4" /> {activeGroup.taggingEnforced ? "Enforced" : "Enforce tags"}
                         </Button>
-                        <Button variant="outline" onClick={openAdmin}>
+                        <Button variant="outline" onClick={() => navigate(`/console/settings/groups/${activeGroup.id}/members`)}>
                           <ChevronRight className="h-4 w-4" /> Manage members
                         </Button>
                       </div>
@@ -553,7 +422,7 @@ export default function GroupsCostCenters() {
                                 <div className="mt-1 text-sm text-slate-600">No limit configured</div>
                               )}
                             </div>
-                            <Button variant="outline" onClick={openAdmin} className="px-3 py-2">
+                            <Button variant="outline" onClick={() => navigate(`/console/settings/groups/cost-centers/${c.id}/edit`)} className="px-3 py-2">
                               <ChevronRight className="h-4 w-4" />
                             </Button>
                           </div>
@@ -574,10 +443,10 @@ export default function GroupsCostCenters() {
                             </div>
                           ) : null}
                           <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <Button variant="outline" onClick={() => toast({ kind: "info", title: "Set default", message: "This would set default for group." })} disabled={!canAdmin}>
+                            <Button variant="outline" onClick={() => toast({ kind: "info", title: "Set default", message: "This would set default for the group." })}>
                               <ChevronRight className="h-4 w-4" /> Set default
                             </Button>
-                            <Button variant="outline" onClick={openAdmin}>
+                            <Button variant="outline" onClick={() => navigate(`/console/settings/groups/cost-centers/${activeCC.id}/edit`)}>
                               <ChevronRight className="h-4 w-4" /> Edit
                             </Button>
                           </div>
@@ -607,10 +476,10 @@ export default function GroupsCostCenters() {
                             <div className="mt-1 text-sm text-slate-600">{m.note}</div>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <Button variant="outline" className="px-3 py-2" onClick={() => setDefaultMapping(m.id)} disabled={!canAdmin} title={!canAdmin ? "Admin required" : "Set default"}>
+                            <Button variant="outline" className="px-3 py-2" onClick={() => setDefaultMapping(m.id)} title={"Set default"}>
                               <Check className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" className="px-3 py-2" onClick={openAdmin}>
+                            <Button variant="outline" className="px-3 py-2" onClick={() => navigate("/console/admin")}>
                               <ChevronRight className="h-4 w-4" />
                             </Button>
                           </div>
@@ -619,13 +488,13 @@ export default function GroupsCostCenters() {
                     ))}
 
                     <div className="pt-2 flex flex-wrap items-center gap-2">
-                      <Button variant="primary" disabled={!canAdmin} title={!canAdmin ? "Admin required" : "Add"} onClick={() => { setAddType("Mapping"); setAddOpen(true); }}>
+                      <Button variant="primary" onClick={() => { setAddType("Mapping"); setAddOpen(true); }}>
                         <Plus className="h-4 w-4" /> Add mapping
                       </Button>
-                      <Button variant="outline" onClick={() => toast({ kind: "info", title: "Simulate", message: "This would simulate mapping for a checkout." })}>
+                      <Button variant="outline" onClick={() => navigate("/console/settings/simulate")}>
                         <ChevronRight className="h-4 w-4" /> Simulate
                       </Button>
-                      <Button variant="outline" onClick={openAdmin}>
+                      <Button variant="outline" onClick={() => navigate("/console/admin")}>
                         <ChevronRight className="h-4 w-4" /> Advanced
                       </Button>
                     </div>
@@ -633,6 +502,7 @@ export default function GroupsCostCenters() {
                 </Section>
               </div>
 
+              {/* Sidebar */}
               <div className="space-y-4 lg:col-span-4">
                 <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="text-sm font-semibold text-slate-900">Tagging enforcement</div>
@@ -660,10 +530,10 @@ export default function GroupsCostCenters() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="outline" onClick={() => toast({ kind: "info", title: "Policy builder", message: "Deep link to policy builder" })}>
+                      <Button variant="outline" onClick={() => navigate("/console/settings/policies")}>
                         <ChevronRight className="h-4 w-4" /> Policy builder
                       </Button>
-                      <Button variant="outline" onClick={() => toast({ kind: "info", title: "Approvals", message: "Deep link to approval builder" })}>
+                      <Button variant="outline" onClick={() => navigate("/console/settings/approvals/workflows")}>
                         <ChevronRight className="h-4 w-4" /> Approval builder
                       </Button>
                     </div>
@@ -690,7 +560,7 @@ export default function GroupsCostCenters() {
                         <Pill label="Enforcement" tone="neutral" />
                       </div>
                       <div className="mt-3">
-                        <Button variant="outline" onClick={openAdmin}>
+                        <Button variant="outline" onClick={() => navigate("/console/admin")}>
                           <ChevronRight className="h-4 w-4" /> Admin Console
                         </Button>
                       </div>
@@ -711,7 +581,7 @@ export default function GroupsCostCenters() {
                     <div className="mt-1 text-sm text-slate-600">Use mapping rules to auto-apply correct cost centers and reduce approval delays.</div>
                   </div>
                 </div>
-                <Button variant="primary" disabled={!canAdmin} title={!canAdmin ? "Admin required" : "Add"} onClick={() => setAddOpen(true)}>
+                <Button variant="primary" onClick={() => setAddOpen(true)}>
                   <Plus className="h-4 w-4" /> Add
                 </Button>
               </div>
@@ -803,9 +673,6 @@ export default function GroupsCostCenters() {
                   <div className="flex items-center justify-between"><span className="text-slate-500">Target</span><span className="font-semibold">{resolveMappingTargetName(draftTarget)}</span></div>
                 </>
               ) : null}
-            </div>
-            <div className="mt-4">
-              <Button variant="outline" onClick={openAdmin}><ChevronRight className="h-4 w-4" /> Advanced</Button>
             </div>
           </div>
         </div>
