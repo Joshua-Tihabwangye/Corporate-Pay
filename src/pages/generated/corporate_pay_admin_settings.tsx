@@ -1220,14 +1220,19 @@ export default function CorporatePayAdminSettingsHubV2() {
                           key={it.id}
                           type="button"
                           className={cn(
-                            "relative rounded-3xl border bg-white p-4 text-left shadow-sm transition hover:bg-slate-50",
+                            "relative rounded-3xl border bg-white p-4 text-left shadow-sm transition-all duration-200 cursor-pointer",
+                            "hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] hover:-translate-y-1 hover:border-emerald-300",
                             selectedId === it.id
                               ? "border-emerald-300 ring-4 ring-emerald-100"
                               : "border-slate-200"
                           )}
                           onClick={() => {
                             setSelectedId(it.id);
-                            if (locked) toast({ title: "Locked", message: "Request access to open.", kind: "warn" });
+                            if (locked) {
+                              toast({ title: "Locked", message: "Request access to open.", kind: "warn" });
+                            } else {
+                              openItem(it);
+                            }
                           }}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -1456,8 +1461,11 @@ export default function CorporatePayAdminSettingsHubV2() {
                           <button
                             key={item.id}
                             type="button"
-                            className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left hover:bg-slate-50"
-                            onClick={() => setSelectedId(item.id)}
+                            className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-emerald-300 cursor-pointer"
+                            onClick={() => {
+                              setSelectedId(item.id);
+                              if (!locked) openItem(item);
+                            }}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-start gap-3">
@@ -1496,10 +1504,13 @@ export default function CorporatePayAdminSettingsHubV2() {
                       <button
                         key={c.id}
                         type="button"
-                        className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left hover:bg-slate-50"
+                        className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-emerald-300 cursor-pointer"
                         onClick={() => {
                           const it = items.find((i) => i.path === c.path);
-                          if (it) setSelectedId(it.id);
+                          if (it) {
+                            setSelectedId(it.id);
+                            openItem(it);
+                          }
                         }}
                       >
                         <div className="flex items-start justify-between gap-3">

@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Key, Save, CheckSquare, Square } from "lucide-react";
+import { useUser } from "../../utils/userStorage";
+import { Permission } from "../../utils/roleStorage";
 
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -31,6 +33,21 @@ function Button({
   );
 }
 
+// Helper function to get all available permissions
+const ALL_PERMISSIONS: Permission[] = [
+  "View wallet",
+  "Pay",
+  "Request",
+  "Approve",
+  "Withdraw",
+  "Manage beneficiaries",
+  "Batch payouts",
+  "Refunds",
+  "Export reports",
+  "Manage users",
+  "Manage policies",
+];
+
 export default function UserPermissionsEdit() {
   const navigate = useNavigate();
   const { userId } = useParams();
@@ -40,20 +57,10 @@ export default function UserPermissionsEdit() {
 
   useEffect(() => {
     if (user) {
-      // Logic to show enabled vs disabled based on user.permissions
-      const allPossible = [
-         ...permissionTemplate("Owner"),
-         ...permissionTemplate("Admin"),
-         ...permissionTemplate("Finance"),
-         ...permissionTemplate("Approver"),
-         ...permissionTemplate("Member"),
-         ...permissionTemplate("Viewer")
-      ].filter((v, i, a) => a.indexOf(v) === i); // Unique
-
-      setPermissions(allPossible.map(p => ({
+      setPermissions(ALL_PERMISSIONS.map(p => ({
           id: p, 
           label: p, 
-          enabled: user.permissions.includes(p)
+          enabled: user.permissions?.includes(p) || false
       })));
     }
   }, [user]);
@@ -63,7 +70,7 @@ export default function UserPermissionsEdit() {
   };
 
   const handleSave = () => {
-      const newPerms = permissions.filter(p => p.enabled).map(p => p.id);
+      const newPerms = permissions.filter(p => p.enabled).map(p => p.id as Permission);
       if (userId) {
           updateUser({ permissions: newPerms });
       }
@@ -123,3 +130,4 @@ export default function UserPermissionsEdit() {
     </div>
   );
 }
+
