@@ -5,73 +5,25 @@ import {
   ArrowLeft,
   AlertTriangle,
   BadgeCheck,
-  BarChart3,
-  CalendarClock,
   Check,
   ChevronDown,
-  ChevronRight,
-  Copy,
   Download,
   FileText,
-  Flame,
   Info,
-  LineChart,
   PiggyBank,
   Plus,
-  Search,
   Shield,
-  Sparkles,
-  Timer,
-  User,
-  Users,
-  Wallet,
   X,
   MoreVertical,
+  Trash2,
+  RefreshCw,
+  History,
+  Search,
 } from "lucide-react";
 
-const EVZ = {
-  green: "#03CD8C",
-  orange: "#F77F00",
-  grey: "#A6A6A6",
-  light: "#F2F2F2",
-};
-
+// Types
 type BudgetPeriod = "Weekly" | "Monthly" | "Quarterly";
-
 type CapType = "Hard" | "Soft";
-
-type ServiceModule =
-  | "E-Commerce"
-  | "EVs & Charging"
-  | "Rides & Logistics"
-  | "School & E-Learning"
-  | "Medical & Health Care"
-  | "Travel & Tourism"
-  | "Green Investments"
-  | "FaithHub"
-  | "Virtual Workspace"
-  | "Finance & Payments"
-  | "Other Service Module";
-
-type Marketplace =
-  | "MyLiveDealz"
-  | "ServiceMart"
-  | "EVmart"
-  | "GadgetMart"
-  | "LivingMart"
-  | "StyleMart"
-  | "EduMart"
-  | "HealthMart"
-  | "PropertyMart"
-  | "GeneratMart"
-  | "ExpressMart"
-  | "FaithMart"
-  | "Other Marketplace";
-
-type GroupName = "Operations" | "Sales" | "Finance" | "Admin" | "Procurement";
-
-type Risk = "Low" | "Medium" | "High";
-
 type BudgetScope = "Org" | "Group" | "Module" | "Marketplace";
 
 type Budget = {
@@ -81,87 +33,35 @@ type Budget = {
   capType: CapType;
   amountUGX: number;
   usedUGX: number;
-  group?: GroupName;
-  module?: ServiceModule;
-  marketplace?: Marketplace;
+  group?: string;
+  module?: string;
+  marketplace?: string;
   updatedAt: number;
   updatedBy: string;
   notes?: string;
+  hardCap: boolean;
 };
 
 type UserRow = {
   id: string;
   name: string;
-  group: GroupName;
+  group: string;
   role: string;
-  autoApprovalEligible: boolean;
-};
-
-type UserCap = {
-  id: string;
-  userId: string;
+  autoApprove: boolean;
+  limit: number;
   period: BudgetPeriod;
-  capType: CapType;
-  amountUGX: number;
-  usedUGX: number;
   updatedAt: number;
-  updatedBy: string;
-};
-
-type AlertItem = {
-  id: string;
-  ts: number;
-  severity: "Info" | "Warning" | "Critical";
-  title: string;
-  message: string;
-  relatedIds: string[];
 };
 
 type HistoryItem = {
   id: string;
   ts: number;
   actor: string;
-  type:
-  | "Budget created"
-  | "Budget updated"
-  | "User cap updated"
-  | "Spend attempted"
-  | "Spend applied"
-  | "Hard cap blocked"
-  | "Exception requested"
-  | "Exception approved"
-  | "Exception rejected";
+  action: string;
   details: string;
 };
 
-type ExceptionStatus = "Pending" | "Approved" | "Rejected";
-
-type ExceptionTarget = "Org" | "Group" | "User" | "Module" | "Marketplace";
-
-type EmergencyException = {
-  id: string;
-  createdAt: number;
-  createdBy: string;
-  status: ExceptionStatus;
-  targetType: ExceptionTarget;
-  targetId: string; // budget id or user id
-  extraAmountUGX: number;
-  reason: string;
-  attachmentsProvided: boolean;
-  approver: string;
-  decisionNote?: string;
-};
-
-type SpendEvent = {
-  userId: string;
-  module: ServiceModule;
-  marketplace: Marketplace | "-";
-  amountUGX: number;
-  vendor: string;
-  risk: Risk;
-  note: string;
-};
-
+// Utils
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
@@ -170,491 +70,120 @@ function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
-
 function formatUGX(n: number) {
   const v = Math.round(Number(n || 0));
   return `UGX ${v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 }
 
-function formatDateTime(ts: number) {
-  return new Date(ts).toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const GROUPS = ["Operations", "Sales", "Finance", "Admin", "Procurement"];
+const MODULES = [
+  "E-Commerce",
+  "EVs & Charging",
+  "Rides & Logistics",
+  "Medical & Health Care",
+  "Travel & Tourism",
+  "Finance & Payments",
+  "All Modules",
+];
 
-function timeAgo(ts: number) {
-  const d = Date.now() - ts;
-  const m = Math.floor(d / 60000);
-  if (m < 1) return "Just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const days = Math.floor(h / 24);
-  return `${days}d ago`;
-}
-
-function pct(n: number, d: number) {
-  if (d <= 0) return 0;
-  return Math.round((n / d) * 100);
-}
-
-function pillToneForSeverity(sev: AlertItem["severity"]) {
-  if (sev === "Critical") return "bad" as const;
-  if (sev === "Warning") return "warn" as const;
-  return "info" as const;
-}
-
-function toneForCapType(cap: CapType) {
-  return cap === "Hard" ? ("warn" as const) : ("neutral" as const);
-}
-
-function toneForRisk(r: Risk) {
-  if (r === "High") return "bad" as const;
-  if (r === "Medium") return "warn" as const;
-  return "good" as const;
-}
-
-function Pill({
-  label,
-  tone = "neutral",
-}: {
-  label: string;
-  tone?: "good" | "warn" | "bad" | "info" | "neutral";
-}) {
-  const map: Record<string, string> = {
-    good: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    warn: "bg-amber-50 text-amber-800 ring-amber-200",
-    bad: "bg-rose-50 text-rose-700 ring-rose-200",
-    info: "bg-blue-50 text-blue-700 ring-blue-200",
-    neutral: "bg-slate-50 text-slate-700 ring-slate-200",
-  };
-  return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1", map[tone])}>
-      {label}
-    </span>
-  );
-}
-
+// Helper Components
 function Button({
   variant = "outline",
   className,
   children,
   onClick,
   disabled,
-  title,
 }: {
-  variant?: "primary" | "accent" | "outline" | "ghost" | "danger";
+  variant?: "primary" | "outline" | "ghost" | "danger" | "accent";
   className?: string;
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   disabled?: boolean;
-  title?: string;
 }) {
-  const base =
-    "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-4";
+  const base = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-4 disabled:opacity-50 disabled:cursor-not-allowed";
   const variants: Record<string, string> = {
-    primary:
-      "text-white shadow-[0_12px_24px_rgba(3,205,140,0.22)] hover:opacity-95 focus:ring-emerald-200",
-    accent:
-      "text-white shadow-[0_12px_24px_rgba(247,127,0,0.22)] hover:opacity-95 focus:ring-orange-200",
-    outline:
-      "border border-slate-200 bg-white text-slate-800 shadow-sm hover:bg-slate-50 focus:ring-slate-200",
-    ghost:
-      "bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-slate-200",
-    danger:
-      "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus:ring-rose-100",
+    primary: "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-200",
+    accent: "bg-orange-500 text-white hover:bg-orange-600 focus:ring-orange-200",
+    outline: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus:ring-slate-200",
+    ghost: "bg-transparent text-slate-700 hover:bg-slate-100 focus:ring-slate-200",
+    danger: "bg-rose-50 text-rose-700 hover:bg-rose-100 focus:ring-rose-200",
   };
-  const style =
-    variant === "primary"
-      ? { background: EVZ.green }
-      : variant === "accent"
-        ? { background: EVZ.orange }
-        : undefined;
-
   return (
-    <button
-      type="button"
-      title={title}
-      disabled={disabled}
-      onClick={onClick}
-      style={style}
-      className={cn(base, variants[variant], disabled && "cursor-not-allowed opacity-60", className)}
-    >
+    <button onClick={onClick} disabled={disabled} className={cn(base, variants[variant], className)}>
       {children}
     </button>
   );
 }
 
-function Toggle({
-  enabled,
-  onChange,
-  label,
-  description,
-}: {
-  enabled: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-  description?: string;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-4">
-      <div>
-        <div className="text-sm font-semibold text-slate-900">{label}</div>
-        {description ? <div className="mt-1 text-xs text-slate-600">{description}</div> : null}
-      </div>
-      <button
-        type="button"
-        className={cn(
-          "relative h-7 w-12 rounded-full border transition",
-          enabled ? "border-emerald-300 bg-emerald-200" : "border-slate-200 bg-white"
-        )}
-        onClick={() => onChange(!enabled)}
-        aria-label={label}
-      >
-        <span
-          className={cn(
-            "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition",
-            enabled ? "left-[22px]" : "left-1"
-          )}
-        />
-      </button>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  hint,
-  type = "text",
-  disabled,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  hint?: string;
-  type?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className={cn(disabled && "opacity-70")}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-semibold text-slate-600">{label}</div>
-        {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
-      </div>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={cn(
-          "mt-2 w-full rounded-2xl border px-3 py-2.5 text-sm font-semibold outline-none focus:ring-4",
-          disabled ? "border-slate-200 bg-slate-50 text-slate-500" : "border-slate-200 bg-white text-slate-900 focus:ring-emerald-100"
-        )}
-      />
-    </div>
-  );
-}
-
-function NumberField({
-  label,
-  value,
-  onChange,
-  hint,
-  disabled,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  hint?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className={cn(disabled && "opacity-70")}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-semibold text-slate-600">{label}</div>
-        {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
-      </div>
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value || 0))}
-        disabled={disabled}
-        className={cn(
-          "mt-2 w-full rounded-2xl border px-3 py-2.5 text-sm font-semibold outline-none focus:ring-4",
-          disabled ? "border-slate-200 bg-slate-50 text-slate-500" : "border-slate-200 bg-white text-slate-900 focus:ring-emerald-100"
-        )}
-      />
-    </div>
-  );
-}
-
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-  hint,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  hint?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className={cn(disabled && "opacity-70")}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-semibold text-slate-600">{label}</div>
-        {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
-      </div>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className={cn(
-          "mt-2 w-full rounded-2xl border px-3 py-2.5 text-sm font-semibold outline-none focus:ring-4",
-          disabled ? "border-slate-200 bg-slate-50 text-slate-500" : "border-slate-200 bg-white text-slate-900 focus:ring-emerald-100"
-        )}
-      >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function TextArea({
-  label,
-  value,
-  onChange,
-  placeholder,
-  hint,
-  rows = 4,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  hint?: string;
-  rows?: number;
-}) {
-  return (
-    <div>
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-semibold text-slate-600">{label}</div>
-        {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
-      </div>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        rows={rows}
-        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-900 shadow-sm outline-none focus:ring-4 focus:ring-emerald-100"
-      />
-    </div>
-  );
-}
-
-function ActionMenu({ actions }: { actions: Array<{ label: string; onClick: () => void; variant?: "default" | "danger"; icon?: React.ReactNode }> }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      const onScroll = () => setIsOpen(false);
-      window.addEventListener("scroll", onScroll, true);
-      return () => window.removeEventListener("scroll", onScroll, true);
-    }
-  }, [isOpen]);
-
-  const rect = buttonRef.current?.getBoundingClientRect();
-  const top = rect ? rect.bottom + 4 : 0;
-  const right = rect ? window.innerWidth - rect.right : 0;
-
-  if (!actions.length) return null;
-
-  return (
-    <>
-      <button
-        ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
-        className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:bg-slate-100 focus:outline-none"
-      >
-        <MoreVertical className="h-5 w-5" />
-      </button>
-      <AnimatePresence>
-        {isOpen && rect && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.98 }}
-              transition={{ duration: 0.16 }}
-              className="fixed z-50 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
-              style={{ top, right }}
-            >
-              {actions.map((a, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    a.onClick();
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium transition hover:bg-slate-50",
-                    a.variant === "danger" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700"
-                  )}
-                >
-                  {a.icon}
-                  {a.label}
-                </button>
-              ))}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
-
 function Modal({
   open,
-  title,
-  subtitle,
-  children,
   onClose,
+  title,
+  children,
   footer,
-  maxW = "920px",
-  actions,
 }: {
   open: boolean;
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
   onClose: () => void;
+  title: string;
+  children: React.ReactNode;
   footer?: React.ReactNode;
-  maxW?: string;
-  actions?: Array<{ label: string; onClick: () => void; variant?: "default" | "danger" }>;
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    if (open) window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   return (
     <AnimatePresence>
-      {open ? (
+      {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-40 bg-black/35"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/40" // Removed backdrop-blur-sm
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            transition={{ duration: 0.18 }}
-            className="fixed inset-x-0 top-[8vh] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
-            style={{ maxWidth: maxW }}
-            role="dialog"
-            aria-modal="true"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
-              <div>
-                <div className="text-lg font-semibold text-slate-900">{title}</div>
-                {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
-              </div>
-              <div className="flex items-center gap-1">
-                {actions ? <ActionMenu actions={actions} /> : null}
-                <button
-                  className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100"
-                  onClick={onClose}
-                  aria-label="Close"
-                >
+            <div className="pointer-events-auto w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-white sticky top-0 z-10">
+                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                   <X className="h-5 w-5" />
                 </button>
               </div>
+              <div className="p-6 overflow-y-auto">{children}</div>
+              {footer && <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 rounded-b-3xl sticky bottom-0 z-10">{footer}</div>}
             </div>
-            <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
-            {footer ? <div className="border-t border-slate-200 px-5 py-4">{footer}</div> : null}
           </motion.div>
         </>
-      ) : null}
+      )}
     </AnimatePresence>
   );
 }
 
-function ToastStack({
-  toasts,
-  onDismiss,
-}: {
-  toasts: Array<{ id: string; title: string; message?: string; kind: string }>;
-  onDismiss: (id: string) => void;
-}) {
+function ToastStack({ toasts, onDismiss }: { toasts: any[]; onDismiss: (id: string) => void }) {
   return (
-    <div className="pointer-events-none fixed right-4 top-4 z-50 w-[min(460px,calc(100vw-2rem))] space-y-2">
-      <AnimatePresence initial={false}>
+    <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
+      <AnimatePresence>
         {toasts.map((t) => (
           <motion.div
             key={t.id}
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ duration: 0.18 }}
-            className="pointer-events-auto rounded-3xl border border-slate-200 bg-white/90 p-3 shadow-[0_18px_45px_rgba(2,8,23,0.18)] backdrop-blur"
-            role="status"
-            aria-live="polite"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="pointer-events-auto flex items-start gap-3 rounded-2xl bg-white p-4 shadow-xl border border-slate-100 w-80"
           >
-            <div className="flex items-start gap-3">
-              <div
-                className={cn(
-                  "mt-0.5 grid h-9 w-9 place-items-center rounded-2xl",
-                  t.kind === "success" && "bg-emerald-50 text-emerald-700",
-                  t.kind === "warn" && "bg-amber-50 text-amber-800",
-                  t.kind === "error" && "bg-rose-50 text-rose-700",
-                  t.kind === "info" && "bg-blue-50 text-blue-700"
-                )}
-              >
-                {t.kind === "error" || t.kind === "warn" ? (
-                  <AlertTriangle className="h-5 w-5" />
-                ) : (
-                  <Check className="h-5 w-5" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-slate-900">{t.title}</div>
-                {t.message ? <div className="mt-0.5 text-sm text-slate-600">{t.message}</div> : null}
-              </div>
-              <button
-                className="rounded-2xl p-2 text-slate-500 hover:bg-slate-100"
-                onClick={() => onDismiss(t.id)}
-                aria-label="Dismiss"
-              >
-                <X className="h-4 w-4" />
-              </button>
+            <div className={cn("mt-0.5 rounded-full p-1", t.kind === "success" ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600")}>
+              {t.kind === "success" ? <Check className="h-4 w-4" /> : <Info className="h-4 w-4" />}
             </div>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-slate-900">{t.title}</div>
+              <div className="text-xs text-slate-500 mt-1">{t.message}</div>
+            </div>
+            <button onClick={() => onDismiss(t.id)} className="text-slate-400 hover:text-slate-600">
+              <X className="h-4 w-4" />
+            </button>
           </motion.div>
         ))}
       </AnimatePresence>
@@ -662,1904 +191,777 @@ function ToastStack({
   );
 }
 
-function StatCard({
-  title,
-  value,
-  sub,
-  icon,
-  tone = "neutral",
-}: {
-  title: string;
-  value: string;
-  sub: string;
-  icon: React.ReactNode;
-  tone?: "neutral" | "good" | "warn" | "bad" | "info";
-}) {
-  const bg =
-    tone === "good"
-      ? "bg-emerald-50 text-emerald-700"
-      : tone === "warn"
-        ? "bg-amber-50 text-amber-800"
-        : tone === "bad"
-          ? "bg-rose-50 text-rose-700"
-          : tone === "info"
-            ? "bg-blue-50 text-blue-700"
-            : "bg-slate-50 text-slate-700";
+// ---------------------- SUB-COMPONENTS ----------------------
+
+function IssueModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (data: any) => void }) {
+  const [amount, setAmount] = useState("");
+  const [group, setGroup] = useState(GROUPS[0]);
+  const [period, setPeriod] = useState("Monthly");
+  const [hardCap, setHardCap] = useState(true);
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (open) {
+      setAmount("");
+      setGroup(GROUPS[0]);
+      setPeriod("Monthly");
+      setHardCap(true);
+    }
+  }, [open]);
+
+  const handleSubmit = () => {
+    if (!amount) return;
+    onSave({
+      amountUGX: parseInt(amount.replace(/,/g, "")),
+      group,
+      period,
+      hardCap,
+      capType: hardCap ? "Hard" : "Soft"
+    });
+  };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
+    <Modal open={open} onClose={onClose} title="Issue New Budget" footer={
+      <div className="flex justify-end gap-3">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" onClick={handleSubmit} disabled={!amount}>Confirm Issuance</Button>
+      </div>
+    }>
+      <div className="space-y-4">
         <div>
-          <div className="text-xs font-semibold text-slate-500">{title}</div>
-          <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{value}</div>
-          <div className="mt-1 text-xs text-slate-600">{sub}</div>
+          <label className="text-xs font-semibold text-slate-500">Select Group</label>
+          <select value={group} onChange={(e) => setGroup(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100">
+            {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
         </div>
-        <div className={cn("grid h-10 w-10 place-items-center rounded-2xl", bg)}>{icon}</div>
+
+        <div>
+           <label className="text-xs font-semibold text-slate-500">Service Module (optional)</label>
+           <select className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100">
+             <option value="All">All Modules</option>
+             {MODULES.map(m => <option key={m} value={m}>{m}</option>)}
+           </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-slate-500">Budget Amount (UGX)</label>
+          <input 
+            type="number" 
+            value={amount} 
+            onChange={(e) => setAmount(e.target.value)} 
+            placeholder="e.g. 5000000"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-lg font-bold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-500">Period</label>
+            <select value={period} onChange={(e) => setPeriod(e.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100">
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500">Cap Type</label>
+            <button 
+              onClick={() => setHardCap(!hardCap)}
+              className={cn(
+                "mt-2 flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-sm font-semibold transition-all",
+                hardCap ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-600"
+              )}
+            >
+              <span>{hardCap ? "Hard Cap" : "Soft Cap"}</span>
+              {hardCap ? <Shield className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
-function ProgressBar({ valuePct, labelLeft, labelRight }: { valuePct: number; labelLeft: string; labelRight: string }) {
-  const pctv = clamp(valuePct, 0, 140);
+function EditModal({ budget, onClose, onSave }: { budget: Budget; onClose: () => void; onSave: (data: any) => void }) {
+  const [amount, setAmount] = useState(budget.amountUGX.toString());
+  const [hardCap, setHardCap] = useState(budget.hardCap);
+
   return (
-    <div>
-      <div className="flex items-center justify-between text-xs text-slate-600">
-        <span className="font-semibold">{labelLeft}</span>
-        <span className="font-semibold">{labelRight}</span>
+    <Modal open={true} onClose={onClose} title={`Edit ${budget.group} Budget`} footer={
+      <div className="flex justify-end gap-3">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" onClick={() => onSave({ amountUGX: Number(amount), hardCap })}>Save Changes</Button>
       </div>
-      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-        <div className="h-full rounded-full" style={{ width: `${Math.min(100, pctv)}%`, background: EVZ.green }} />
+    }>
+      <div className="space-y-4">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="text-xs font-semibold text-slate-500">Current Allocation</div>
+          <div className="text-xl font-bold text-slate-900">{formatUGX(budget.amountUGX)}</div>
+          <div className="text-xs text-slate-500">{budget.period} • {budget.module || "All Modules"}</div>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-slate-500">New Amount (UGX)</label>
+          <input 
+            type="number" 
+            value={amount} 
+            onChange={(e) => setAmount(e.target.value)} 
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-lg font-bold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+          />
+        </div>
+
+        <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 bg-white">
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Hard Cap</div>
+            <div className="text-xs text-slate-500">Prevent spending above limit</div>
+          </div>
+          <button 
+            onClick={() => setHardCap(!hardCap)}
+            className={cn(
+              "relative h-6 w-11 rounded-full border transition-colors",
+              hardCap ? "border-emerald-500 bg-emerald-500" : "border-slate-300 bg-slate-200"
+            )}
+          >
+            <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform", hardCap ? "left-[22px]" : "left-0.5")} />
+          </button>
+        </div>
       </div>
-      {pctv > 100 ? (
-        <div className="mt-2 text-xs font-semibold text-rose-700">Over by {Math.round((pctv - 100) * 10) / 10}%</div>
-      ) : null}
-    </div>
+    </Modal>
   );
 }
 
-function daysRunway(remaining: number, burnPerDay: number) {
-  if (burnPerDay <= 0) return Infinity;
-  return remaining / burnPerDay;
+function UserLimitModal({ user, onClose, onSave }: { user: UserRow; onClose: () => void; onSave: (data: any) => void }) {
+  const [limit, setLimit] = useState(user.limit.toString());
+  const [autoApprove, setAutoApprove] = useState(user.autoApprove);
+
+  return (
+    <Modal open={true} onClose={onClose} title={`Edit Limits for ${user.name}`} footer={
+      <div className="flex justify-end gap-3">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" onClick={() => onSave({ limit: Number(limit), autoApprove })}>Save Changes</Button>
+      </div>
+    }>
+      <div className="space-y-4">
+        <div className="flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
+            <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+              {user.name.charAt(0)}
+            </div>
+            <div>
+               <div className="font-bold text-slate-900">{user.name}</div>
+               <div className="text-xs text-slate-500">{user.role} • {user.group}</div>
+            </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-slate-500">Spending Limit (UGX)</label>
+          <input 
+            type="number" 
+            value={limit} 
+            onChange={(e) => setLimit(e.target.value)} 
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-lg font-bold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
+          />
+        </div>
+
+        <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 bg-white">
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Auto-Approval Eligibility</div>
+            <div className="text-xs text-slate-500">Allow system to auto-approve safe requests</div>
+          </div>
+          <button 
+            onClick={() => setAutoApprove(!autoApprove)}
+            className={cn(
+              "relative h-6 w-11 rounded-full border transition-colors",
+              autoApprove ? "border-emerald-500 bg-emerald-500" : "border-slate-300 bg-slate-200"
+            )}
+          >
+            <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform", autoApprove ? "left-[22px]" : "left-0.5")} />
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
+
+function HistoryModal({ open, onClose, history, onClear }: { open: boolean; onClose: () => void; history: HistoryItem[]; onClear: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose} title="Budget History" footer={
+      <div className="flex justify-between w-full">
+        <Button variant="danger" onClick={onClear}>Clear Log</Button>
+        <Button variant="primary" onClick={onClose}>Done</Button>
+      </div>
+    }>
+      <div className="space-y-4">
+        {history.length === 0 ? (
+          <div className="text-center py-8 text-slate-500 text-sm">No history recorded yet.</div>
+        ) : (
+          history.map((h) => (
+            <div key={h.id} className="flex gap-3 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+              <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+              <div>
+                <div className="text-sm font-semibold text-slate-900">{h.action} <span className="font-normal text-slate-500">by {h.actor}</span></div>
+                <div className="text-xs text-slate-600">{h.details}</div>
+                <div className="text-[10px] text-slate-400 mt-1">{new Date(h.ts).toLocaleString()}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ---------------------- MAIN PAGE ----------------------
 
 export default function CorporatePayBudgetsSpendControlsV2() {
   const navigate = useNavigate();
-  const SERVICE_MODULES: ServiceModule[] = [
-    "E-Commerce",
-    "EVs & Charging",
-    "Rides & Logistics",
-    "School & E-Learning",
-    "Medical & Health Care",
-    "Travel & Tourism",
-    "Green Investments",
-    "FaithHub",
-    "Virtual Workspace",
-    "Finance & Payments",
-    "Other Service Module",
-  ];
-
-  const MARKETPLACES: Marketplace[] = [
-    "MyLiveDealz",
-    "ServiceMart",
-    "EVmart",
-    "GadgetMart",
-    "LivingMart",
-    "StyleMart",
-    "EduMart",
-    "HealthMart",
-    "PropertyMart",
-    "GeneratMart",
-    "ExpressMart",
-    "FaithMart",
-    "Other Marketplace",
-  ];
-
-  const GROUPS: GroupName[] = ["Operations", "Sales", "Finance", "Admin", "Procurement"];
-
-  const USERS: UserRow[] = [
-    { id: "U-1001", name: "Mary N.", group: "Operations", role: "Manager", autoApprovalEligible: true },
-    { id: "U-1002", name: "John S.", group: "Sales", role: "Employee", autoApprovalEligible: false },
-    { id: "U-1003", name: "Irene K.", group: "Operations", role: "Travel Coordinator", autoApprovalEligible: true },
-    { id: "U-1004", name: "Daisy O.", group: "Finance", role: "Accountant", autoApprovalEligible: true },
-    { id: "U-1005", name: "Procurement Desk", group: "Procurement", role: "Approver", autoApprovalEligible: true },
-  ];
-
-  const [toasts, setToasts] = useState<Array<{ id: string; title: string; message?: string; kind: string }>>([]);
-  const toast = (t: { title: string; message?: string; kind: string }) => {
-    const id = uid("toast");
-    setToasts((p) => [{ id, ...t }, ...p].slice(0, 4));
-    window.setTimeout(() => setToasts((p) => p.filter((x) => x.id !== id)), 3200);
+  const [toasts, setToasts] = useState<any[]>([]);
+  
+  const showToast = (title: string, message: string, kind = "info") => {
+    const id = uid();
+    setToasts((prev) => [...prev, { id, title, message, kind }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
   };
 
-  // Assume month context (demo)
-  const dayOfPeriod = 8;
-  const periodDays = 30;
+  // State: Budgets
+  const [budgets, setBudgets] = useState<Budget[]>([
+    { id: "B-1", scope: "Group", group: "Operations", module: "All Modules", marketplace: "All", amountUGX: 5000000, period: "Monthly", hardCap: true, capType: "Hard", usedUGX: 3200000, updatedAt: Date.now(), updatedBy: "Admin" },
+    { id: "B-2", scope: "Group", group: "Sales", module: "Rides & Logistics", marketplace: "All", amountUGX: 2500000, period: "Monthly", hardCap: false, capType: "Soft", usedUGX: 2100000, updatedAt: Date.now(), updatedBy: "Admin" },
+    { id: "B-3", scope: "Group", group: "Finance", module: "All Modules", marketplace: "All", amountUGX: 8000000, period: "Quarterly", hardCap: true, capType: "Hard", usedUGX: 1200000, updatedAt: Date.now(), updatedBy: "Admin" },
+    { id: "B-4", scope: "Group", group: "Operations", module: "E-Commerce", marketplace: "MyLiveDealz", amountUGX: 1500000, period: "Monthly", hardCap: true, capType: "Hard", usedUGX: 0, updatedAt: Date.now(), updatedBy: "Admin" },
+    { id: "B-5", scope: "Group", group: "Operations", module: "All Modules", marketplace: "All", amountUGX: 5000000, period: "Monthly", hardCap: true, capType: "Hard", usedUGX: 5000000, updatedAt: Date.now(), updatedBy: "Admin" },
+  ]);
 
-  // Budgets
-  const [budgets, setBudgets] = useState<Budget[]>(() => {
-    const now = Date.now();
-    return [
-      {
-        id: "B-ORG",
-        scope: "Org",
-        period: "Monthly",
-        capType: "Hard",
-        amountUGX: 40000000,
-        usedUGX: 32500000,
-        updatedAt: now - 2 * 24 * 60 * 60 * 1000,
-        updatedBy: "Org Admin",
-        notes: "Primary monthly budget",
-      },
-      {
-        id: "B-G-OPS",
-        scope: "Group",
-        period: "Monthly",
-        capType: "Soft",
-        amountUGX: 15000000,
-        usedUGX: 12000000,
-        group: "Operations",
-        updatedAt: now - 24 * 60 * 60 * 1000,
-        updatedBy: "Org Admin",
-        notes: "Operations monthly allocation",
-      },
-      {
-        id: "B-G-SALES",
-        scope: "Group",
-        period: "Monthly",
-        capType: "Soft",
-        amountUGX: 12000000,
-        usedUGX: 9800000,
-        group: "Sales",
-        updatedAt: now - 24 * 60 * 60 * 1000,
-        updatedBy: "Org Admin",
-      },
-      {
-        id: "B-G-FIN",
-        scope: "Group",
-        period: "Monthly",
-        capType: "Hard",
-        amountUGX: 6000000,
-        usedUGX: 5200000,
-        group: "Finance",
-        updatedAt: now - 48 * 60 * 60 * 1000,
-        updatedBy: "Org Admin",
-      },
-      {
-        id: "B-MOD-RIDES",
-        scope: "Module",
-        period: "Monthly",
-        capType: "Soft",
-        amountUGX: 16000000,
-        usedUGX: 14200000,
-        module: "Rides & Logistics",
-        updatedAt: now - 3 * 24 * 60 * 60 * 1000,
-        updatedBy: "Finance Desk",
-        notes: "Soft cap, above routes to approvals",
-      },
-      {
-        id: "B-MKT-MYLIVE",
-        scope: "Marketplace",
-        period: "Monthly",
-        capType: "Hard",
-        amountUGX: 6000000,
-        usedUGX: 5200000,
-        module: "E-Commerce",
-        marketplace: "MyLiveDealz",
-        updatedAt: now - 3 * 24 * 60 * 60 * 1000,
-        updatedBy: "Procurement Desk",
-        notes: "High risk marketplace hard cap",
-      },
-    ];
-  });
+  // State: Users
+  const [users, setUsers] = useState<UserRow[]>([
+    { id: "U-1", name: "Mary N.", group: "Operations", role: "Manager", limit: 2000000, autoApprove: true, period: "Monthly", updatedAt: Date.now() },
+    { id: "U-2", name: "John S.", group: "Sales", role: "Employee", limit: 500000, autoApprove: false, period: "Monthly", updatedAt: Date.now() - 86400000 },
+    { id: "U-3", name: "Irene K.", group: "Operations", role: "Coordinator", limit: 1500000, autoApprove: true, period: "Monthly", updatedAt: Date.now() - 172800000 },
+    { id: "U-4", name: "Daisy O.", group: "Finance", role: "Accountant", limit: 5000000, autoApprove: true, period: "Monthly", updatedAt: Date.now() - 604800000 },
+  ]);
 
-  // User caps
-  const [userCaps, setUserCaps] = useState<UserCap[]>(() => {
-    const now = Date.now();
-    return [
-      { id: "UC-1001", userId: "U-1001", period: "Monthly", capType: "Soft", amountUGX: 3000000, usedUGX: 2100000, updatedAt: now - 3 * 24 * 60 * 60 * 1000, updatedBy: "Org Admin" },
-      { id: "UC-1002", userId: "U-1002", period: "Monthly", capType: "Hard", amountUGX: 1200000, usedUGX: 900000, updatedAt: now - 3 * 24 * 60 * 60 * 1000, updatedBy: "Org Admin" },
-      { id: "UC-1003", userId: "U-1003", period: "Monthly", capType: "Soft", amountUGX: 2000000, usedUGX: 1400000, updatedAt: now - 3 * 24 * 60 * 60 * 1000, updatedBy: "Org Admin" },
-    ];
-  });
+  const [history, setHistory] = useState<HistoryItem[]>([
+    { id: "H-1", ts: Date.now() - 100000, actor: "Admin", action: "Created", details: "Initial budget allocation for Operations" }
+  ]);
 
-  // Alerts and history
-  const [alerts, setAlerts] = useState<AlertItem[]>(() => {
-    const now = Date.now();
-    return [
-      {
-        id: "AL-01",
-        ts: now - 50 * 60 * 1000,
-        severity: "Warning",
-        title: "Sales group at 82%",
-        message: "Sales group is above 80% of monthly cap. Consider enforce or adjust.",
-        relatedIds: ["B-G-SALES"],
-      },
-      {
-        id: "AL-02",
-        ts: now - 20 * 60 * 1000,
-        severity: "Critical",
-        title: "Finance group nearing hard cap",
-        message: "Finance group hard cap is close. Remaining is under UGX 1,000,000.",
-        relatedIds: ["B-G-FIN"],
-      },
-    ];
-  });
+  // Filters - Budgets
+  const [timeFilter, setTimeFilter] = useState("All");
+  const [groupFilter, setGroupFilter] = useState("All");
+  const [moduleFilter, setModuleFilter] = useState("All");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
-  const [history, setHistory] = useState<HistoryItem[]>(() => {
-    const now = Date.now();
-    return [
-      { id: "H-01", ts: now - 3 * 24 * 60 * 60 * 1000, actor: "Org Admin", type: "Budget updated", details: "Updated org monthly budget to UGX 40,000,000" },
-      { id: "H-02", ts: now - 2 * 24 * 60 * 60 * 1000, actor: "Org Admin", type: "Budget updated", details: "Updated Operations budget to UGX 15,000,000" },
-      { id: "H-03", ts: now - 9 * 60 * 60 * 1000, actor: "System", type: "Spend applied", details: "Applied spend UGX 82,000 to Rides & Logistics for John S." },
-    ];
-  });
-
-  // Emergency exceptions
-  const [exceptions, setExceptions] = useState<EmergencyException[]>(() => {
-    const now = Date.now();
-    return [
-      {
-        id: "EXC-01",
-        createdAt: now - 18 * 60 * 60 * 1000,
-        createdBy: "Finance Desk",
-        status: "Pending",
-        targetType: "Group",
-        targetId: "B-G-FIN",
-        extraAmountUGX: 1500000,
-        reason: "Urgent month-end reconciliations and payouts",
-        attachmentsProvided: true,
-        approver: "Org Admin",
-      },
-    ];
-  });
-
-  // Tabs
-  const [tab, setTab] = useState<"budgets" | "caps" | "history" | "forecast" | "exceptions">("budgets");
+  // Filters - Users
+  const [userTimeFilter, setUserTimeFilter] = useState("All");
+  const [userCustomStart, setUserCustomStart] = useState("");
+  const [userCustomEnd, setUserCustomEnd] = useState("");
+  const [userSearch, setUserSearch] = useState("");
 
   // Modals
-  const [budgetModalOpen, setBudgetModalOpen] = useState(false);
-  const [budgetDraft, setBudgetDraft] = useState<Budget>(() => {
-    const now = Date.now();
-    return {
-      id: "",
+  const [isIssueOpen, setIsIssueOpen] = useState(false);
+  const [editBudget, setEditBudget] = useState<Budget | null>(null);
+  const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  // Derived state: Budgets
+  const filteredBudgets = useMemo(() => {
+    return budgets.filter((b) => {
+      // Group Filter
+      if (groupFilter !== "All" && b.group !== groupFilter) return false;
+      // Module Filter
+      if (moduleFilter !== "All" && b.module !== moduleFilter) return false;
+      
+      // Time Filter
+      const d = new Date(b.updatedAt);
+      const now = new Date();
+      if (timeFilter === "Today") return d.toDateString() === now.toDateString();
+      if (timeFilter === "Week") return (now.getTime() - d.getTime()) < 7 * 86400000;
+      if (timeFilter === "Month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (timeFilter === "Year") return d.getFullYear() === now.getFullYear();
+      if (timeFilter === "Custom" && customStart && customEnd) {
+         const start = new Date(customStart);
+         const end = new Date(customEnd);
+         end.setHours(23, 59, 59);
+         return d >= start && d <= end;
+      }
+      
+      return true;
+    });
+  }, [budgets, groupFilter, moduleFilter, timeFilter, customStart, customEnd]);
+
+  // Derived state: Users
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      // Search
+      if (userSearch && !u.name.toLowerCase().includes(userSearch.toLowerCase())) return false;
+      
+      // Time Filter (mocking with updatedAt)
+      const d = new Date(u.updatedAt);
+      const now = new Date();
+      if (userTimeFilter === "Today") return d.toDateString() === now.toDateString();
+      if (userTimeFilter === "Week") return (now.getTime() - d.getTime()) < 7 * 86400000;
+      if (userTimeFilter === "Month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (userTimeFilter === "Year") return d.getFullYear() === now.getFullYear();
+      if (userTimeFilter === "Custom" && userCustomStart && userCustomEnd) {
+         const start = new Date(userCustomStart);
+         const end = new Date(userCustomEnd);
+         end.setHours(23, 59, 59);
+         return d >= start && d <= end;
+      }
+
+      return true;
+    });
+  }, [users, userSearch, userTimeFilter, userCustomStart, userCustomEnd]);
+
+  // Actions
+  const handleClearBudgets = () => {
+    if (timeFilter === "All" && groupFilter === "All" && moduleFilter === "All") {
+       if (confirm("Clear ALL budgets? This cannot be undone.")) {
+         setBudgets([]);
+         showToast("Cleared", "All budgets removed", "success");
+       }
+       return;
+    }
+
+    if (confirm("Clear budgets matching current filters?")) {
+      const idsToRemove = new Set(filteredBudgets.map(b => b.id));
+      setBudgets(budgets.filter(b => !idsToRemove.has(b.id)));
+      showToast("Cleared", `${idsToRemove.size} budgets removed`, "success");
+    }
+  };
+
+  const handleClearUsers = () => {
+    if (userTimeFilter === "All" && !userSearch) {
+       if (confirm("Clear ALL user limits? This cannot be undone.")) {
+         setUsers([]);
+         showToast("Cleared", "All user limits removed", "success");
+       }
+       return;
+    }
+
+    if (confirm("Clear user limits matching current filters?")) {
+      const idsToRemove = new Set(filteredUsers.map(u => u.id));
+      setUsers(users.filter(u => !idsToRemove.has(u.id)));
+      showToast("Cleared", `${idsToRemove.size} user limits removed`, "success");
+    }
+  };
+
+  const handleIssue = (data: Partial<Budget>) => {
+    const newBudget: Budget = {
+      id: uid("B"),
       scope: "Group",
       period: "Monthly",
-      capType: "Soft",
-      amountUGX: 1000000,
+      capType: "Hard",
+      hardCap: true,
+      amountUGX: 0,
       usedUGX: 0,
-      group: "Operations",
-      updatedAt: now,
+      updatedAt: Date.now(),
       updatedBy: "You",
-      notes: "",
-    };
-  });
-
-  const [capModalOpen, setCapModalOpen] = useState(false);
-  const [capDraft, setCapDraft] = useState<UserCap>(() => {
-    const now = Date.now();
-    return { id: "", userId: USERS[0].id, period: "Monthly", capType: "Soft", amountUGX: 500000, usedUGX: 0, updatedAt: now, updatedBy: "You" };
-  });
-
-  const [spendModalOpen, setSpendModalOpen] = useState(false);
-  const [spendDraft, setSpendDraft] = useState<SpendEvent>(() => ({
-    userId: USERS[1].id,
-    module: "Rides & Logistics",
-    marketplace: "-",
-    amountUGX: 85000,
-    vendor: "EVzone Rides",
-    risk: "Low",
-    note: "Client meeting ride",
-  }));
-
-  const [exceptionModalOpen, setExceptionModalOpen] = useState(false);
-  const [exceptionDraft, setExceptionDraft] = useState<EmergencyException>(() => ({
-    id: "",
-    createdAt: Date.now(),
-    createdBy: "You",
-    status: "Pending",
-    targetType: "Group",
-    targetId: "B-G-FIN",
-    extraAmountUGX: 1000000,
-    reason: "",
-    attachmentsProvided: true,
-    approver: "Org Admin",
-  }));
-
-  // Forecast UI controls
-  const [forecastGroupQ, setForecastGroupQ] = useState("");
-  const [forecastDept, setForecastDept] = useState<"All" | GroupName>("All");
-  const [forecastMethod, setForecastMethod] = useState<"runrate" | "last7" | "seasonality">("runrate");
-
-  // Derived
-  const orgBudget = useMemo(() => budgets.find((b) => b.scope === "Org") || null, [budgets]);
-  const totalUsed = orgBudget?.usedUGX || budgets.filter((b) => b.scope === "Org").reduce((a, b) => a + b.usedUGX, 0);
-  const totalAmount = orgBudget?.amountUGX || budgets.filter((b) => b.scope === "Org").reduce((a, b) => a + b.amountUGX, 0);
-  const remaining = Math.max(0, totalAmount - totalUsed);
-
-  const orgBurnPerDay = useMemo(() => {
-    // simple burn rate estimate from MTD usage
-    return dayOfPeriod > 0 ? totalUsed / dayOfPeriod : 0;
-  }, [totalUsed]);
-
-  const runwayDays = useMemo(() => daysRunway(remaining, orgBurnPerDay), [remaining, orgBurnPerDay]);
-
-  const orgForecast = useMemo(() => {
-    if (dayOfPeriod <= 0) return totalUsed;
-    return Math.round((totalUsed / dayOfPeriod) * periodDays);
-  }, [totalUsed]);
-
-  const openAlerts = useMemo(() => alerts.slice().sort((a, b) => b.ts - a.ts), [alerts]);
-
-  // Suggested caps (premium) based on mock historical
-  const historical = useMemo(() => {
-    // last 3 periods usage per group (UGX)
-    return {
-      Operations: [11800000, 12400000, 13100000],
-      Sales: [8200000, 9100000, 9900000],
-      Finance: [4300000, 5100000, 5600000],
-      Admin: [3100000, 3700000, 3900000],
-      Procurement: [2400000, 2900000, 3200000],
-    } as Record<GroupName, number[]>;
-  }, []);
-
-  const suggestedGroupCaps = useMemo(() => {
-    const factor = 1.15; // +15%
-    return GROUPS.map((g) => {
-      const arr = historical[g];
-      const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
-      const p90 = Math.max(...arr);
-      const suggested = Math.round(Math.max(avg, p90) * factor);
-      return { group: g, avg: Math.round(avg), p90, suggested };
-    });
-  }, [GROUPS, historical]);
-
-  // Forecasting by group/module/marketplace
-  const groupForecast = useMemo(() => {
-    const groupBudgets = budgets.filter((b) => b.scope === "Group" && b.period === "Monthly");
-    return groupBudgets.map((b) => {
-      const burn = dayOfPeriod > 0 ? b.usedUGX / dayOfPeriod : 0;
-      const forecast = Math.round(burn * periodDays);
-      const rem = Math.max(0, b.amountUGX - b.usedUGX);
-      const runway = daysRunway(rem, burn);
-      return { ...b, forecast, burnPerDay: burn, runway };
-    });
-  }, [budgets]);
-
-  const groupForecastFiltered = useMemo(() => {
-    const q = forecastGroupQ.trim().toLowerCase();
-    return groupForecast.filter((g) => {
-      const deptOk = forecastDept === "All" ? true : g.group === forecastDept;
-      const qOk = !q ? true : String(g.group || "").toLowerCase().includes(q);
-      return deptOk && qOk;
-    });
-  }, [groupForecast, forecastDept, forecastGroupQ]);
-
-  const moduleForecast = useMemo(() => {
-    const moduleBudgets = budgets.filter((b) => b.scope === "Module" && b.period === "Monthly");
-    return moduleBudgets.map((b) => {
-      const burn = dayOfPeriod > 0 ? b.usedUGX / dayOfPeriod : 0;
-      const forecast = Math.round(burn * periodDays);
-      return { ...b, forecast, burnPerDay: burn };
-    });
-  }, [budgets]);
-
-  const marketplaceForecast = useMemo(() => {
-    const mktBudgets = budgets.filter((b) => b.scope === "Marketplace" && b.period === "Monthly");
-    return mktBudgets.map((b) => {
-      const burn = dayOfPeriod > 0 ? b.usedUGX / dayOfPeriod : 0;
-      const forecast = Math.round(burn * periodDays);
-      return { ...b, forecast, burnPerDay: burn };
-    });
-  }, [budgets]);
-
-  // Helpers
-  const addHistory = (h: Omit<HistoryItem, "id">) => {
-    setHistory((prev) => [{ id: uid("H"), ...h }, ...prev]);
-  };
-
-  const addAlert = (a: Omit<AlertItem, "id">) => {
-    setAlerts((prev) => [{ id: uid("AL"), ...a }, ...prev].slice(0, 40));
-  };
-
-  const exportJSON = () => {
-    const payload = {
-      budgets,
-      userCaps,
-      alerts,
-      history,
-      exceptions,
-      exportedAt: new Date().toISOString(),
-    };
-    const text = JSON.stringify(payload, null, 2);
-    const blob = new Blob([text], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "corporatepay-budgets-controls.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "Exported", message: "Downloaded JSON config.", kind: "success" });
-  };
-
-  const copyJSON = async () => {
-    const payload = { budgets, userCaps, alerts, history, exceptions };
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-      toast({ title: "Copied", message: "Copied JSON to clipboard.", kind: "success" });
-    } catch {
-      toast({ title: "Copy failed", message: "Copy manually.", kind: "warn" });
-    }
-  };
-
-  // Budget editor
-  const openNewBudget = () => {
-    const now = Date.now();
-    setBudgetDraft({
-      id: "",
-      scope: "Group",
-      period: "Monthly",
-      capType: "Soft",
-      amountUGX: 1000000,
-      usedUGX: 0,
       group: "Operations",
-      updatedAt: now,
-      updatedBy: "You",
-      notes: "",
-    });
-    setBudgetModalOpen(true);
-  };
-
-  const openEditBudget = (b: Budget) => {
-    setBudgetDraft(JSON.parse(JSON.stringify(b)));
-    setBudgetModalOpen(true);
-  };
-
-  const saveBudget = () => {
-    // basic validation
-    if (budgetDraft.amountUGX <= 0) {
-      toast({ title: "Invalid amount", message: "Budget amount must be greater than zero.", kind: "warn" });
-      return;
-    }
-
-    // marketplace scope requires module E-Commerce
-    if (budgetDraft.scope === "Marketplace" && budgetDraft.module !== "E-Commerce") {
-      toast({ title: "Invalid scope", message: "Marketplace budgets must be under E-Commerce.", kind: "warn" });
-      return;
-    }
-
-    const now = Date.now();
-    const isNew = !budgetDraft.id;
-    const id = isNew ? uid("B") : budgetDraft.id;
-
-    setBudgets((prev) => {
-      const next = prev.slice();
-      const idx = next.findIndex((x) => x.id === id);
-      const row = { ...budgetDraft, id, updatedAt: now, updatedBy: "You" };
-      if (idx >= 0) next[idx] = row;
-      else next.unshift(row);
-      return next;
-    });
-
-    addHistory({ ts: now, actor: "You", type: isNew ? "Budget created" : "Budget updated", details: `${isNew ? "Created" : "Updated"} ${budgetDraft.scope} budget (${id}) to ${formatUGX(budgetDraft.amountUGX)} (${budgetDraft.capType})` });
-
-    toast({ title: "Saved", message: "Budget saved.", kind: "success" });
-    setBudgetModalOpen(false);
-  };
-
-  const deleteBudget = (id: string) => {
-    setBudgets((p) => p.filter((b) => b.id !== id));
-    addHistory({ ts: Date.now(), actor: "You", type: "Budget updated", details: `Deleted budget ${id}` });
-    toast({ title: "Deleted", message: `Budget ${id} removed.",`, kind: "info" });
-  };
-
-  // User caps editor
-  const openNewCap = () => {
-    const now = Date.now();
-    setCapDraft({ id: "", userId: USERS[0].id, period: "Monthly", capType: "Soft", amountUGX: 500000, usedUGX: 0, updatedAt: now, updatedBy: "You" });
-    setCapModalOpen(true);
-  };
-
-  const openEditCap = (c: UserCap) => {
-    setCapDraft(JSON.parse(JSON.stringify(c)));
-    setCapModalOpen(true);
-  };
-
-  const saveCap = () => {
-    if (capDraft.amountUGX <= 0) {
-      toast({ title: "Invalid amount", message: "Cap amount must be greater than zero.", kind: "warn" });
-      return;
-    }
-    const now = Date.now();
-    const isNew = !capDraft.id;
-    const id = isNew ? uid("UC") : capDraft.id;
-
-    setUserCaps((prev) => {
-      const next = prev.slice();
-      const idx = next.findIndex((x) => x.id === id);
-      const row = { ...capDraft, id, updatedAt: now, updatedBy: "You" };
-      if (idx >= 0) next[idx] = row;
-      else next.unshift(row);
-      return next;
-    });
-
-    addHistory({ ts: now, actor: "You", type: "User cap updated", details: `${isNew ? "Created" : "Updated"} user cap (${id}) to ${formatUGX(capDraft.amountUGX)} (${capDraft.capType})` });
-
-    toast({ title: "Saved", message: "User cap saved.", kind: "success" });
-    setCapModalOpen(false);
-  };
-
-  // Emergency exceptions
-  const openNewException = (targetType?: ExceptionTarget, targetId?: string) => {
-    setExceptionDraft({
-      id: "",
-      createdAt: Date.now(),
-      createdBy: "You",
-      status: "Pending",
-      targetType: targetType || "Group",
-      targetId: targetId || "B-G-FIN",
-      extraAmountUGX: 1000000,
-      reason: "",
-      attachmentsProvided: true,
-      approver: "Org Admin",
-    });
-    setExceptionModalOpen(true);
-  };
-
-  const submitException = () => {
-    if (exceptionDraft.reason.trim().length < 10) {
-      toast({ title: "Reason required", message: "Provide a clear reason (min 10 chars).", kind: "warn" });
-      return;
-    }
-    const now = Date.now();
-    const exc: EmergencyException = { ...exceptionDraft, id: uid("EXC"), createdAt: now, createdBy: "You", status: "Pending" };
-    setExceptions((p) => [exc, ...p]);
-    addHistory({ ts: now, actor: "You", type: "Exception requested", details: `Requested emergency exception ${exc.id} (+${formatUGX(exc.extraAmountUGX)}) for ${exc.targetType} ${exc.targetId}` });
-    addAlert({ ts: now, severity: "Warning", title: "Emergency exception requested", message: `${exc.id} pending approval.`, relatedIds: [exc.targetId] });
-    toast({ title: "Requested", message: "Emergency exception submitted.", kind: "success" });
-    setExceptionModalOpen(false);
-  };
-
-  const decideException = (id: string, decision: "Approved" | "Rejected") => {
-    const now = Date.now();
-    setExceptions((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, status: decision, decisionNote: decision === "Approved" ? "Approved" : "Rejected", approver: "Org Admin" } : e))
-    );
-    addHistory({ ts: now, actor: "Org Admin", type: decision === "Approved" ? "Exception approved" : "Exception rejected", details: `${decision} emergency exception ${id}` });
-
-    if (decision === "Approved") {
-      // apply to budget or cap by increasing amount
-      const ex = exceptions.find((x) => x.id === id);
-      if (ex) {
-        if (ex.targetType === "User") {
-          // bump user cap if exists
-          setUserCaps((prev) =>
-            prev.map((c) => (c.userId === ex.targetId ? { ...c, amountUGX: c.amountUGX + ex.extraAmountUGX, updatedAt: now, updatedBy: "Org Admin" } : c))
-          );
-        } else {
-          setBudgets((prev) =>
-            prev.map((b) => (b.id === ex.targetId ? { ...b, amountUGX: b.amountUGX + ex.extraAmountUGX, updatedAt: now, updatedBy: "Org Admin", notes: `${b.notes || ""} (Exception ${id})` } : b))
-          );
-        }
-      }
-      addAlert({ ts: now, severity: "Info", title: "Emergency exception approved", message: `${id} approved and applied to limits.",`, relatedIds: [id] });
-      toast({ title: "Approved", message: "Exception applied to limits.", kind: "success" });
-    } else {
-      addAlert({ ts: now, severity: "Info", title: "Emergency exception rejected", message: `${id} rejected.",`, relatedIds: [id] });
-      toast({ title: "Rejected", message: "Exception rejected.", kind: "info" });
-    }
-  };
-
-  // Spend simulation
-  const openSpendSim = () => {
-    setSpendDraft({
-      userId: USERS[1].id,
-      module: "Rides & Logistics",
-      marketplace: "-",
-      amountUGX: 85000,
-      vendor: "EVzone Rides",
-      risk: "Low",
-      note: "Client meeting ride",
-    });
-    setSpendModalOpen(true);
-  };
-
-  const findUser = (id: string) => USERS.find((u) => u.id === id) || USERS[0];
-
-  const applySpend = () => {
-    const now = Date.now();
-    const u = findUser(spendDraft.userId);
-
-    addHistory({ ts: now, actor: "System", type: "Spend attempted", details: `Spend attempt ${formatUGX(spendDraft.amountUGX)} by ${u.name} in ${spendDraft.module}${spendDraft.module === "E-Commerce" ? ` (${spendDraft.marketplace})` : ""}` });
-
-    // Determine applicable budgets
-    const applicable: Budget[] = [];
-    const org = budgets.find((b) => b.scope === "Org" && b.period === "Monthly");
-    if (org) applicable.push(org);
-
-    const gBudget = budgets.find((b) => b.scope === "Group" && b.group === u.group && b.period === "Monthly");
-    if (gBudget) applicable.push(gBudget);
-
-    const mBudget = budgets.find((b) => b.scope === "Module" && b.module === spendDraft.module && b.period === "Monthly");
-    if (mBudget) applicable.push(mBudget);
-
-    if (spendDraft.module === "E-Commerce" && spendDraft.marketplace !== "-") {
-      const mkBudget = budgets.find((b) => b.scope === "Marketplace" && b.marketplace === spendDraft.marketplace && b.period === "Monthly");
-      if (mkBudget) applicable.push(mkBudget);
-    }
-
-    const cap = userCaps.find((c) => c.userId === u.id && c.period === "Monthly") || null;
-
-    // Check hard caps first (any hard cap blocks)
-    const blockers: Array<{ label: string; id: string }> = [];
-
-    for (const b of applicable) {
-      if (b.capType === "Hard" && b.usedUGX + spendDraft.amountUGX > b.amountUGX) {
-        blockers.push({ label: `${b.scope} budget ${b.id}`, id: b.id });
-      }
-    }
-    if (cap && cap.capType === "Hard" && cap.usedUGX + spendDraft.amountUGX > cap.amountUGX) {
-      blockers.push({ label: `User cap ${cap.id}`, id: cap.id });
-    }
-
-    if (blockers.length) {
-      addHistory({ ts: now, actor: "System", type: "Hard cap blocked", details: `Blocked by: ${blockers.map((b) => b.label).join(", ")}` });
-      addAlert({ ts: now, severity: "Critical", title: "Hard cap blocked", message: `Spend blocked by hard cap. Consider emergency exception if urgent.",`, relatedIds: blockers.map((x) => x.id) });
-      toast({ title: "Blocked", message: "Hard cap blocked this spend.", kind: "warn" });
-      setSpendModalOpen(false);
-      return;
-    }
-
-    // Apply spend
-    setBudgets((prev) =>
-      prev.map((b) => {
-        const hit = applicable.find((x) => x.id === b.id);
-        if (!hit) return b;
-        const nextUsed = b.usedUGX + spendDraft.amountUGX;
-        return { ...b, usedUGX: nextUsed };
-      })
-    );
-
-    if (cap) {
-      setUserCaps((prev) => prev.map((c) => (c.id === cap.id ? { ...c, usedUGX: c.usedUGX + spendDraft.amountUGX } : c)));
-    }
-
-    // Alerts: 80% and 100%
-    const checkThreshold = (label: string, id: string, used: number, amount: number, capType: CapType) => {
-      const beforePct = pct(used - spendDraft.amountUGX, amount);
-      const afterPct = pct(used, amount);
-      if (afterPct >= 100 && beforePct < 100) {
-        addAlert({ ts: now, severity: capType === "Hard" ? "Critical" : "Warning", title: `${label} reached 100%`, message: `${id} reached its limit.",`, relatedIds: [id] });
-      } else if (afterPct >= 80 && beforePct < 80) {
-        addAlert({ ts: now, severity: "Warning", title: `${label} at 80%`, message: `${id} is above 80% of its cap.",`, relatedIds: [id] });
-      }
+      module: "All Modules",
+      marketplace: "All",
+      ...data,
     };
-
-    for (const b of applicable) {
-      const updated = budgets.find((x) => x.id === b.id);
-      const used = (updated?.usedUGX || b.usedUGX) + spendDraft.amountUGX;
-      checkThreshold(`${b.scope}`, b.id, used, b.amountUGX, b.capType);
-
-      // Soft cap behavior: allow but alert if exceeded
-      if (b.capType === "Soft" && used > b.amountUGX) {
-        addAlert({ ts: now, severity: "Warning", title: "Soft cap exceeded", message: `${b.id} exceeded soft cap. Routed to approvals in production.",`, relatedIds: [b.id] });
-      }
-    }
-
-    if (cap) {
-      const nextUsed = cap.usedUGX + spendDraft.amountUGX;
-      checkThreshold("User cap", cap.id, nextUsed, cap.amountUGX, cap.capType);
-      if (cap.capType === "Soft" && nextUsed > cap.amountUGX) {
-        addAlert({ ts: now, severity: "Warning", title: "User soft cap exceeded", message: `${u.name} exceeded their soft cap. Consider adjust or enforce.",`, relatedIds: [cap.id] });
-      }
-    }
-
-    addHistory({ ts: now, actor: "System", type: "Spend applied", details: `Applied spend ${formatUGX(spendDraft.amountUGX)} by ${u.name}.` });
-    toast({ title: "Applied", message: "Spend applied and budgets updated.", kind: "success" });
-    setSpendModalOpen(false);
+    setBudgets([newBudget, ...budgets]);
+    setIsIssueOpen(false);
+    showToast("Budget Issued", `Allocated ${formatUGX(newBudget.amountUGX)} to ${newBudget.group}`, "success");
+    setHistory(prev => [{ id: uid("H"), ts: Date.now(), actor: "You", action: "Issued Budget", details: `Allocated ${formatUGX(newBudget.amountUGX)}` }, ...prev]);
   };
 
-  // Render
-  const orgPct = totalAmount > 0 ? (totalUsed / totalAmount) * 100 : 0;
+  const handleEdit = (id: string, updates: Partial<Budget>) => {
+    setBudgets(budgets.map(b => b.id === id ? { ...b, ...updates, updatedAt: Date.now() } : b));
+    setEditBudget(null);
+    showToast("Budget Updated", "Changes saved successfully", "success");
+    setHistory(prev => [{ id: uid("H"), ts: Date.now(), actor: "You", action: "Updated Budget", details: `Modified budget ${id}` }, ...prev]);
+  };
+
+  const handleUserEdit = (id: string, updates: Partial<UserRow>) => {
+    setUsers(users.map(u => u.id === id ? { ...u, ...updates, updatedAt: Date.now() } : u));
+    setEditUser(null);
+    showToast("User Updated", "Limits and permissions updated", "success");
+    setHistory(prev => [{ id: uid("H"), ts: Date.now(), actor: "You", action: "Updated User", details: `Modified user ${id}` }, ...prev]);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this budget?")) {
+      setBudgets(budgets.filter(b => b.id !== id));
+      showToast("Budget Deleted", "Budget removed successfully", "success");
+    }
+  };
 
   return (
-    <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
-      <ToastStack toasts={toasts} onDismiss={(id) => setToasts((p) => p.filter((x) => x.id !== id))} />
+    <div className="min-h-screen bg-slate-50 pb-20">
+      <ToastStack toasts={toasts} onDismiss={(id) => setToasts(t => t.filter(x => x.id !== id))} />
 
-      <div className="mx-auto max-w-[95%] px-4 py-6 md:px-6">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.12)]">
-          {/* Header */}
-          <div className="border-b border-slate-200 bg-white px-4 py-4 md:px-6">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex items-center gap-3">
-                <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-slate-100 rounded-full text-slate-500">
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
-                <div className="grid h-12 w-12 place-items-center rounded-2xl text-white" style={{ background: EVZ.green }}>
-                  <PiggyBank className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">Budgets, Spend Limits and Controls</div>
-                  <div className="mt-1 text-xs text-slate-500">Org budgets, group budgets, user caps, alerts, forecasting, and emergency exceptions.</div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Pill label={`Period: Monthly (Day ${dayOfPeriod}/${periodDays})`} tone="neutral" />
-                    <Pill label={`Org used: ${Math.round(orgPct)}%`} tone={orgPct >= 90 ? "warn" : "good"} />
-                    <Pill label={`Alerts: ${alerts.length}`} tone={alerts.some((a) => a.severity === "Critical") ? "bad" : "info"} />
-                    <Pill label="Premium forecasting" tone="info" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" onClick={copyJSON}>
-                  <Copy className="h-4 w-4" /> Copy JSON
-                </Button>
-                <Button variant="outline" onClick={exportJSON}>
-                  <Download className="h-4 w-4" /> Export
-                </Button>
-                <Button variant="outline" onClick={openSpendSim}>
-                  <Wallet className="h-4 w-4" /> Simulate spend
-                </Button>
-                <Button variant="primary" onClick={openNewBudget}>
-                  <Plus className="h-4 w-4" /> New budget
-                </Button>
-              </div>
-            </div>
-
-            {/* KPI cards */}
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
-              <StatCard
-                title="Org budget"
-                value={formatUGX(totalAmount)}
-                sub="Monthly"
-                icon={<PiggyBank className="h-5 w-5" />}
-                tone="neutral"
-              />
-              <StatCard
-                title="Spent"
-                value={formatUGX(totalUsed)}
-                sub={`MTD (Day ${dayOfPeriod})`}
-                icon={<BarChart3 className="h-5 w-5" />}
-                tone={orgPct >= 90 ? "warn" : "good"}
-              />
-              <StatCard
-                title="Remaining"
-                value={formatUGX(remaining)}
-                sub="Available this period"
-                icon={<Wallet className="h-5 w-5" />}
-                tone={remaining <= 2000000 ? "warn" : "neutral"}
-              />
-              <StatCard
-                title="Runway"
-                value={runwayDays === Infinity ? "∞" : `${Math.max(0, Math.round(runwayDays))} days`}
-                sub="At current burn"
-                icon={<Timer className="h-5 w-5" />}
-                tone={runwayDays !== Infinity && runwayDays <= 5 ? "warn" : "neutral"}
-              />
-              <StatCard
-                title="Forecast"
-                value={formatUGX(orgForecast)}
-                sub={orgForecast > totalAmount ? "Over budget risk" : "Within budget"}
-                icon={<LineChart className="h-5 w-5" />}
-                tone={orgForecast > totalAmount ? "warn" : "good"}
-              />
-              <StatCard
-                title="Exceptions"
-                value={`${exceptions.filter((e) => e.status === "Pending").length} pending`}
-                sub="Emergency workflow"
-                icon={<Shield className="h-5 w-5" />}
-                tone={exceptions.some((e) => e.status === "Pending") ? "info" : "neutral"}
-              />
-            </div>
-
-            <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
-              <ProgressBar valuePct={orgPct} labelLeft="Org usage" labelRight={`${Math.round(orgPct)}%`} />
-              <div className="mt-2 text-xs text-slate-600">
-                Hard cap blocks spend. Soft cap allows spend but triggers alerts and routes to approvals in production.
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[
-                { id: "budgets", label: "Budgets" },
-                { id: "caps", label: "User caps" },
-                { id: "history", label: "Allocation history" },
-                { id: "forecast", label: "Forecasting" },
-                { id: "exceptions", label: "Emergency exceptions" },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  className={cn(
-                    "rounded-full px-4 py-2 text-sm font-semibold ring-1 transition",
-                    tab === (t.id as any) ? "text-white ring-emerald-600" : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
-                  )}
-                  style={tab === (t.id as any) ? { background: EVZ.green } : undefined}
-                  onClick={() => setTab(t.id as any)}
-                >
-                  {t.label}
-                </button>
-              ))}
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur-sm md:px-6"> 
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">Issued Budgets</h1>
+              <p className="text-sm text-slate-500">Manage and audit budget allocations</p>
             </div>
           </div>
-
-          {/* Body */}
-          <div className="bg-slate-50 px-4 py-5 md:px-6">
-            <div className="flex flex-col gap-4">
-              {/* Alerts */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Alerts</div>
-                      <div className="mt-1 text-xs text-slate-500">Real-time cap breach alerts and policy reminders.</div>
-                    </div>
-                    <Pill label="Live" tone="info" />
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {openAlerts.slice(0, 6).map((a) => (
-                      <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Pill label={a.severity} tone={pillToneForSeverity(a.severity)} />
-                              <div className="text-sm font-semibold text-slate-900">{a.title}</div>
-                            </div>
-                            <div className="mt-1 text-sm text-slate-700">{a.message}</div>
-                            <div className="mt-2 text-xs text-slate-500">{timeAgo(a.ts)} • {formatDateTime(a.ts)}</div>
-                          </div>
-                          <AlertTriangle className={cn("h-5 w-5", a.severity === "Critical" ? "text-rose-700" : a.severity === "Warning" ? "text-amber-700" : "text-blue-700")} />
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => toast({ title: "Rule", message: "Create rule from this alert (see J).", kind: "info" })}>
-                            <Sparkles className="h-4 w-4" /> Create rule
-                          </Button>
-                          <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openNewException("Org", "B-ORG")}>
-                            <Shield className="h-4 w-4" /> Exception
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {!openAlerts.length ? (
-                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
-                        No alerts.
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-              {/* Main */}
-              <div className="space-y-4">
-                {tab === "budgets" ? (
-                  <>
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Budgets</div>
-                          <div className="mt-1 text-xs text-slate-500">Org, group, module, and marketplace budgets.</div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button variant="outline" onClick={openNewBudget}>
-                            <Plus className="h-4 w-4" /> Add budget
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="mt-6 mb-4 flex flex-col gap-3 border-t border-slate-100 pt-4 md:flex-row md:items-end">
-                        <div className="w-full md:w-64">
-                            <div className="text-xs font-semibold text-slate-600">Search groups</div>
-                            <div className="relative mt-2">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                            <input
-                                value={forecastGroupQ}
-                                onChange={(e) => setForecastGroupQ(e.target.value)}
-                                placeholder="Search groups..."
-                                className="w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100"
-                            />
-                            </div>
-                        </div>
-                        <div className="w-full md:w-48">
-                            <div className="text-xs font-semibold text-slate-600">Department</div>
-                            <select
-                                value={forecastDept}
-                                onChange={(e) => setForecastDept(e.target.value as any)}
-                                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100"
-                            >
-                                <option value="All">All Departments</option>
-                                {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-                            </select>
-                        </div>
-                        <div className="w-full md:w-48">
-                            <div className="flex items-center gap-2">
-                                <div className="text-xs font-semibold text-slate-600">Forecast method</div>
-                                <div title="Run rate: Extrapolated from MTD. Last 7: Based on recent trend. Seasonality: Adjusted for bumps."><Info className="h-3.5 w-3.5 text-slate-400" /></div>
-                            </div>
-                            <select
-                                value={forecastMethod}
-                                onChange={(e) => setForecastMethod(e.target.value as any)}
-                                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100"
-                            >
-                                <option value="runrate">Run rate (linear)</option>
-                                <option value="last7">Last 7 days</option>
-                                <option value="seasonality">Seasonality (AI)</option>
-                            </select>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                        <table className="min-w-full text-left text-sm">
-                          <thead className="bg-slate-50 text-xs text-slate-600">
-                            <tr>
-                              <th className="px-4 py-3 font-semibold">Scope</th>
-                              <th className="px-4 py-3 font-semibold">Target</th>
-                              <th className="px-4 py-3 font-semibold">Period</th>
-                              <th className="px-4 py-3 font-semibold">Cap type</th>
-                              <th className="px-4 py-3 font-semibold">Used</th>
-                              <th className="px-4 py-3 font-semibold">Limit</th>
-                              <th className="px-4 py-3 font-semibold">Variance</th>
-                              <th className="px-4 py-3 font-semibold">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {budgets
-                              .slice()
-                              .sort((a, b) => (a.scope === "Org" ? -1 : b.scope === "Org" ? 1 : a.scope.localeCompare(b.scope)))
-                              .filter((b) => {
-                                 // Simple client side filter
-                                 if (forecastDept !== "All" && b.group !== forecastDept && b.scope === "Group") return false;
-                                 if (forecastGroupQ && b.scope === "Group" && !b.group?.toLowerCase().includes(forecastGroupQ.toLowerCase())) return false;
-                                 return true;
-                              })
-                              .map((b) => {
-                                const usage = pct(b.usedUGX, b.amountUGX);
-                                const over = b.usedUGX > b.amountUGX;
-                                const warn = usage >= 80;
-                                const target =
-                                  b.scope === "Org"
-                                    ? "Organization"
-                                    : b.scope === "Group"
-                                      ? b.group
-                                      : b.scope === "Module"
-                                        ? b.module
-                                        : `${b.marketplace}`;
-                                
-                                // Forecast calc
-                                const burn = dayOfPeriod > 0 ? b.usedUGX / dayOfPeriod : 0;
-                                let forecast = burn * periodDays;
-                                if(forecastMethod === 'seasonality') forecast = forecast * 1.15;
-                                if(forecastMethod === 'last7') forecast = forecast * 0.95; // Mock variance
-
-                                const variance = forecast - b.amountUGX;
-                                const varPct = b.amountUGX > 0 ? Math.round((variance / b.amountUGX) * 100) : 0;
-                                const varTone = variance > 0 ? "text-rose-600" : "text-emerald-600";
-
-                                return (
-                                  <tr key={b.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                    <td className="px-4 py-3"><Pill label={b.scope} tone="neutral" /></td>
-                                    <td className="px-4 py-3 font-semibold text-slate-900">{target || "-"}</td>
-                                    <td className="px-4 py-3 text-slate-700">{b.period}</td>
-                                    <td className="px-4 py-3"><Pill label={b.capType} tone={toneForCapType(b.capType)} /></td>
-                                    <td className="px-4 py-3 text-slate-700">{formatUGX(b.usedUGX)}</td>
-                                    <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(b.amountUGX)}</td>
-                                    <td className="px-4 py-3">
-                                      <div className="flex flex-col gap-0.5">
-                                        <span className={cn("font-medium", varTone)}>{variance > 0 ? "+" : ""}{formatUGX(variance)}</span>
-                                        <span className="text-xs text-slate-500">{variance > 0 ? "+" : ""}{varPct}%</span>
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <div className="flex items-center gap-2">
-                                        <button className={cn(
-                                            "flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition hover:opacity-80",
-                                            over ? "bg-rose-100 text-rose-700" : warn ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-700"
-                                        )}>
-                                            <span>{over ? "Over" : warn ? "Risk" : "OK"}</span>
-                                            <ChevronRight className="h-3 w-3" />
-                                        </button>
-                                        
-                                        <ActionMenu actions={[
-                                            { label: "Edit budget", icon: <FileText className="h-4 w-4" />, onClick: () => openEditBudget(b) },
-                                            { label: "Request exception", icon: <Shield className="h-4 w-4" />, onClick: () => openNewException(b.scope as any, b.id) },
-                                            { label: "Delete", icon: <X className="h-4 w-4" />, variant: "danger", onClick: () => deleteBudget(b.id) }
-                                        ]} />
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            {!budgets.length ? (
-                              <tr>
-                                <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-600">
-                                  No budgets configured.
-                                </td>
-                              </tr>
-                            ) : null}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                        Core: hard cap vs soft cap, budget periods, allocation history, real-time alerts. Premium: forecasting and suggested caps.
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Premium: suggested caps</div>
-                          <div className="mt-1 text-xs text-slate-500">Based on historical spend. Apply to group budgets.</div>
-                        </div>
-                        <Pill label="Premium" tone="info" />
-                      </div>
-
-                      <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                        <table className="min-w-full text-left text-sm">
-                          <thead className="bg-slate-50 text-xs text-slate-600">
-                            <tr>
-                              <th className="px-4 py-3 font-semibold">Group</th>
-                              <th className="px-4 py-3 font-semibold">Avg</th>
-                              <th className="px-4 py-3 font-semibold">Max</th>
-                              <th className="px-4 py-3 font-semibold">Suggested</th>
-                              <th className="px-4 py-3 font-semibold">Apply</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {suggestedGroupCaps.map((s) => (
-                              <tr key={s.group} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                <td className="px-4 py-3 font-semibold text-slate-900">{s.group}</td>
-                                <td className="px-4 py-3 text-slate-700">{formatUGX(s.avg)}</td>
-                                <td className="px-4 py-3 text-slate-700">{formatUGX(s.p90)}</td>
-                                <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(s.suggested)}</td>
-                                <td className="px-4 py-3">
-                                  <Button
-                                    variant="outline"
-                                    className="px-3 py-2 text-xs"
-                                    onClick={() => {
-                                      const now = Date.now();
-                                      setBudgets((prev) =>
-                                        prev.map((b) =>
-                                          b.scope === "Group" && b.group === s.group
-                                            ? { ...b, amountUGX: s.suggested, updatedAt: now, updatedBy: "You", notes: `${b.notes || ""} (Suggested caps applied)` }
-                                            : b
-                                        )
-                                      );
-                                      addHistory({ ts: now, actor: "You", type: "Budget updated", details: `Applied suggested cap for ${s.group} to ${formatUGX(s.suggested)}` });
-                                      toast({ title: "Applied", message: `Updated ${s.group} budget.",`, kind: "success" });
-                                    }}
-                                  >
-                                    Apply
-                                  </Button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                        Suggested caps are guidance. Keep stricter controls for high-risk modules and marketplaces.
-                      </div>
-                    </div>
-                  </>
-                ) : null}
-
-                {tab === "caps" ? (
-                  <>
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">User caps</div>
-                          <div className="mt-1 text-xs text-slate-500">User spend caps by period. Hard cap blocks, soft cap warns.</div>
-                        </div>
-                        <Button variant="primary" onClick={openNewCap}>
-                          <Plus className="h-4 w-4" /> Add cap
-                        </Button>
-                      </div>
-
-                      <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                        <table className="min-w-full text-left text-sm">
-                          <thead className="bg-slate-50 text-xs text-slate-600">
-                            <tr>
-                              <th className="px-4 py-3 font-semibold">User</th>
-                              <th className="px-4 py-3 font-semibold">Group</th>
-                              <th className="px-4 py-3 font-semibold">Eligible</th>
-                              <th className="px-4 py-3 font-semibold">Cap type</th>
-                              <th className="px-4 py-3 font-semibold">Used</th>
-                              <th className="px-4 py-3 font-semibold">Limit</th>
-                              <th className="px-4 py-3 font-semibold">Usage</th>
-                              <th className="px-4 py-3 font-semibold">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {userCaps.map((c) => {
-                              const u = USERS.find((x) => x.id === c.userId);
-                              const usage = pct(c.usedUGX, c.amountUGX);
-                              const warn = usage >= 80;
-                              const over = c.usedUGX > c.amountUGX;
-                              return (
-                                <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                                  <td className="px-4 py-3 font-semibold text-slate-900">{u?.name || c.userId}</td>
-                                  <td className="px-4 py-3 text-slate-700">{u?.group || "-"}</td>
-                                  <td className="px-4 py-3"><Pill label={u?.autoApprovalEligible ? "Yes" : "No"} tone={u?.autoApprovalEligible ? "good" : "neutral"} /></td>
-                                  <td className="px-4 py-3"><Pill label={c.capType} tone={toneForCapType(c.capType)} /></td>
-                                  <td className="px-4 py-3 text-slate-700">{formatUGX(c.usedUGX)}</td>
-                                  <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(c.amountUGX)}</td>
-                                  <td className="px-4 py-3">
-                                    <Pill label={`${usage}%`} tone={over ? "bad" : warn ? "warn" : "good"} />
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openEditCap(c)}>
-                                        Edit
-                                      </Button>
-                                      <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => openNewException("User", c.userId)}>
-                                        <Shield className="h-4 w-4" /> Exception
-                                      </Button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                            {!userCaps.length ? (
-                              <tr>
-                                <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-600">
-                                  No user caps configured.
-                                </td>
-                              </tr>
-                            ) : null}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                        Premium: suggested caps can be computed per user based on their historical spend.
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Real-time alerts</div>
-                          <div className="mt-1 text-xs text-slate-500">Alerts are generated when crossing 80% or 100% thresholds, and on hard cap blocks.</div>
-                        </div>
-                        <Button variant="outline" onClick={openSpendSim}>
-                          <Wallet className="h-4 w-4" /> Simulate spend
-                        </Button>
-                      </div>
-
-                      <div className="mt-4 space-y-2">
-                        {openAlerts.slice(0, 8).map((a) => (
-                          <div key={a.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Pill label={a.severity} tone={pillToneForSeverity(a.severity)} />
-                                  <div className="text-sm font-semibold text-slate-900">{a.title}</div>
-                                </div>
-                                <div className="mt-1 text-sm text-slate-700">{a.message}</div>
-                                <div className="mt-2 text-xs text-slate-500">{formatDateTime(a.ts)} ({timeAgo(a.ts)})</div>
-                                {a.relatedIds.length ? (
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    {a.relatedIds.slice(0, 4).map((id) => (
-                                      <Pill key={id} label={id} tone="neutral" />
-                                    ))}
-                                  </div>
-                                ) : null}
-                              </div>
-                              <AlertTriangle className={cn("h-5 w-5", a.severity === "Critical" ? "text-rose-700" : a.severity === "Warning" ? "text-amber-700" : "text-blue-700")} />
-                            </div>
-                          </div>
-                        ))}
-                        {!openAlerts.length ? (
-                          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
-                            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
-                              <BellIcon />
-                            </div>
-                            <div className="mt-3 text-sm font-semibold text-slate-900">No alerts</div>
-                            <div className="mt-1 text-sm text-slate-600">Alerts will appear here.</div>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </>
-                ) : null}
-
-                {tab === "history" ? (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">Budget allocation history</div>
-                        <div className="mt-1 text-xs text-slate-500">Changes are logged with who, when, and what happened.</div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={copyJSON}>
-                          <Copy className="h-4 w-4" /> Copy JSON
-                        </Button>
-                        <Button variant="outline" onClick={exportJSON}>
-                          <Download className="h-4 w-4" /> Export
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      {history.slice(0, 30).map((h) => (
-                        <div key={h.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Pill label={h.type} tone={h.type.includes("Hard cap") ? "bad" : h.type.includes("Exception") ? "info" : "neutral"} />
-                                <div className="text-sm font-semibold text-slate-900">{h.actor}</div>
-                              </div>
-                              <div className="mt-1 text-sm text-slate-700">{h.details}</div>
-                              <div className="mt-2 text-xs text-slate-500">{formatDateTime(h.ts)} ({timeAgo(h.ts)}) • {h.id}</div>
-                            </div>
-                            <FileText className="h-5 w-5 text-slate-600" />
-                          </div>
-                        </div>
-                      ))}
-                      {!history.length ? (
-                        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center">
-                          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-700">
-                            <FileText className="h-6 w-6" />
-                          </div>
-                          <div className="mt-3 text-sm font-semibold text-slate-900">No history</div>
-                          <div className="mt-1 text-sm text-slate-600">Changes will be recorded here.</div>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-
-                {tab === "forecast" ? (
-                  <>
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">Forecasting and runway</div>
-                          <div className="mt-1 text-xs text-slate-500">Premium: forecast to month-end by group, module, and marketplace.</div>
-                        </div>
-                        <Pill label="Premium" tone="info" />
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-                        <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-xs font-semibold text-slate-600">Search groups</div>
-                            <Search className="h-4 w-4 text-slate-500" />
-                          </div>
-                          <input
-                            value={forecastGroupQ}
-                            onChange={(e) => setForecastGroupQ(e.target.value)}
-                            placeholder="Search groups"
-                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                          />
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="text-xs font-semibold text-slate-600">Department</div>
-                          <select
-                            value={forecastDept}
-                            onChange={(e) => setForecastDept(e.target.value as any)}
-                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                          >
-                            <option value="All">All</option>
-                            <option value="Operations">Ops</option>
-                            <option value="Sales">Sales</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Procurement">Procurement</option>
-                          </select>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-xs font-semibold text-slate-600">Forecast method</div>
-                            <span title="Run rate uses month-to-date burn (used ÷ day of period) × period days. Last 7 days and Seasonality are placeholders.">
-                              <Info className="h-4 w-4 text-slate-500" />
-                            </span>
-                          </div>
-                          <select
-                            value={forecastMethod}
-                            onChange={(e) => {
-                              const v = e.target.value as any;
-                              setForecastMethod(v);
-                              if (v !== "runrate") toast({ title: "Coming soon", message: "Only Run rate is implemented in this demo.", kind: "info" });
-                            }}
-                            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-emerald-100"
-                          >
-                            <option value="runrate">Run rate (linear)</option>
-                            <option value="last7">Last 7 days</option>
-                            <option value="seasonality">Seasonality (placeholder)</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="text-sm font-semibold text-slate-900">Org forecast</div>
-                          <div className="mt-1 text-xs text-slate-500">
-                            {forecastMethod === "runrate" ? "Run rate projection." : "Projection method selected."}
-                          </div>
-                          <div className="mt-3">
-                            <ProgressBar
-                              valuePct={pct(orgForecast, totalAmount)}
-                              labelLeft={`Forecast ${formatUGX(orgForecast)}`}
-                              labelRight={`Budget ${formatUGX(totalAmount)}`}
-                            />
-                          </div>
-                          <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">Burn per day: {formatUGX(Math.round(orgBurnPerDay))}</div>
-                        </div>
-
-                        <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                          <div className="text-sm font-semibold text-slate-900">Runway by group</div>
-                          <div className="mt-1 text-xs text-slate-500">How long until budgets run out.</div>
-                          <div className="mt-3 space-y-2">
-                            {groupForecastFiltered.map((g) => {
-                              const rem = Math.max(0, g.amountUGX - g.usedUGX);
-                              const days = g.runway === Infinity ? Infinity : Math.max(0, Math.round(g.runway));
-                              const variance = Math.round(g.forecast - g.amountUGX);
-                              const variancePct = g.amountUGX > 0 ? Math.round((variance / g.amountUGX) * 100) : 0;
-                              const status = g.forecast > g.amountUGX ? "At risk" : "OK";
-                              return (
-                                <div key={g.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                      <div className="text-sm font-semibold text-slate-900">{g.group}</div>
-                                      <div className="mt-1 text-xs text-slate-500">Remaining: {formatUGX(rem)} • Burn/day: {formatUGX(Math.round(g.burnPerDay))}</div>
-                                      <div className="mt-1 text-xs text-slate-500">
-                                        Variance: <span className={variance > 0 ? "font-semibold text-rose-700" : "font-semibold text-emerald-700"}>{formatUGX(variance)}</span>
-                                        <span className="ml-2 block text-[11px] text-slate-500">Variance %: {variancePct}%</span>
-                                      </div>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                      <Pill label={days === Infinity ? "∞" : `${days}d`} tone={days !== Infinity && days <= 5 ? "warn" : "neutral"} />
-                                      <Button
-                                        variant="outline"
-                                        className="px-3 py-2 text-xs"
-                                        onClick={() => toast({ title: "Drill-down", message: `Open ${g.group} forecast details (${status}).`, kind: "info" })}
-                                      >
-                                        {status} <ChevronRight className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  <div className="mt-2">
-                                    <ProgressBar valuePct={pct(g.usedUGX, g.amountUGX)} labelLeft="Used" labelRight={`${pct(g.usedUGX, g.amountUGX)}%`} />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Forecast by module</div>
-                            <div className="mt-1 text-xs text-slate-500">Module budgets and projected spend.</div>
-                          </div>
-                          <Pill label="Premium" tone="info" />
-                        </div>
-                        <div className="mt-3 space-y-2">
-                          {moduleForecast.length ? (
-                            moduleForecast.map((m) => (
-                              <div key={m.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <div className="text-sm font-semibold text-slate-900">{m.module}</div>
-                                    <div className="mt-1 text-xs text-slate-500">Forecast: {formatUGX(m.forecast)} • Budget: {formatUGX(m.amountUGX)}</div>
-                                  </div>
-                                  <Pill label={m.forecast > m.amountUGX ? "Risk" : "OK"} tone={m.forecast > m.amountUGX ? "warn" : "good"} />
-                                </div>
-                                <div className="mt-2">
-                                  <ProgressBar valuePct={pct(m.forecast, m.amountUGX)} labelLeft="Forecast" labelRight={`${pct(m.forecast, m.amountUGX)}%`} />
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
-                              No module budgets configured.
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-900">Forecast by marketplace</div>
-                            <div className="mt-1 text-xs text-slate-500">E-Commerce marketplace budgets and projected spend.</div>
-                          </div>
-                          <Pill label="Premium" tone="info" />
-                        </div>
-                        <div className="mt-3 space-y-2">
-                          {marketplaceForecast.length ? (
-                            marketplaceForecast.map((m) => (
-                              <div key={m.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <div className="text-sm font-semibold text-slate-900">{m.marketplace}</div>
-                                    <div className="mt-1 text-xs text-slate-500">Forecast: {formatUGX(m.forecast)} • Budget: {formatUGX(m.amountUGX)}</div>
-                                  </div>
-                                  <Pill label={m.forecast > m.amountUGX ? "Risk" : "OK"} tone={m.forecast > m.amountUGX ? "warn" : "good"} />
-                                </div>
-                                <div className="mt-2">
-                                  <ProgressBar valuePct={pct(m.forecast, m.amountUGX)} labelLeft="Forecast" labelRight={`${pct(m.forecast, m.amountUGX)}%`} />
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
-                              No marketplace budgets configured.
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                          Tip: keep MyLiveDealz stricter due to high-value deals.
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : null}
-
-                {tab === "exceptions" ? (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">Emergency exception workflow</div>
-                        <div className="mt-1 text-xs text-slate-500">Premium: allow temporary limit increases with approvals.</div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={() => openNewException()}>
-                          <Plus className="h-4 w-4" /> New exception
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                      <table className="min-w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-600">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold">ID</th>
-                            <th className="px-4 py-3 font-semibold">Status</th>
-                            <th className="px-4 py-3 font-semibold">Target</th>
-                            <th className="px-4 py-3 font-semibold">Extra</th>
-                            <th className="px-4 py-3 font-semibold">Reason</th>
-                            <th className="px-4 py-3 font-semibold">Attachments</th>
-                            <th className="px-4 py-3 font-semibold">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {exceptions.map((e) => (
-                            <tr key={e.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                              <td className="px-4 py-3 font-semibold text-slate-900">{e.id}</td>
-                              <td className="px-4 py-3">
-                                <Pill label={e.status} tone={e.status === "Approved" ? "good" : e.status === "Rejected" ? "bad" : "warn"} />
-                              </td>
-                              <td className="px-4 py-3 text-slate-700">{e.targetType} • {e.targetId}</td>
-                              <td className="px-4 py-3 font-semibold text-slate-900">{formatUGX(e.extraAmountUGX)}</td>
-                              <td className="px-4 py-3 text-slate-700">{e.reason}</td>
-                              <td className="px-4 py-3"><Pill label={e.attachmentsProvided ? "Yes" : "No"} tone={e.attachmentsProvided ? "good" : "warn"} /></td>
-                              <td className="px-4 py-3">
-                                {e.status === "Pending" ? (
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <Button variant="primary" className="px-3 py-2 text-xs" onClick={() => decideException(e.id, "Approved")}>
-                                      <Check className="h-4 w-4" /> Approve
-                                    </Button>
-                                    <Button variant="danger" className="px-3 py-2 text-xs" onClick={() => decideException(e.id, "Rejected")}>
-                                      <X className="h-4 w-4" /> Reject
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <Pill label={`By ${e.approver}`} tone="neutral" />
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                          {!exceptions.length ? (
-                            <tr>
-                              <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-600">
-                                No exceptions.
-                              </td>
-                            </tr>
-                          ) : null}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-                      Emergency exceptions should be rare and always audit logged.
-                    </div>
-                  </div>
-
-                ) : null}
-              </div>
-
-
-
-              {/* Quick Actions */}
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Quick actions</div>
-                      <div className="mt-1 text-xs text-slate-500">Budget and control tools.</div>
-                    </div>
-                    <Pill label="Admin" tone="neutral" />
-                  </div>
-                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                    <Button variant="outline" onClick={openNewBudget}>
-                      <Plus className="h-4 w-4" /> Create budget
-                    </Button>
-                    <Button variant="outline" onClick={openNewCap}>
-                      <User className="h-4 w-4" /> Set user cap
-                    </Button>
-                    <Button variant="outline" onClick={openSpendSim}>
-                      <Wallet className="h-4 w-4" /> Simulate spend
-                    </Button>
-                    <Button variant="outline" onClick={() => openNewException()}>
-                      <Shield className="h-4 w-4" /> Emergency exception
-                    </Button>
-                  </div>
-                  <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-                    Premium: emergency exceptions require approvals and are audit logged.
-                  </div>
-                </div>
-            </div>
+          <div className="flex gap-2">
+            <button onClick={() => setIsHistoryOpen(true)} className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:flex">
+              <History className="h-4 w-4" /> History
+            </button>
+            <button className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <Download className="h-4 w-4" /> Export
+            </button>
+            <button onClick={() => setIsIssueOpen(true)} className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 shadow-md shadow-emerald-200">
+              <Plus className="h-4 w-4" /> Issue New
+            </button>
           </div>
-
-          <footer className="border-t border-slate-200 bg-white/60 py-6">
-            <div className="mx-auto max-w-[95%] px-4 text-xs text-slate-500 md:px-6">
-              L Budgets, Spend Limits and Controls v2. Core: org budget, group budgets, user caps, hard vs soft caps, budget periods, real-time alerts, and allocation history. Premium: forecasting and runway, suggested caps, and emergency exceptions with approvals.
-            </div>
-          </footer>
         </div>
       </div>
 
-      {/* Budget modal */}
-      <Modal
-        open={budgetModalOpen}
-        title={budgetDraft.id ? "Edit budget" : "New budget"}
-        subtitle="Org, group, module, or marketplace budgets."
-        onClose={() => setBudgetModalOpen(false)}
-        actions={[
-          ...(budgetDraft.id ? [{ label: "Delete", onClick: () => { deleteBudget(budgetDraft.id); setBudgetModalOpen(false); }, variant: "danger" as const }] : []),
-          { label: "Save", onClick: saveBudget }
-        ]}
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setBudgetModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={saveBudget}>
-              {budgetDraft.id ? "Save budget" : "Add budget"}
-            </Button>
-          </div>
-        }
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Select
-            label="Scope"
-            value={budgetDraft.scope}
-            onChange={(v) => {
-              const scope = v as BudgetScope;
-              setBudgetDraft((p) => {
-                const next: Budget = { ...p, scope };
-                if (scope === "Org") {
-                  delete next.group;
-                  delete next.module;
-                  delete next.marketplace;
-                }
-                if (scope === "Group") {
-                  next.group = next.group || "Operations";
-                  delete next.module;
-                  delete next.marketplace;
-                }
-                if (scope === "Module") {
-                  next.module = next.module || "Rides & Logistics";
-                  delete next.group;
-                  delete next.marketplace;
-                }
-                if (scope === "Marketplace") {
-                  next.module = "E-Commerce";
-                  next.marketplace = next.marketplace || "MyLiveDealz";
-                  delete next.group;
-                }
-                return next;
-              });
-            }}
-            options={["Org", "Group", "Module", "Marketplace"]}
-          />
+      <div className="mx-auto mt-8 max-w-7xl px-4 md:px-6">
+        <div className="grid gap-6">
+          {/* Filters Card */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              {/* Time Pills */}
+              <div className="flex overflow-x-auto rounded-xl bg-slate-100 p-1">
+                {["All", "Today", "Week", "Month", "Year", "Custom"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTimeFilter(t)}
+                    className={cn(
+                      "rounded-lg px-4 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
+                      timeFilter === t
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-900"
+                    )}
+                  >
+                    {t === "All" ? "All time" : t}
+                  </button>
+                ))}
+              </div>
 
-          <Select
-            label="Period"
-            value={budgetDraft.period}
-            onChange={(v) => setBudgetDraft((p) => ({ ...p, period: v as BudgetPeriod }))}
-            options={["Weekly", "Monthly", "Quarterly"]}
-          />
+              {/* Dropdowns */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <select
+                    value={groupFilter}
+                    onChange={(e) => setGroupFilter(e.target.value)}
+                    className="h-9 appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-8 text-xs font-semibold text-slate-700 outline-none hover:border-slate-300"
+                  >
+                    <option value="All">All Groups</option>
+                    {GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                </div>
 
-          <Select
-            label="Cap type"
-            value={budgetDraft.capType}
-            onChange={(v) => setBudgetDraft((p) => ({ ...p, capType: v as CapType }))}
-            options={["Hard", "Soft"]}
-            hint="Hard blocks spend"
-          />
+                <div className="relative">
+                  <select
+                    value={moduleFilter}
+                    onChange={(e) => setModuleFilter(e.target.value)}
+                    className="h-9 appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-8 text-xs font-semibold text-slate-700 outline-none hover:border-slate-300"
+                  >
+                    <option value="All">All Modules</option>
+                    {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                </div>
 
-          <NumberField
-            label="Amount (UGX)"
-            value={budgetDraft.amountUGX}
-            onChange={(v) => setBudgetDraft((p) => ({ ...p, amountUGX: Math.max(0, v) }))}
-            hint={formatUGX(budgetDraft.amountUGX)}
-          />
+                {/* Custom Date Pickers */}
+                {timeFilter === 'Custom' && (
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
+                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="bg-transparent outline-none" />
+                    <span className="text-slate-400">-</span>
+                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="bg-transparent outline-none" />
+                  </div>
+                )}
 
-          <div className={cn("", budgetDraft.scope === "Group" ? "" : "opacity-70")}>
-            <Select
-              label="Group"
-              value={budgetDraft.group || "Operations"}
-              onChange={(v) => setBudgetDraft((p) => ({ ...p, group: v as GroupName }))}
-              options={["Operations", "Sales", "Finance", "Admin", "Procurement"]}
-              disabled={budgetDraft.scope !== "Group"}
-            />
+                <div className="h-6 w-px bg-slate-200" />
+
+                {/* Clear / Delete Action */}
+                <button 
+                  onClick={handleClearBudgets}
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold hover:bg-opacity-80 transition",
+                    timeFilter === 'All' && groupFilter === 'All' && moduleFilter === 'All' 
+                       ? "border-rose-200 bg-rose-50 text-rose-700" 
+                       : "border-orange-200 bg-orange-50 text-orange-700"
+                  )}
+                >
+                  <Trash2 className="h-3 w-3" />
+                  {timeFilter === 'All' && groupFilter === 'All' && moduleFilter === 'All' ? "Clear All" : "Clear Period"}
+                </button>
+
+                <button 
+                  onClick={() => { setGroupFilter("All"); setModuleFilter("All"); setTimeFilter("All"); setCustomStart(""); setCustomEnd(""); }}
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <RefreshCw className="h-3 w-3" /> Reset Filters
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className={cn("", budgetDraft.scope === "Module" ? "" : "opacity-70")}>
-            <Select
-              label="Module"
-              value={budgetDraft.module || "Rides & Logistics"}
-              onChange={(v) => setBudgetDraft((p) => ({ ...p, module: v as ServiceModule }))}
-              options={SERVICE_MODULES}
-              disabled={budgetDraft.scope !== "Module" && budgetDraft.scope !== "Marketplace"}
-              hint={budgetDraft.scope === "Marketplace" ? "Fixed to E-Commerce" : undefined}
-            />
+          {/* Table Card 1: Budgets */}
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            {filteredBudgets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="grid h-16 w-16 place-items-center rounded-full bg-slate-50 text-slate-300">
+                  <PiggyBank className="h-8 w-8" />
+                </div>
+                <h3 className="mt-4 text-lg font-bold text-slate-900">No budgets found</h3>
+                <p className="max-w-xs text-sm text-slate-500">Try adjusting your filters or issue a new budget.</p>
+                <button onClick={() => setIsIssueOpen(true)} className="mt-6 text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                  Issue Budget
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold text-slate-500">
+                    <tr>
+                      <th className="px-6 py-4">Group</th>
+                      <th className="px-6 py-4">Module</th>
+                      <th className="px-6 py-4">Marketplace</th>
+                      <th className="px-6 py-4 text-right">Amount</th>
+                      <th className="px-6 py-4">Period</th>
+                      <th className="px-6 py-4 text-center">Hard Cap</th>
+                      <th className="px-6 py-4 text-right">Issued At</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredBudgets.map((b) => (
+                      <tr 
+                        key={b.id} 
+                        className="group hover:bg-slate-50/80 cursor-pointer transition-colors"
+                        onClick={() => setEditBudget(b)}
+                      >
+                        <td className="px-6 py-4 font-semibold text-slate-900">{b.group}</td>
+                        <td className="px-6 py-4 text-slate-600">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium">
+                            {b.module === "All" || !b.module ? "All Modules" : b.module}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-500">{b.marketplace || "All"}</td>
+                        <td className="px-6 py-4 text-right font-bold text-emerald-600">{formatUGX(b.amountUGX)}</td>
+                        <td className="px-6 py-4 text-slate-600">{b.period}</td>
+                        <td className="px-6 py-4 text-center">
+                          {b.hardCap ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                              <Check className="h-3 w-3" /> Enabled
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-400">Disabled</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right text-slate-500">
+                          {new Date(b.updatedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setEditBudget(b); }}
+                              className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
+                              title="Edit Budget"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleDelete(b.id); }}
+                              className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                              title="Delete Budget"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-
-          <div className={cn("md:col-span-2", budgetDraft.scope === "Marketplace" ? "" : "opacity-70")}>
-            <Select
-              label="Marketplace"
-              value={budgetDraft.marketplace || "MyLiveDealz"}
-              onChange={(v) => setBudgetDraft((p) => ({ ...p, marketplace: v as Marketplace }))}
-              options={MARKETPLACES}
-              disabled={budgetDraft.scope !== "Marketplace"}
-              hint="E-Commerce only"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <TextArea
-              label="Notes"
-              value={budgetDraft.notes || ""}
-              onChange={(v) => setBudgetDraft((p) => ({ ...p, notes: v }))}
-              placeholder="Explain why this budget exists"
-              rows={3}
-            />
-          </div>
-
-          <div className="md:col-span-2 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-            Best practice: keep high-risk marketplaces on hard cap or require approvals above soft cap.
-          </div>
-        </div>
-      </Modal>
-
-      {/* User cap modal */}
-      <Modal
-        open={capModalOpen}
-        title={capDraft.id ? "Edit user cap" : "New user cap"}
-        subtitle="User caps are enforced alongside budgets."
-        onClose={() => setCapModalOpen(false)}
-        actions={[
-          { label: "Save", onClick: saveCap }
-        ]}
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setCapModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={saveCap}>
-              Save cap
-            </Button>
-          </div>
-        }
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Select
-            label="User"
-            value={capDraft.userId}
-            onChange={(v) => setCapDraft((p) => ({ ...p, userId: v }))}
-            options={USERS.map((u) => u.id)}
-            hint="Select user ID"
-          />
-          <Select
-            label="Period"
-            value={capDraft.period}
-            onChange={(v) => setCapDraft((p) => ({ ...p, period: v as BudgetPeriod }))}
-            options={["Weekly", "Monthly", "Quarterly"]}
-          />
-          <Select
-            label="Cap type"
-            value={capDraft.capType}
-            onChange={(v) => setCapDraft((p) => ({ ...p, capType: v as CapType }))}
-            options={["Hard", "Soft"]}
-            hint="Hard blocks spend"
-          />
-          <NumberField
-            label="Cap amount (UGX)"
-            value={capDraft.amountUGX}
-            onChange={(v) => setCapDraft((p) => ({ ...p, amountUGX: Math.max(0, v) }))}
-            hint={formatUGX(capDraft.amountUGX)}
-          />
-
-          <div className="md:col-span-2 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-            Premium: use suggested caps from historical spend for consistent enforcement.
+          
+          <div className="text-center text-xs text-slate-400">
+            Showing {filteredBudgets.length} of {budgets.length} total records
           </div>
         </div>
-      </Modal>
 
-      {/* Spend simulation modal */}
-      <Modal
-        open={spendModalOpen}
-        title="Simulate spend"
-        subtitle="Creates alerts on breach and updates used amounts. Hard caps block."
-        onClose={() => setSpendModalOpen(false)}
-        actions={[
-          { label: "Emergency exception", onClick: () => openNewException("Org", "B-ORG") },
-          { label: "Apply", onClick: applySpend }
-        ]}
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setSpendModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={applySpend}>
-              Apply
-            </Button>
+        {/* User Spend Limits Table Section */}
+        <div className="mt-12 grid gap-6"> 
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">User Spend Limits</h2>
+              <p className="text-sm text-slate-500">Individual caps and auto-approval eligibility</p>
+            </div>
+             {/* Main User Search */}
+            <div className="flex items-center gap-3">
+               <div className="relative">
+                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                 <input 
+                   value={userSearch}
+                   onChange={(e) => setUserSearch(e.target.value)}
+                   placeholder="Search users..." 
+                   className="h-10 w-64 rounded-xl border border-slate-200 bg-white pl-9 pr-4 text-sm font-semibold outline-none focus:ring-4 focus:ring-emerald-100"
+                 />
+               </div>
+            </div>
           </div>
-        }
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Select
-            label="User"
-            value={spendDraft.userId}
-            onChange={(v) => {
-              const u = USERS.find((x) => x.id === v) || USERS[0];
-              setSpendDraft((p) => ({ ...p, userId: v, module: p.module, marketplace: p.module === "E-Commerce" ? (p.marketplace === "-" ? "MyLiveDealz" : p.marketplace) : "-" }));
-              toast({ title: "User", message: `${u.name} selected.",`, kind: "info" });
-            }}
-            options={USERS.map((u) => u.id)}
-            hint="User ID"
-          />
+          
+          {/* User Filters Card */}
+           <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              {/* Time Pills */}
+              <div className="flex overflow-x-auto rounded-xl bg-slate-100 p-1">
+                {["All", "Today", "Week", "Month", "Year", "Custom"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setUserTimeFilter(t)}
+                    className={cn(
+                      "rounded-lg px-4 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
+                      userTimeFilter === t
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-900"
+                    )}
+                  >
+                    {t === "All" ? "All time" : t}
+                  </button>
+                ))}
+              </div>
 
-          <NumberField
-            label="Amount (UGX)"
-            value={spendDraft.amountUGX}
-            onChange={(v) => setSpendDraft((p) => ({ ...p, amountUGX: Math.max(0, v) }))}
-            hint={formatUGX(spendDraft.amountUGX)}
-          />
+              {/* Custom Date Pickers */}
+               {userTimeFilter === 'Custom' && (
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
+                    <input type="date" value={userCustomStart} onChange={e => setUserCustomStart(e.target.value)} className="bg-transparent outline-none" />
+                    <span className="text-slate-400">-</span>
+                    <input type="date" value={userCustomEnd} onChange={e => setUserCustomEnd(e.target.value)} className="bg-transparent outline-none" />
+                  </div>
+                )}
+                
+                {/* Clear / Delete Action */}
+                <button 
+                  onClick={handleClearUsers}
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold hover:bg-opacity-80 transition",
+                    userTimeFilter === 'All' && !userSearch
+                       ? "border-rose-200 bg-rose-50 text-rose-700" 
+                       : "border-orange-200 bg-orange-50 text-orange-700"
+                  )}
+                >
+                  <Trash2 className="h-3 w-3" />
+                  {userTimeFilter === 'All' && !userSearch ? "Clear All" : "Clear Period"}
+                </button>
 
-          <Select
-            label="Service Module"
-            value={spendDraft.module}
-            onChange={(v) => {
-              const m = v as ServiceModule;
-              setSpendDraft((p) => ({ ...p, module: m, marketplace: m === "E-Commerce" ? (p.marketplace === "-" ? "MyLiveDealz" : p.marketplace) : "-" }));
-            }}
-            options={SERVICE_MODULES}
-          />
+                {/* Reset Filters */}
+                {userTimeFilter !== 'All' && (
+                  <button 
+                  onClick={() => { setUserTimeFilter("All"); setUserCustomStart(""); setUserCustomEnd(""); setUserSearch(""); }}
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <RefreshCw className="h-3 w-3" /> Reset Filters
+                </button>
+                )}
+            </div>
+           </div>
 
-          <Select
-            label="Marketplace"
-            value={String(spendDraft.marketplace === "-" ? "MyLiveDealz" : spendDraft.marketplace)}
-            onChange={(v) => setSpendDraft((p) => ({ ...p, marketplace: v as Marketplace }))}
-            options={MARKETPLACES}
-            disabled={spendDraft.module !== "E-Commerce"}
-            hint={spendDraft.module !== "E-Commerce" ? "E-Commerce only" : undefined}
-          />
 
-          <Select
-            label="Risk"
-            value={spendDraft.risk}
-            onChange={(v) => setSpendDraft((p) => ({ ...p, risk: v as Risk }))}
-            options={["Low", "Medium", "High"]}
-            hint="Premium safeguards"
-          />
-
-          <Field
-            label="Vendor"
-            value={spendDraft.vendor}
-            onChange={(v) => setSpendDraft((p) => ({ ...p, vendor: v }))}
-            placeholder="Vendor name"
-          />
-
-          <div className="md:col-span-2">
-            <TextArea label="Note" value={spendDraft.note} onChange={(v) => setSpendDraft((p) => ({ ...p, note: v }))} placeholder="Reason for spend" rows={3} />
-          </div>
-
-          <div className="md:col-span-2 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-            Spend hits org budget, group budget, optional module and marketplace budgets, plus the user cap.
-          </div>
-        </div>
-      </Modal>
-
-      {/* Emergency exception modal */}
-      <Modal
-        open={exceptionModalOpen}
-        title="Emergency exception request"
-        subtitle="Premium: temporary limit increase requires approval."
-        onClose={() => setExceptionModalOpen(false)}
-        actions={[
-          { label: "Submit", onClick: submitException }
-        ]}
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setExceptionModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={submitException}>
-              Submit
-            </Button>
-          </div>
-        }
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Select
-            label="Target type"
-            value={exceptionDraft.targetType}
-            onChange={(v) => setExceptionDraft((p) => ({ ...p, targetType: v as ExceptionTarget }))}
-            options={["Org", "Group", "User", "Module", "Marketplace"]}
-          />
-
-          <Field
-            label="Target ID"
-            value={exceptionDraft.targetId}
-            onChange={(v) => setExceptionDraft((p) => ({ ...p, targetId: v }))}
-            placeholder="Budget ID or User ID"
-            hint="Example: B-ORG or B-G-FIN or U-1002"
-          />
-
-          <NumberField
-            label="Extra amount (UGX)"
-            value={exceptionDraft.extraAmountUGX}
-            onChange={(v) => setExceptionDraft((p) => ({ ...p, extraAmountUGX: Math.max(0, v) }))}
-            hint={formatUGX(exceptionDraft.extraAmountUGX)}
-          />
-
-          <Select
-            label="Approver"
-            value={exceptionDraft.approver}
-            onChange={(v) => setExceptionDraft((p) => ({ ...p, approver: v }))}
-            options={["Org Admin", "Finance Desk", "CFO"]}
-          />
-
-          <div className="md:col-span-2">
-            <TextArea
-              label="Reason"
-              value={exceptionDraft.reason}
-              onChange={(v) => setExceptionDraft((p) => ({ ...p, reason: v }))}
-              placeholder="Example: urgent purchase required for operations, request approval to exceed cap"
-              hint="Minimum 10 characters"
-              rows={4}
-            />
-          </div>
-
-          <Toggle
-            enabled={exceptionDraft.attachmentsProvided}
-            onChange={(v) => setExceptionDraft((p) => ({ ...p, attachmentsProvided: v }))}
-            label="Attachments provided"
-            description="Required for high value exceptions"
-          />
-
-          <div className="md:col-span-2 rounded-2xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-            In production, this request routes to Approval Workflow Builder (J) and appears in Approvals Inbox (K).
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+             <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold text-slate-500">
+                    <tr>
+                      <th className="px-6 py-4">User</th>
+                      <th className="px-6 py-4">Role</th>
+                      <th className="px-6 py-4">Group</th>
+                      <th className="px-6 py-4 text-right">Limit</th>
+                      <th className="px-6 py-4">Period</th>
+                      <th className="px-6 py-4 text-center">Auto-Approve</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredUsers.length === 0 ? (
+                        <tr>
+                            <td colSpan={7} className="px-6 py-8 text-center text-slate-500">No users found matching filters.</td>
+                        </tr>
+                    ) : filteredUsers.map((u) => (
+                      <tr 
+                        key={u.id} 
+                        className="group hover:bg-slate-50/80 cursor-pointer transition-colors"
+                        onClick={() => setEditUser(u)}
+                      >
+                        <td className="px-6 py-4 font-semibold text-slate-900">{u.name}</td>
+                        <td className="px-6 py-4 text-slate-600">{u.role}</td>
+                        <td className="px-6 py-4 text-slate-600">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium">
+                            {u.group}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right font-bold text-emerald-600">{formatUGX(u.limit)}</td>
+                        <td className="px-6 py-4 text-slate-600">{u.period}</td>
+                        <td className="px-6 py-4 text-center">
+                          {u.autoApprove ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                              <Check className="h-3 w-3" /> Eligible
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setEditUser(u); }}
+                              className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
+                              title="Edit User Limits"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
           </div>
         </div>
-      </Modal>
+      </div>
+
+      {/* ISSUE BUDGET MODAL */}
+      <IssueModal
+        open={isIssueOpen}
+        onClose={() => setIsIssueOpen(false)}
+        onSave={handleIssue}
+      />
+
+      {/* EDIT BUDGET MODAL */}
+      {editBudget && (
+        <EditModal 
+          budget={editBudget} 
+          onClose={() => setEditBudget(null)} 
+          onSave={(updates) => handleEdit(editBudget.id, updates)} 
+        />
+      )}
+
+      {/* EDIT USER MODAL */}
+      {editUser && (
+        <UserLimitModal
+          user={editUser}
+          onClose={() => setEditUser(null)}
+          onSave={(updates) => handleUserEdit(editUser.id, updates)}
+        />
+      )}
+
+      {/* HISTORY MODAL */}
+      <HistoryModal
+        open={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        history={history}
+        onClear={() => setHistory([])}
+      />
     </div>
   );
-
-  function BellIcon() {
-    return (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-slate-700">
-        <path d="M15 17H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
 }

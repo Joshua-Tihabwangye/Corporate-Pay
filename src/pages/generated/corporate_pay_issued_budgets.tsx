@@ -116,7 +116,7 @@ export default function CorpayIssuedBudgets() {
     if (timeFilter === 'All') return;
     if (confirm(`Delete all budgets from filter "${timeFilter}"?`)) {
       // Re-use logic to identify what to KEEP
-      BudgetStorage.clearByPeriod((b) => {
+      BudgetStorage.clearByPredicate((b) => {
         // Return TRUE if it matches the current filter (to be deleted)
         const d = new Date(b.timestamp);
         const now = new Date();

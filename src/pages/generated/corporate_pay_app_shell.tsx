@@ -808,7 +808,7 @@ function AuthLogin({
   );
 }
 
-export default function CorporatePayFinalAppShellV3() {
+export default function CorporatePayFinalAppShellV3({ children }: { children?: React.ReactNode }) {
   const isDesktop = useMedia("(min-width: 1024px)");
   const { pageId } = useParams<{ pageId?: string }>();
   const navigate = useNavigate();
@@ -1337,6 +1337,8 @@ export default function CorporatePayFinalAppShellV3() {
   };
 
   const renderContent = () => {
+    if (children) return children;
+
     const p = pages[active];
     if (!p) return <PlaceholderPage title="Not found" subtitle="This route does not exist." tier="Core" />;
 
@@ -1478,6 +1480,16 @@ export default function CorporatePayFinalAppShellV3() {
                 <div className="flex items-center gap-2">
                   <button className="rounded-2xl border border-white/30 bg-white/20 p-2 text-white shadow-sm backdrop-blur hover:bg-white/30 lg:hidden" onClick={() => setMobileDrawer(true)} aria-label="Open menu">
                     <Menu className="h-5 w-5" />
+                  </button>
+
+                  {/* Mobile Dashboard Entry */}
+                  <button 
+                    className="flex items-center gap-2 lg:hidden" 
+                    onClick={() => navigate(`${ROUTES.CONSOLE.ROOT}/dashboard`)}
+                    aria-label="Go to Dashboard"
+                  >
+                    <img src={logoIcon} alt="CorporatePay" className="h-8 w-8 rounded-lg object-contain bg-white/10 p-0.5" />
+                    <span className="hidden text-sm font-bold text-white sm:block text-shadow-sm">CorporatePay</span>
                   </button>
 
                   <button
