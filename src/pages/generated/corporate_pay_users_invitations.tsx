@@ -19,28 +19,13 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { useUsers, Person, OrgRole, MemberStatus, permissionTemplate } from "../../utils/userStorage";
 
 const EVZ = { green: "#03CD8C", orange: "#F77F00" };
-
-type OrgRole = "Viewer" | "Member" | "Approver" | "Finance" | "Admin" | "Owner";
 
 type OrgStatus = "Active" | "Deposit depleted" | "Suspended" | "Needs verification";
 
 type Org = { id: string; name: string; role: OrgRole; status: OrgStatus };
-
-type MemberStatus = "Active" | "Invited" | "Disabled";
-
-type Person = {
-  id: string;
-  name: string;
-  email: string;
-  role: OrgRole;
-  status: MemberStatus;
-  lastActive: string;
-  twoFA: boolean;
-  trustedDevice: boolean;
-  permissions: string[];
-};
 
 type Invite = {
   id: string;
@@ -209,18 +194,30 @@ function Modal({
   );
 }
 
-function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {
+function Select({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: (string | { value: string; label: string })[];
+}) {
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-4 focus:ring-emerald-100"
     >
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
+      {options.map((o) => {
+        const val = typeof o === "string" ? o : o.value;
+        const lab = typeof o === "string" ? o : o.label;
+        return (
+          <option key={val} value={val}>
+            {lab}
+          </option>
+        );
+      })}
     </select>
   );
 }
@@ -236,17 +233,7 @@ function Input({ value, onChange, placeholder }: { value: string; onChange: (v: 
   );
 }
 
-function permissionTemplate(role: OrgRole) {
-  const map: Record<OrgRole, string[]> = {
-    Owner: ["All access", "Change policies", "Manage users", "Manage funding"],
-    Admin: ["Manage users", "Manage policies", "View reports"],
-    Finance: ["Approve payouts", "Export reports", "Reconcile"],
-    Approver: ["Approve purchases", "Approve payouts"],
-    Member: ["Create requests", "View own items"],
-    Viewer: ["View only"],
-  };
-  return map[role];
-}
+
 
 export default function UsersInvitations() {
   const navigate = useNavigate();
@@ -260,7 +247,7 @@ export default function UsersInvitations() {
   const orgs = useMemo<Org[]>(
     () => [
       { id: "org_acme", name: "Acme Group Ltd", role: "Finance", status: "Active" },
-      { id: "org_khl", name: "Kampala Holdings", role: "Member", status: "Deposit depleted" },
+      { id: "org_khl", name: "Kampala Holdings Group", role: "Member", status: "Deposit depleted" },
     ],
     []
   );
@@ -269,55 +256,7 @@ export default function UsersInvitations() {
   const org = useMemo(() => orgs.find((o) => o.id === orgId) || orgs[0], [orgs, orgId]);
   const canAdmin = useMemo(() => ["Owner", "Admin", "Finance"].includes(org.role), [org.role]);
 
-  const membersSeed = useMemo<Person[]>(
-    () => [
-      {
-        id: "U-1",
-        name: "Ronald Isabirye",
-        email: "ronald@acme.ug",
-        role: "Owner",
-        status: "Active",
-        lastActive: "Now",
-        twoFA: true,
-        trustedDevice: true,
-        permissions: permissionTemplate("Owner"),
-      },
-      {
-        id: "U-2",
-        name: "Finance Desk",
-        email: "finance@acme.ug",
-        role: "Finance",
-        status: "Active",
-        lastActive: "12m ago",
-        twoFA: true,
-        trustedDevice: true,
-        permissions: permissionTemplate("Finance"),
-      },
-      {
-        id: "U-3",
-        name: "Procurement",
-        email: "procurement@acme.ug",
-        role: "Approver",
-        status: "Active",
-        lastActive: "2h ago",
-        twoFA: false,
-        trustedDevice: false,
-        permissions: permissionTemplate("Approver"),
-      },
-      {
-        id: "U-4",
-        name: "Auditor",
-        email: "audit@acme.ug",
-        role: "Viewer",
-        status: "Disabled",
-        lastActive: "1w ago",
-        twoFA: false,
-        trustedDevice: false,
-        permissions: permissionTemplate("Viewer"),
-      },
-    ],
-    []
-  );
+
 
   const invitesSeed = useMemo<Invite[]>(
     () => [
@@ -327,7 +266,7 @@ export default function UsersInvitations() {
     []
   );
 
-  const [members, setMembers] = useState<Person[]>(membersSeed);
+  const { users: members, addUser, updateUser } = useUsers();
   const [invites, setInvites] = useState<Invite[]>(invitesSeed);
 
   const [q, setQ] = useState("");
@@ -368,8 +307,7 @@ export default function UsersInvitations() {
     const inv = invites.find((i) => i.id === id);
     if (!inv) return;
     setInvites((p) => p.map((x) => (x.id === id ? { ...x, status: "Accepted" } : x)));
-    setMembers((p) => [
-      {
+    addUser({
         id: `U-${Math.floor(10 + Math.random() * 90)}`,
         name: inv.email.split("@")[0].replace(/\./g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
         email: inv.email,
@@ -379,14 +317,15 @@ export default function UsersInvitations() {
         twoFA: false,
         trustedDevice: false,
         permissions: permissionTemplate(inv.role),
-      },
-      ...p,
-    ]);
+    });
     toast({ kind: "success", title: "Invite accepted", message: inv.email });
   };
 
   const toggleDisable = (id: string) => {
-    setMembers((p) => p.map((m) => (m.id === id ? { ...m, status: m.status === "Disabled" ? "Active" : "Disabled" } : m)));
+    const m = members.find(u => u.id === id);
+    if (m) {
+        updateUser(id, { status: m.status === "Disabled" ? "Active" : "Disabled" });
+    }
     toast({ kind: "success", title: "Status updated" });
   };
 
@@ -438,14 +377,13 @@ export default function UsersInvitations() {
 
               <div className="flex flex-wrap items-center gap-2">
                 <div className="min-w-[220px]">
-                  <Select value={orgId} onChange={setOrgId} options={orgs.map((o) => o.id)} />
+                  <Select
+                    value={orgId}
+                    onChange={setOrgId}
+                    options={orgs.map((o) => ({ value: o.id, label: o.name }))}
+                  />
                 </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Switch", message: "Open wallet switcher" })}>
-                  <ChevronRight className="h-4 w-4" /> Switch
-                </Button>
-                <Button variant="outline" onClick={openAdmin}>
-                  <ChevronRight className="h-4 w-4" /> Admin Console
-                </Button>
+
                 <Button
                   variant="primary"
                   disabled={!canAdmin}
@@ -467,10 +405,10 @@ export default function UsersInvitations() {
                     <div className="text-sm font-semibold text-slate-900">Limited access</div>
                     <div className="mt-1 text-sm text-amber-900">You can view the team directory, but invites and role edits require Admin or Finance role.</div>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button variant="accent" onClick={() => toast({ kind: "info", title: "Request access", message: "Open access request flow" })}>
+                      <Button variant="accent" onClick={() => navigate("/console/access-request")}>
                         <ChevronRight className="h-4 w-4" /> Request access
                       </Button>
-                      <Button variant="outline" onClick={() => toast({ kind: "info", title: "Contact Admin", message: "Show org Admin contacts" })}>
+                      <Button variant="outline" onClick={() => navigate("/console/settings/support-tools")}>
                         <ChevronRight className="h-4 w-4" /> Contact Admin
                       </Button>
                     </div>
@@ -481,135 +419,161 @@ export default function UsersInvitations() {
           </div>
 
           <div className="bg-slate-50 px-4 py-5 md:px-6">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <div className="space-y-4 lg:col-span-8">
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Team directory</div>
-                      <div className="mt-1 text-xs text-slate-500">Status, last active, and permission boundaries</div>
-                    </div>
-                    <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                      <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
-                        <Search className="h-4 w-4 text-slate-500" />
-                        <input
-                          value={q}
-                          onChange={(e) => setQ(e.target.value)}
-                          placeholder="Search name or email"
-                          className="w-[min(320px,70vw)] bg-transparent text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none"
-                        />
-                      </div>
-                      <div className="min-w-[160px]">
-                        <Select value={roleFilter} onChange={(v) => setRoleFilter(v as any)} options={["ALL", "Owner", "Admin", "Finance", "Approver", "Member", "Viewer"]} />
-                      </div>
-                      <div className="min-w-[160px]">
-                        <Select value={statusFilter} onChange={(v) => setStatusFilter(v as any)} options={["ALL", "Active", "Invited", "Disabled"]} />
-                      </div>
-                    </div>
+            <div className="flex flex-col gap-4">
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Team directory</div>
+                    <div className="mt-1 text-xs text-slate-500">Status, last active, and permission boundaries</div>
                   </div>
-
-                  <div className="mt-4 space-y-2">
-                    {filteredMembers.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => openPerson(m)}
-                        className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left hover:bg-slate-50"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-900">{m.name}</div>
-                              <Pill label={m.role} tone={m.role === "Owner" || m.role === "Admin" ? "info" : "neutral"} />
-                              <Pill label={m.status} tone={toneForMemberStatus(m.status)} />
-                              <Pill label={m.twoFA ? "2FA" : "No 2FA"} tone={m.twoFA ? "good" : "warn"} />
-                              <Pill label={m.trustedDevice ? "Trusted" : "Untrusted"} tone={m.trustedDevice ? "good" : "neutral"} />
-                            </div>
-                            <div className="mt-1 text-sm text-slate-600">{m.email}</div>
-                            <div className="mt-2 text-xs text-slate-500">Last active: {m.lastActive}</div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Button variant="outline" className="px-3 py-2" onClick={() => copy(m.email)}>
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" className="px-3 py-2" onClick={() => toast({ kind: "info", title: "Open profile", message: m.id })}>
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          {m.permissions.slice(0, 3).map((p) => (
-                            <Pill key={p} label={p} tone="neutral" />
-                          ))}
-                          {m.permissions.length > 3 ? <Pill label={`+${m.permissions.length - 3} more`} tone="neutral" /> : null}
-                        </div>
-                      </button>
-                    ))}
-
-                    {!filteredMembers.length ? (
-                      <div className="rounded-3xl border border-slate-200 bg-white p-4 text-sm text-slate-600">No members match filters.</div>
-                    ) : null}
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5">
+                      <Search className="h-4 w-4 text-slate-500" />
+                      <input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Search name or email"
+                        className="w-[min(320px,70vw)] bg-transparent text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                      />
+                    </div>
+                    <div className="min-w-[160px]">
+                      <Select value={roleFilter} onChange={(v) => setRoleFilter(v as any)} options={["ALL", "Owner", "Admin", "Finance", "Approver", "Member", "Viewer"]} />
+                    </div>
+                    <div className="min-w-[160px]">
+                      <Select value={statusFilter} onChange={(v) => setStatusFilter(v as any)} options={["ALL", "Active", "Invited", "Disabled"]} />
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Invitations</div>
-                      <div className="mt-1 text-xs text-slate-500">Pending invites and access reviews</div>
-                    </div>
-                    <Pill label={`${invites.length}`} tone="neutral" />
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    {invites.map((i) => (
-                      <div key={i.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-900">{i.email}</div>
-                              <Pill label={i.role} tone="neutral" />
-                              <Pill label={i.status} tone={i.status === "Accepted" ? "good" : i.status === "Pending" ? "warn" : "neutral"} />
-                            </div>
-                            <div className="mt-1 text-sm text-slate-600">{i.note}</div>
-                            <div className="mt-2 text-xs text-slate-500">Sent: {i.sentAt}</div>
-                          </div>
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {filteredMembers.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => openPerson(m)}
+                      className="w-full rounded-3xl border border-slate-200 bg-white p-4 text-left hover:bg-slate-50"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <Button variant="outline" className="px-3 py-2" onClick={() => copy(i.email)}>
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            {i.status === "Pending" ? (
-                              <Button
-                                variant="primary"
-                                disabled={!canAdmin}
-                                title={!canAdmin ? "Admin role required" : "Simulate accept"}
-                                onClick={() => acceptInviteSim(i.id)}
-                              >
-                                <Check className="h-4 w-4" /> Accept
-                              </Button>
-                            ) : null}
+                            <div className="text-sm font-semibold text-slate-900">{m.name}</div>
+                            <Pill label={m.role} tone={m.role === "Owner" || m.role === "Admin" ? "info" : "neutral"} />
+                            <Pill label={m.status} tone={toneForMemberStatus(m.status)} />
+                            <Pill label={m.twoFA ? "2FA" : "No 2FA"} tone={m.twoFA ? "good" : "warn"} />
+                            <Pill label={m.trustedDevice ? "Trusted" : "Untrusted"} tone={m.trustedDevice ? "good" : "neutral"} />
                           </div>
+                          <div className="mt-1 text-sm text-slate-600">{m.email}</div>
+                          <div className="mt-2 text-xs text-slate-500">Last active: {m.lastActive}</div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button variant="outline" className="px-3 py-2" onClick={() => copy(m.email)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" className="px-3 py-2" onClick={() => navigate(`/console/users/${m.id}`)}>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                    ))}
 
-                    <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-slate-700">
-                          <Info className="h-5 w-5" />
-                        </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {m.permissions.slice(0, 3).map((p) => (
+                          <Pill key={p} label={p} tone="neutral" />
+                        ))}
+                        {m.permissions.length > 3 ? <Pill label={`+${m.permissions.length - 3} more`} tone="neutral" /> : null}
+                      </div>
+                    </button>
+                  ))}
+
+                  {!filteredMembers.length ? (
+                    <div className="rounded-3xl border border-slate-200 bg-white p-4 text-sm text-slate-600">No members match filters.</div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="text-sm font-semibold text-slate-900">Permission boundaries</div>
+                <div className="mt-1 text-xs text-slate-500">What each role can do</div>
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {(["Owner", "Admin", "Finance", "Approver", "Member", "Viewer"] as OrgRole[]).map((r) => (
+                    <div key={r} className="rounded-3xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-sm font-semibold text-slate-900">Access review</div>
-                          <div className="mt-1 text-sm text-slate-600">Last: {accessReview.last} • Next: {accessReview.next} • Due in {accessReview.dueInDays} days</div>
-                          <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <Button variant="outline" onClick={openAdmin}>
-                              <ChevronRight className="h-4 w-4" /> Start review
-                            </Button>
-                            <Button variant="outline" onClick={() => toast({ kind: "info", title: "Export", message: "Export access review report" })}>
-                              <ChevronRight className="h-4 w-4" /> Export
-                            </Button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-sm font-semibold text-slate-900">{r}</div>
+                            <Pill label={`${permissionTemplate(r).length} permissions`} tone="neutral" />
                           </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {permissionTemplate(r).slice(0, 2).map((p) => (
+                              <Pill key={p} label={p} tone="neutral" />
+                            ))}
+                            {permissionTemplate(r).length > 2 ? <Pill label="More" tone="neutral" /> : null}
+                          </div>
+                        </div>
+                        <Button variant="outline" className="px-3 py-2" onClick={() => navigate("/console/settings/roles")}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Invitations</div>
+                    <div className="mt-1 text-xs text-slate-500">Pending invites and access reviews</div>
+                  </div>
+                  <Pill label={`${invites.length}`} tone="neutral" />
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {invites.map((i) => (
+                    <div key={i.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-sm font-semibold text-slate-900">{i.email}</div>
+                            <Pill label={i.role} tone="neutral" />
+                            <Pill label={i.status} tone={i.status === "Accepted" ? "good" : i.status === "Pending" ? "warn" : "neutral"} />
+                          </div>
+                          <div className="mt-1 text-sm text-slate-600">{i.note}</div>
+                          <div className="mt-2 text-xs text-slate-500">Sent: {i.sentAt}</div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button variant="outline" className="px-3 py-2" onClick={() => copy(i.email)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          {i.status === "Pending" ? (
+                            <Button
+                              variant="primary"
+                              disabled={!canAdmin}
+                              title={!canAdmin ? "Admin role required" : "Simulate accept"}
+                              onClick={() => acceptInviteSim(i.id)}
+                            >
+                              <Check className="h-4 w-4" /> Accept
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-slate-700">
+                        <Info className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-900">Access review</div>
+                        <div className="mt-1 text-sm text-slate-600">Last: {accessReview.last} • Next: {accessReview.next} • Due in {accessReview.dueInDays} days</div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Button variant="outline" onClick={() => navigate("/console/settings/security")}>
+                            <ChevronRight className="h-4 w-4" /> Start review
+                          </Button>
+                          <Button variant="outline" onClick={() => navigate("/console/reports")}>
+                            <ChevronRight className="h-4 w-4" /> Export
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -617,57 +581,27 @@ export default function UsersInvitations() {
                 </div>
               </div>
 
-              <div className="space-y-4 lg:col-span-4">
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="text-sm font-semibold text-slate-900">Permission boundaries</div>
-                  <div className="mt-1 text-xs text-slate-500">What each role can do</div>
-                  <div className="mt-4 space-y-2">
-                    {(["Owner", "Admin", "Finance", "Approver", "Member", "Viewer"] as OrgRole[]).map((r) => (
-                      <div key={r} className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-900">{r}</div>
-                              <Pill label={`${permissionTemplate(r).length} permissions`} tone="neutral" />
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                              {permissionTemplate(r).slice(0, 2).map((p) => (
-                                <Pill key={p} label={p} tone="neutral" />
-                              ))}
-                              {permissionTemplate(r).length > 2 ? <Pill label="More" tone="neutral" /> : null}
-                            </div>
-                          </div>
-                          <Button variant="outline" className="px-3 py-2" onClick={openAdmin}>
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+              <div
+                className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                style={{
+                  background:
+                    "radial-gradient(90% 80% at 10% 0%, rgba(247,127,0,0.20), rgba(255,255,255,0)), radial-gradient(90% 80% at 90% 0%, rgba(3,205,140,0.16), rgba(255,255,255,0))",
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="grid h-11 w-11 place-items-center rounded-2xl text-white" style={{ background: EVZ.orange }}>
+                    <Sparkles className="h-5 w-5" />
                   </div>
-                </div>
-
-                <div
-                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
-                  style={{
-                    background:
-                      "radial-gradient(90% 80% at 10% 0%, rgba(247,127,0,0.20), rgba(255,255,255,0)), radial-gradient(90% 80% at 90% 0%, rgba(3,205,140,0.16), rgba(255,255,255,0))",
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="grid h-11 w-11 place-items-center rounded-2xl text-white" style={{ background: EVZ.orange }}>
-                      <Sparkles className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Admin console deep links</div>
-                      <div className="mt-1 text-sm text-slate-600">This page is a fast view. Full management happens in Admin Console.</div>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={openAdmin}>
-                          <ChevronRight className="h-4 w-4" /> Open Admin
-                        </Button>
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Audit", message: "Open audit log" })}>
-                          <ChevronRight className="h-4 w-4" /> Audit
-                        </Button>
-                      </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Admin console deep links</div>
+                    <div className="mt-1 text-sm text-slate-600">This page is a fast view. Full management happens in Admin Console.</div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button variant="outline" onClick={() => navigate("/console/admin")}>
+                        <ChevronRight className="h-4 w-4" /> Open Admin
+                      </Button>
+                      <Button variant="outline" onClick={() => navigate("/console/settings/security")}>
+                        <ChevronRight className="h-4 w-4" /> Audit
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -748,7 +682,7 @@ export default function UsersInvitations() {
               ))}
             </div>
             <div className="mt-4">
-              <Button variant="outline" onClick={openAdmin}>
+              <Button variant="outline" onClick={() => navigate("/console/settings/roles")}>
                 <ChevronRight className="h-4 w-4" /> Advanced permissions
               </Button>
             </div>
@@ -803,7 +737,7 @@ export default function UsersInvitations() {
                 <Button variant="outline" onClick={() => copy(detail.email)}>
                   <Copy className="h-4 w-4" /> Copy email
                 </Button>
-                <Button variant="outline" onClick={openAdmin}>
+                <Button variant="outline" onClick={() => navigate("/console/settings/roles")}>
                   <ChevronRight className="h-4 w-4" /> Edit role
                 </Button>
               </div>
@@ -817,10 +751,10 @@ export default function UsersInvitations() {
                 <li className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-slate-400" />Review access quarterly</li>
               </ul>
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Security", message: "Open Security & Trust" })}>
+                <Button variant="outline" onClick={() => navigate("/console/settings/security")}>
                   <ChevronRight className="h-4 w-4" /> Security
                 </Button>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Audit", message: "Open audit log" })}>
+                <Button variant="outline" onClick={() => navigate("/console/settings/security")}>
                   <ChevronRight className="h-4 w-4" /> Audit
                 </Button>
               </div>

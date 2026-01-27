@@ -11,6 +11,12 @@ import RolesPermissions from './generated/corporate_pay_roles_permissions_govern
 import PolicyBuilder from './generated/corporate_pay_policy_builder_rides_services';
 import ApprovalWorkflowBuilder from './generated/corporate_pay_approval_workflow';
 import ApprovalsInbox from './generated/corporate_pay_approvals_inbox';
+import UserProfileDetail from './generated/corporate_pay_user_profile_detail';
+import UserEditProfile from './generated/corporate_pay_user_edit_profile';
+import UserSecuritySettings from './generated/corporate_pay_user_security_settings';
+import UserPermissionsEdit from './generated/corporate_pay_user_permissions_edit';
+import UserActivityLog from './generated/corporate_pay_user_activity_log';
+import RoleEdit from './generated/corporate_pay_role_edit';
 import Budgets from './generated/corporate_pay_budgets_spend_limits_controls';
 import WalletBilling from './generated/corporate_pay_corporate_wallet_credit_line_prepaid_funding';
 import BillingSetup from './generated/corporate_pay_billing_setup_invoice';
@@ -42,6 +48,12 @@ export type ConsolePageId =
   | 'org_setup'
   | 'modules_enablement'
   | 'users'
+  | 'user_profile'
+  | 'user_edit'
+  | 'user_security'
+  | 'user_permissions'
+  | 'user_activity'
+  | 'role_edit'
   | 'groups'
   | 'roles_permissions'
   | 'policies'
@@ -78,6 +90,12 @@ export const consolePages: Record<ConsolePageId, ComponentType> = {
   org_setup: OrgSetup,
   modules_enablement: ModulesEnablement,
   users: UsersInvites,
+  user_profile: UserProfileDetail,
+  user_edit: UserEditProfile,
+  user_security: UserSecuritySettings,
+  user_permissions: UserPermissionsEdit,
+  user_activity: UserActivityLog,
+  role_edit: RoleEdit,
   groups: GroupsCostCenters,
   roles_permissions: RolesPermissions,
   policies: PolicyBuilder,
