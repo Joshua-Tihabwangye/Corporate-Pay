@@ -10,7 +10,7 @@ function formatUGX(n: number) {
 export default function CostCenterEdit() {
   const navigate = useNavigate();
   const { costCenterId } = useParams();
-  const { costCenters, updateCostCenter, payments, refresh } = useGroupsData();
+  const { costCenters, updateCostCenter, refresh } = useGroupsData();
   
   const [cc, setCc] = useState<CostCenter | null>(null);
   const [loading, setLoading] = useState(true);

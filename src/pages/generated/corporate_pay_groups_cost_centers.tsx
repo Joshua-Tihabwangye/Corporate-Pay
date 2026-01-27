@@ -217,7 +217,8 @@ export default function GroupsCostCenters() {
           description: draftDesc.trim(),
           defaultCostCenterId: costCenters[0]?.id,
           visibility: "Group only",
-          taggingEnforced: true
+          taggingEnforced: true,
+          status: "Active"
       });
       toast({ kind: "success", title: "Group created", message: draftName.trim() });
     }

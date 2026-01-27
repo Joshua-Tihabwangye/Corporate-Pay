@@ -93,6 +93,18 @@ export const BudgetStorage = {
         const newItems = items.filter(i => i.id !== id);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
         window.dispatchEvent(new Event("budget-storage-update"));
+    },
+
+    clearAll: () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+        window.dispatchEvent(new Event("budget-storage-update"));
+    },
+
+    clearByPeriod: (period: string) => {
+        const items = BudgetStorage.getAll();
+        const newItems = items.filter(i => i.period !== period);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
+        window.dispatchEvent(new Event("budget-storage-update"));
     }
 };
 
