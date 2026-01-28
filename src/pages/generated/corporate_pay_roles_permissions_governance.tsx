@@ -423,177 +423,62 @@ export default function RolesPermissionsGovernance() {
           </div>
 
           <div className="bg-slate-50 px-4 py-5 md:px-6">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <div className="space-y-4 lg:col-span-8">
-                <Section title="Roles" subtitle="Standard roles with granular permissions" right={<Pill label={selectedRoleDef.role} tone="info" />}>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    {roles.map((r) => (
-                      <button
-                        key={r.role}
-                        type="button"
-                        onClick={() => navigate(`/console/settings/roles/${r.role}/edit`)}
-                        className={cn(
-                          "rounded-3xl border bg-white p-4 text-left transition-all duration-200",
-                          "hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-emerald-300 hover:-translate-y-1",
-                          "shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
-                          selectedRole === r.role ? "border-emerald-200 ring-2 ring-emerald-100" : "border-slate-200"
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-900">{r.role}</div>
-                              <Pill label={`${r.permissions.length} perms`} tone="neutral" />
-                            </div>
-                            <div className="mt-1 text-sm text-slate-600">{r.summary}</div>
-                          </div>
-                          <div className={cn("grid h-10 w-10 place-items-center rounded-2xl", selectedRole === r.role ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-700")}>
-                            <Users className="h-5 w-5" />
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          {r.permissions.slice(0, 3).map((p) => (
-                            <Pill key={p} label={p} tone="neutral" />
-                          ))}
-                          {r.permissions.length > 3 ? <Pill label={`+${r.permissions.length - 3} more`} tone="neutral" /> : null}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">Permission details</div>
-                        <div className="mt-1 text-sm text-slate-600">Role: {selectedRoleDef.role}</div>
-                      </div>
-                      <Button variant="outline" onClick={() => navigate(`/console/settings/roles/${selectedRoleDef.role}/edit`)}>
-                        <ChevronRight className="h-4 w-4" /> Edit Permissions
-                      </Button>
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      {selectedRoleDef.permissions.map((p) => (
-                        <Pill key={p} label={p} tone={p.includes("Manage") ? "info" : "neutral"} />
-                      ))}
-                    </div>
-                  </div>
-                </Section>
-
-                <Section
-                  title="Dual-control rules"
-                  subtitle="Maker-checker for sensitive actions"
-                  right={<Pill label={`${dualRules.filter((d) => d.enabled).length}/${dualRules.length} enabled`} tone="info" />}
-                >
-                  <div className="space-y-2">
-                    {dualRules.map((d) => (
-                      <div key={d.key} className={cn("rounded-3xl border p-4", d.enabled ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-900">{d.key}</div>
-                              <Pill label={d.enabled ? "Enabled" : "Disabled"} tone={d.enabled ? "good" : "neutral"} />
-                            </div>
-                            <div className="mt-1 text-sm text-slate-700">{d.note}</div>
-                          </div>
-                          <Button
-                            variant={d.enabled ? "primary" : "outline"}
-                            disabled={!canGovern}
-                            title={!canGovern ? "Admin role required" : "Toggle"}
-                            onClick={() => toggleDual(d.key)}
-                            className="px-3 py-2"
-                          >
-                            {d.enabled ? "ON" : "OFF"}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                    <div className="flex items-start gap-2">
-                      <Info className="mt-0.5 h-4 w-4" />
-                      <div>Dual-control actions create an immutable audit trail with both decisions.</div>
-                    </div>
-                  </div>
-                </Section>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Section
-                    title="Approval thresholds"
-                    subtitle="Approval required above threshold"
-                    right={<Pill label={`${thresholds.length} rules`} tone="neutral" />}
-                  >
-                  <div className="space-y-2">
-                    {thresholds.map((t) => (
-                      <div key={t.id} className="rounded-3xl border border-slate-200 bg-white p-4">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-900">{t.label}</div>
-                              <Pill label={t.currency} tone="neutral" />
-                              <Pill label={`${t.approvers} approver(s)`} tone="info" />
-                              <Pill label={`Above ${formatMoney(t.threshold, t.currency)}`} tone="warn" />
-                            </div>
-                            <div className="mt-1 text-sm text-slate-600">Applies to: {t.appliesTo.join(", ")}</div>
-                          </div>
+            <div className="space-y-4">
+              <Section title="Roles" subtitle="Standard roles with granular permissions" right={<Pill label={selectedRoleDef.role} tone="info" />}>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {roles.map((r) => (
+                    <button
+                      key={r.role}
+                      type="button"
+                      onClick={() => navigate(`/console/settings/roles/${r.role}/edit`)}
+                      className={cn(
+                        "rounded-3xl border bg-white p-4 text-left transition-all duration-200",
+                        "hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:border-emerald-300 hover:-translate-y-1",
+                        "shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
+                        selectedRole === r.role ? "border-emerald-200 ring-2 ring-emerald-100" : "border-slate-200"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                              variant="outline"
-                              disabled={!canGovern}
-                              title={!canGovern ? "Admin role required" : "Edit"}
-                              onClick={() => {
-                                setEditId(t.id);
-                                setEditOpen(true);
-                              }}
-                            >
-                              <ChevronRight className="h-4 w-4" /> Edit
-                            </Button>
-                            <Button variant="outline" onClick={() => copy(`${t.label} ${formatMoney(t.threshold, t.currency)} ${t.approvers}`)}>
-                              <Copy className="h-4 w-4" /> Copy
-                            </Button>
+                            <div className="text-sm font-semibold text-slate-900">{r.role}</div>
+                            <Pill label={`${r.permissions.length} perms`} tone="neutral" />
                           </div>
+                          <div className="mt-1 text-sm text-slate-600">{r.summary}</div>
+                        </div>
+                        <div className={cn("grid h-10 w-10 place-items-center rounded-2xl", selectedRole === r.role ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-700")}>
+                          <Users className="h-5 w-5" />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  </Section>
-                  
-                  <Section title="Audit trail" subtitle="Recent policy and permission changes" right={<Pill label={`${audit.length}`} tone="neutral" />}>
-                  <div className="space-y-2">
-                    {audit.map((a) => (
-                      <div key={a.id} className={cn("rounded-3xl border p-4", a.outcome === "Blocked" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")}>
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-slate-900">{a.action}</div>
-                              <Pill label={a.outcome} tone={a.outcome === "Blocked" ? "warn" : "good"} />
-                              <Pill label={a.actor} tone="neutral" />
-                            </div>
-                            <div className="mt-1 text-sm text-slate-700">{a.target}</div>
-                            <div className="mt-2 text-xs text-slate-500">{a.when} • {a.why}</div>
-                          </div>
-                          <Button variant="outline" onClick={() => navigate("/console/settings/security")} className="px-3 py-2">
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {a.outcome === "Blocked" ? (
-                          <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle className="mt-0.5 h-4 w-4" />
-                              <div>
-                                <div className="font-semibold">Blocked by governance</div>
-                                <div className="mt-1 text-xs text-amber-800">{a.why}</div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : null}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {r.permissions.slice(0, 3).map((p) => (
+                          <Pill key={p} label={p} tone="neutral" />
+                        ))}
+                        {r.permissions.length > 3 ? <Pill label={`+${r.permissions.length - 3} more`} tone="neutral" /> : null}
                       </div>
-                    ))}
-                  </div>
-                  </Section>
+                    </button>
+                  ))}
                 </div>
-              </div>
 
-              <div className="space-y-4 lg:col-span-4">
+                <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">Permission details</div>
+                      <div className="mt-1 text-sm text-slate-600">Role: {selectedRoleDef.role}</div>
+                    </div>
+                    <Button variant="outline" onClick={() => navigate(`/console/settings/roles/${selectedRoleDef.role}/edit`)}>
+                      <ChevronRight className="h-4 w-4" /> Edit Permissions
+                    </Button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {selectedRoleDef.permissions.map((p) => (
+                      <Pill key={p} label={p} tone={p.includes("Manage") ? "info" : "neutral"} />
+                    ))}
+                  </div>
+                </div>
+              </Section>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="text-sm font-semibold text-slate-900">Governance health</div>
                   <div className="mt-1 text-xs text-slate-500">A quick view of protections</div>
@@ -684,6 +569,119 @@ export default function RolesPermissionsGovernance() {
                   </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <Section
+                  title="Dual-control rules"
+                  subtitle="Maker-checker for sensitive actions"
+                  right={<Pill label={`${dualRules.filter((d) => d.enabled).length}/${dualRules.length} enabled`} tone="info" />}
+                >
+                  <div className="space-y-2">
+                    {dualRules.map((d) => (
+                      <div key={d.key} className={cn("rounded-3xl border p-4", d.enabled ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-slate-900">{d.key}</div>
+                              <Pill label={d.enabled ? "Enabled" : "Disabled"} tone={d.enabled ? "good" : "neutral"} />
+                            </div>
+                            <div className="mt-1 text-sm text-slate-700">{d.note}</div>
+                          </div>
+                          <Button
+                            variant={d.enabled ? "primary" : "outline"}
+                            disabled={!canGovern}
+                            title={!canGovern ? "Admin role required" : "Toggle"}
+                            onClick={() => toggleDual(d.key)}
+                            className="px-3 py-2"
+                          >
+                            {d.enabled ? "ON" : "OFF"}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                    <div className="flex items-start gap-2">
+                      <Info className="mt-0.5 h-4 w-4" />
+                      <div>Dual-control actions create an immutable audit trail with both decisions.</div>
+                    </div>
+                  </div>
+                </Section>
+
+                <Section
+                  title="Approval thresholds"
+                  subtitle="Approval required above threshold"
+                  right={<Pill label={`${thresholds.length} rules`} tone="neutral" />}
+                >
+                  <div className="space-y-2">
+                    {thresholds.map((t) => (
+                      <div key={t.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-slate-900">{t.label}</div>
+                              <Pill label={t.currency} tone="neutral" />
+                              <Pill label={`${t.approvers} approver(s)`} tone="info" />
+                              <Pill label={`Above ${formatMoney(t.threshold, t.currency)}`} tone="warn" />
+                            </div>
+                            <div className="mt-1 text-sm text-slate-600">Applies to: {t.appliesTo.join(", ")}</div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              variant="outline"
+                              disabled={!canGovern}
+                              title={!canGovern ? "Admin role required" : "Edit"}
+                              onClick={() => {
+                                setEditId(t.id);
+                                setEditOpen(true);
+                              }}
+                            >
+                              <ChevronRight className="h-4 w-4" /> Edit
+                            </Button>
+                            <Button variant="outline" onClick={() => copy(`${t.label} ${formatMoney(t.threshold, t.currency)} ${t.approvers}`)}>
+                              <Copy className="h-4 w-4" /> Copy
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+              </div>
+
+              <Section title="Audit trail" subtitle="Recent policy and permission changes" right={<Pill label={`${audit.length}`} tone="neutral" />}>
+                <div className="space-y-2">
+                  {audit.map((a) => (
+                    <div key={a.id} className={cn("rounded-3xl border p-4", a.outcome === "Blocked" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-sm font-semibold text-slate-900">{a.action}</div>
+                            <Pill label={a.outcome} tone={a.outcome === "Blocked" ? "warn" : "good"} />
+                            <Pill label={a.actor} tone="neutral" />
+                          </div>
+                          <div className="mt-1 text-sm text-slate-700">{a.target}</div>
+                          <div className="mt-2 text-xs text-slate-500">{a.when} • {a.why}</div>
+                        </div>
+                        <Button variant="outline" onClick={() => navigate("/console/settings/security")} className="px-3 py-2">
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {a.outcome === "Blocked" ? (
+                        <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="mt-0.5 h-4 w-4" />
+                            <div>
+                              <div className="font-semibold">Blocked by governance</div>
+                              <div className="mt-1 text-xs text-amber-800">{a.why}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </Section>
             </div>
 
             <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">

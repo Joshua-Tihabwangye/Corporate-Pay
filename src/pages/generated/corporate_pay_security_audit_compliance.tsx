@@ -79,7 +79,7 @@ function Button({
 }: {
   variant?: "primary" | "accent" | "outline" | "ghost" | "danger";
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   disabled?: boolean;
   className?: string;
   title?: string;
@@ -372,9 +372,6 @@ export default function SecurityAuditCompliance() {
                 <div className="min-w-[260px]">
                   <Select value={orgId} onChange={setOrgId} options={orgs.map((o) => ({ value: o.id, label: o.name }))} />
                 </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Admin Console", message: "Deep link to admin security module" })}>
-                  <ChevronRight className="h-4 w-4" /> Admin Console
-                </Button>
                 <Button variant="primary" onClick={() => toast({ kind: "success", title: "Refreshed" })}>
                   <RefreshCcw className="h-4 w-4" /> Refresh
                 </Button>
@@ -432,10 +429,10 @@ export default function SecurityAuditCompliance() {
                         />
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Export", message: "Export audit CSV/JSON" })}>
+                        <Button variant="outline" onClick={() => navigate("/console/reports")}>
                           <ChevronRight className="h-4 w-4" /> Export
                         </Button>
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Legal hold", message: "Open retention tab" })}>
+                        <Button variant="outline" onClick={() => setTab("Retention")}>
                           <ChevronRight className="h-4 w-4" /> Legal hold
                         </Button>
                       </div>
@@ -443,7 +440,7 @@ export default function SecurityAuditCompliance() {
 
                     <div className="mt-4 space-y-2">
                       {filteredAudit.map((a) => (
-                        <div key={a.id} className={cn("rounded-3xl border p-4", a.outcome === "Blocked" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")}>
+                        <div key={a.id} className={cn("rounded-3xl border p-4 transition-all hover:shadow-md hover:border-emerald-300 cursor-pointer", a.outcome === "Blocked" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")} onClick={() => navigate(`/console/settings/security/audit/${a.id}?outcome=${a.outcome}&action=${encodeURIComponent(a.action)}&target=${encodeURIComponent(a.target)}&why=${encodeURIComponent(a.why)}&actor=${encodeURIComponent(a.actor)}&when=${encodeURIComponent(a.when)}`)}>
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -456,8 +453,8 @@ export default function SecurityAuditCompliance() {
                               <div className="mt-2 text-xs text-slate-500">{a.when} • {a.why}</div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button variant="outline" className="px-3 py-2" onClick={() => copy(a.id)}><Copy className="h-4 w-4" /></Button>
-                              <Button variant="outline" className="px-3 py-2" onClick={() => toast({ kind: "info", title: "Open", message: a.id })}><ChevronRight className="h-4 w-4" /></Button>
+                              <Button variant="outline" className="px-3 py-2" onClick={(e) => { e?.stopPropagation(); copy(a.id); }}><Copy className="h-4 w-4" /></Button>
+                              <Button variant="outline" className="px-3 py-2" onClick={(e) => { e?.stopPropagation(); navigate(`/console/settings/security/audit/${a.id}?outcome=${a.outcome}&action=${encodeURIComponent(a.action)}&target=${encodeURIComponent(a.target)}&why=${encodeURIComponent(a.why)}&actor=${encodeURIComponent(a.actor)}&when=${encodeURIComponent(a.when)}`); }}><ChevronRight className="h-4 w-4" /></Button>
                             </div>
                           </div>
                         </div>
@@ -479,7 +476,7 @@ export default function SecurityAuditCompliance() {
                   <Section title="Device trust" subtitle="Trust list and revoke sessions" right={<Pill label={`${devices.length} devices`} tone="neutral" />}>
                     <div className="space-y-2">
                       {devices.map((d) => (
-                        <div key={d.id} className={cn("rounded-3xl border p-4", d.trusted ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
+                        <div key={d.id} className={cn("rounded-3xl border p-4 transition-all hover:shadow-md hover:border-emerald-300 cursor-pointer", d.trusted ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -506,7 +503,7 @@ export default function SecurityAuditCompliance() {
                         <Button variant="outline" onClick={() => toast({ kind: "info", title: "Revoke others", message: "This would revoke other sessions." })}>
                           <ChevronRight className="h-4 w-4" /> Revoke others
                         </Button>
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Export", message: "Export device trust list" })}>
+                        <Button variant="outline" onClick={() => navigate("/console/reports")}>
                           <ChevronRight className="h-4 w-4" /> Export
                         </Button>
                       </div>
@@ -525,7 +522,7 @@ export default function SecurityAuditCompliance() {
                   <Section title="Login events" subtitle="Risk scoring and anomalies" right={<Pill label={`${logins.length} events`} tone="neutral" />}>
                     <div className="space-y-2">
                       {logins.map((l) => (
-                        <div key={l.id} className={cn("rounded-3xl border p-4", l.risk === "High" ? "border-rose-200 bg-rose-50" : l.risk === "Medium" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")}>
+                        <div key={l.id} className={cn("rounded-3xl border p-4 transition-all hover:shadow-md hover:border-emerald-300 cursor-pointer", l.risk === "High" ? "border-rose-200 bg-rose-50" : l.risk === "Medium" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-white")} onClick={() => navigate(`/console/settings/security/logins/${l.id}?result=${l.result}&risk=${l.risk}&device=${encodeURIComponent(l.device)}&location=${encodeURIComponent(l.location)}&ip=${encodeURIComponent(l.ip)}&when=${encodeURIComponent(l.when)}&reason=${encodeURIComponent(l.reason || '')}`)}>
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -537,7 +534,7 @@ export default function SecurityAuditCompliance() {
                               <div className="mt-1 text-sm text-slate-700">{l.location} • IP {l.ip}</div>
                               <div className="mt-2 text-xs text-slate-500">{l.when}{l.reason ? ` • ${l.reason}` : ""}</div>
                             </div>
-                            <Button variant="outline" className="px-3 py-2" onClick={() => toast({ kind: "info", title: "Investigate", message: l.id })}>
+                            <Button variant="outline" className="px-3 py-2" onClick={(e) => { e?.stopPropagation(); navigate(`/console/settings/security/logins/${l.id}?result=${l.result}&risk=${l.risk}&device=${encodeURIComponent(l.device)}&location=${encodeURIComponent(l.location)}&ip=${encodeURIComponent(l.ip)}&when=${encodeURIComponent(l.when)}&reason=${encodeURIComponent(l.reason || '')}`); }}>
                               <ChevronRight className="h-4 w-4" />
                             </Button>
                           </div>
@@ -559,7 +556,7 @@ export default function SecurityAuditCompliance() {
                   <Section title="Retention policies" subtitle="Retention periods and legal holds" right={<Pill label={`${retention.filter((r) => r.legalHold).length} hold(s)`} tone={retention.some((r) => r.legalHold) ? "warn" : "neutral"} />}>
                     <div className="space-y-2">
                       {retention.map((r) => (
-                        <div key={r.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div key={r.id} className="rounded-3xl border border-slate-200 bg-white p-4 transition-all hover:shadow-md hover:border-emerald-300">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -594,7 +591,7 @@ export default function SecurityAuditCompliance() {
                   <Section title="Dual-control policies" subtitle="Maker-checker for sensitive actions" right={<Pill label={`${dual.filter((d) => d.enabled).length}/${dual.length} enabled`} tone="info" />}>
                     <div className="space-y-2">
                       {dual.map((d) => (
-                        <div key={d.id} className={cn("rounded-3xl border p-4", d.enabled ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
+                        <div key={d.id} className={cn("rounded-3xl border p-4 transition-all hover:shadow-md hover:border-emerald-300", d.enabled ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white")}>
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -612,7 +609,7 @@ export default function SecurityAuditCompliance() {
                       ))}
                     </div>
                     <div className="mt-3">
-                      <Button variant="outline" onClick={() => toast({ kind: "info", title: "Approvals", message: "Open Approval Workflow Builder" })}>
+                      <Button variant="outline" onClick={() => navigate("/console/settings/approvals/workflows")}>
                         <ChevronRight className="h-4 w-4" /> Workflow builder
                       </Button>
                     </div>
@@ -630,7 +627,7 @@ export default function SecurityAuditCompliance() {
                   <Section title="Key rotation" subtitle="Access logs and rotation events" right={<Pill label={`${keyLogs.length} events`} tone="neutral" />}>
                     <div className="space-y-2">
                       {keyLogs.map((k) => (
-                        <div key={k.id} className="rounded-3xl border border-slate-200 bg-white p-4">
+                        <div key={k.id} className="rounded-3xl border border-slate-200 bg-white p-4 transition-all hover:shadow-md hover:border-emerald-300 cursor-pointer" onClick={() => navigate(`/console/settings/security/keys/${k.keyId}`)}>
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -643,8 +640,8 @@ export default function SecurityAuditCompliance() {
                               <div className="mt-1 text-xs text-slate-500">{k.when}</div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button variant="outline" className="px-3 py-2" onClick={() => copy(k.id)}><Copy className="h-4 w-4" /></Button>
-                              <Button variant="primary" disabled={!canAdmin} title={!canAdmin ? "Admin required" : "Rotate"} onClick={() => rotateKey(k.keyId)}>
+                              <Button variant="outline" className="px-3 py-2" onClick={(e) => { e?.stopPropagation(); copy(k.id); }}><Copy className="h-4 w-4" /></Button>
+                              <Button variant="primary" disabled={!canAdmin} title={!canAdmin ? "Admin required" : "Rotate"} onClick={(e) => { e?.stopPropagation(); rotateKey(k.keyId); }}>
                                 <KeyRound className="h-4 w-4" /> Rotate
                               </Button>
                             </div>
@@ -669,7 +666,7 @@ export default function SecurityAuditCompliance() {
                   <Section title="Forensic exports" subtitle="Dual-control and retention-friendly" right={<Button variant="primary" disabled={!canAdmin} onClick={makeForensics}><Sparkles className="h-4 w-4" /> New export</Button>}>
                     <div className="space-y-2">
                       {forensics.map((f) => (
-                        <div key={f.id} className={cn("rounded-3xl border p-4", f.status === "Ready" ? "border-emerald-200 bg-emerald-50" : f.status === "Failed" ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white")}>
+                        <div key={f.id} className={cn("rounded-3xl border p-4 transition-all hover:shadow-md hover:border-emerald-300", f.status === "Ready" ? "border-emerald-200 bg-emerald-50" : f.status === "Failed" ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white")}>
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -688,7 +685,7 @@ export default function SecurityAuditCompliance() {
                               <Button variant={f.status === "Ready" ? "primary" : "outline"} disabled={f.status !== "Ready"} onClick={() => downloadForensics(f.id)}>
                                 <Download className="h-4 w-4" />
                               </Button>
-                              <Button variant="outline" onClick={() => toast({ kind: "info", title: "Open", message: f.id })}>
+                              <Button variant="outline" onClick={() => navigate(`/console/settings/security/forensics/${f.id}?status=${f.status}&scope=${encodeURIComponent(f.scope)}&createdAt=${encodeURIComponent(f.createdAt)}&includes=${encodeURIComponent(f.includes.join(','))}`)}>
                                 <ChevronRight className="h-4 w-4" />
                               </Button>
                             </div>
@@ -713,7 +710,7 @@ export default function SecurityAuditCompliance() {
                     <div className="mt-1 text-sm text-slate-600">Treat compliance features as product. Show policy reasons everywhere, and keep exports forensic-ready.</div>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Support", message: "Open Support & Admin Tools" })}>
+                <Button variant="outline" onClick={() => navigate("/console/settings/support-tools")}>
                   <ChevronRight className="h-4 w-4" /> Support
                 </Button>
               </div>
