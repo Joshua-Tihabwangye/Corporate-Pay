@@ -5,74 +5,23 @@ import {
   ArrowLeft,
   AlertTriangle,
   BadgeCheck,
-  Bell,
-  Building2,
   Check,
-  ChevronDown,
   ChevronRight,
-  Copy,
-  FileText,
-  Globe,
   Info,
   Layers,
   Lock,
-  Mail,
-  MessageCircle,
   Plus,
-  ShieldCheck,
   Sparkles,
   Timer,
-  Users,
   X,
 } from "lucide-react";
+import { ApprovalStorage, ApprovalFlow, ApprovalStage, Channel } from "../../utils/approvalStorage";
 
 const EVZ = { green: "#03CD8C", orange: "#F77F00" };
 
 type OrgRole = "Viewer" | "Member" | "Approver" | "Finance" | "Admin" | "Owner";
-
 type OrgStatus = "Active" | "Deposit depleted" | "Suspended" | "Needs verification";
-
 type Org = { id: string; name: string; role: OrgRole; status: OrgStatus };
-
-type Channel = "In-app" | "Email" | "WhatsApp" | "WeChat" | "SMS";
-
-type StageType = "Manager" | "Finance" | "Risk" | "Custom";
-
-type ApprovalStage = {
-  id: string;
-  name: string;
-  type: StageType;
-  requiredApprovers: number;
-  delegatesAllowed: boolean;
-  escalationAfter: string;
-  notifyChannels: Channel[];
-  note: string;
-};
-
-type Flow = {
-  id: string;
-  name: string;
-  status: "Draft" | "Active" | "Archived";
-  appliesTo: Array<"Purchases" | "Payouts" | "Refunds">;
-  thresholds: Array<{ currency: "UGX" | "USD" | "CNY" | "KES"; under: number; autoApprove: boolean; note: string }>;
-  eligibility: Array<string>;
-  stages: ApprovalStage[];
-  lastEdited: string;
-};
-
-type Scenario = {
-  type: "Purchases" | "Payouts" | "Refunds";
-  amountUGX: number;
-  requesterRole: OrgRole;
-  vendor: string;
-  module: string;
-};
-
-type SimulationResult = {
-  decision: "Auto-approved" | "Approval required" | "Blocked";
-  stages: Array<{ stage: string; required: number; channels: Channel[]; sla: string }>;
-  reason: string;
-};
 
 type Toast = { id: string; title: string; message?: string; kind: "success" | "warn" | "error" | "info" };
 
@@ -182,58 +131,6 @@ function Section({ title, subtitle, right, children }: { title: string; subtitle
   );
 }
 
-function Modal({
-  open,
-  title,
-  subtitle,
-  onClose,
-  children,
-  footer,
-}: {
-  open: boolean;
-  title: string;
-  subtitle?: string;
-  onClose: () => void;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => (e.key === "Escape" ? onClose() : null);
-    if (open) window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-  return (
-    <AnimatePresence>
-      {open ? (
-        <>
-          <motion.div className="fixed inset-0 z-40 bg-black/35" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            transition={{ duration: 0.18 }}
-            className="fixed inset-x-0 top-[10vh] z-50 mx-auto w-[min(980px,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(2,8,23,0.22)]"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
-              <div>
-                <div className="text-lg font-semibold text-slate-900">{title}</div>
-                {subtitle ? <div className="mt-1 text-sm text-slate-600">{subtitle}</div> : null}
-              </div>
-              <button className="rounded-2xl p-2 text-slate-600 hover:bg-slate-100" onClick={onClose} aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="max-h-[70vh] overflow-auto px-5 py-4">{children}</div>
-            {footer ? <div className="border-t border-slate-200 bg-slate-50 px-5 py-4">{footer}</div> : null}
-          </motion.div>
-        </>
-      ) : null}
-    </AnimatePresence>
-  );
-}
-
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: string[] }) {
   return (
     <select
@@ -248,22 +145,6 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
       ))}
     </select>
   );
-}
-
-function simulate(flow: Flow, s: Scenario): SimulationResult {
-  // Auto-approve under threshold
-  const thr = flow.thresholds.find((t) => t.currency === "UGX");
-  if (thr && s.amountUGX < thr.under && thr.autoApprove) {
-    return { decision: "Auto-approved", stages: [], reason: `Under ${formatUGX(thr.under)} auto-approve threshold` };
-  }
-
-  // Basic eligibility
-  if (s.requesterRole === "Viewer") {
-    return { decision: "Blocked", stages: [], reason: "Viewer role cannot request approvals" };
-  }
-
-  const stages = flow.stages.map((st) => ({ stage: st.name, required: st.requiredApprovers, channels: st.notifyChannels, sla: st.escalationAfter }));
-  return { decision: "Approval required", stages, reason: "Meets criteria for approval workflow" };
 }
 
 export default function ApprovalWorkflowBuilder() {
@@ -283,167 +164,73 @@ export default function ApprovalWorkflowBuilder() {
     []
   );
 
-  const [orgId, setOrgId] = useState(orgs[0].id);
-  const org = useMemo(() => orgs.find((o) => o.id === orgId) || orgs[0], [orgs, orgId]);
+  const [orgName, setOrgName] = useState(orgs[0].name);
+  const org = useMemo(() => orgs.find((o) => o.name === orgName) || orgs[0], [orgs, orgName]);
   const canEdit = useMemo(() => ["Owner", "Admin", "Finance"].includes(org.role), [org.role]);
 
-  const [flows, setFlows] = useState<Flow[]>([
-    {
-      id: "F-1",
-      name: "CorporatePay purchases",
-      status: "Active",
-      appliesTo: ["Purchases"],
-      thresholds: [{ currency: "UGX", under: 100000, autoApprove: true, note: "Auto-approve small purchases" }],
-      eligibility: ["Requester must not be Viewer", "Cost center required"],
-      stages: [
-        {
-          id: "S-1",
-          name: "Manager approval",
-          type: "Manager",
-          requiredApprovers: 1,
-          delegatesAllowed: true,
-          escalationAfter: "2h",
-          notifyChannels: ["In-app", "Email", "WhatsApp"],
-          note: "First line approval",
-        },
-        {
-          id: "S-2",
-          name: "Finance approval",
-          type: "Finance",
-          requiredApprovers: 1,
-          delegatesAllowed: true,
-          escalationAfter: "4h",
-          notifyChannels: ["In-app", "Email", "WeChat"],
-          note: "Final approval",
-        },
-      ],
-      lastEdited: "Today",
-    },
-    {
-      id: "F-2",
-      name: "Payout approvals",
-      status: "Draft",
-      appliesTo: ["Payouts"],
-      thresholds: [{ currency: "UGX", under: 50000, autoApprove: true, note: "Small payouts auto" }],
-      eligibility: ["Beneficiary must be verified", "No risk holds"],
-      stages: [
-        {
-          id: "S-3",
-          name: "Finance approval",
-          type: "Finance",
-          requiredApprovers: 2,
-          delegatesAllowed: false,
-          escalationAfter: "6h",
-          notifyChannels: ["In-app", "Email"],
-          note: "Dual approval",
-        },
-      ],
-      lastEdited: "Draft",
-    },
-  ]);
+  // Load flows from storage
+  const [flows, setFlows] = useState<ApprovalFlow[]>([]);
+  const [selectedFlowName, setSelectedFlowName] = useState("");
 
-  const [flowId, setFlowId] = useState(flows[0].id);
-  const flow = useMemo(() => flows.find((f) => f.id === flowId) || flows[0], [flows, flowId]);
-
-  const [scenario, setScenario] = useState<Scenario>({
-    type: "Purchases",
-    amountUGX: 540000,
-    requesterRole: "Member",
-    vendor: "Acme Supplies",
-    module: "CorporatePay",
-  });
-
-  const result = useMemo(() => simulate(flow, scenario), [flow, scenario]);
-
-  const openAdmin = () => toast({ kind: "info", title: "Open Admin Console", message: "Deep link to full workflow builder." });
-
-  const [addOpen, setAddOpen] = useState(false);
-  const [draftName, setDraftName] = useState("New flow");
-  const [draftUnder, setDraftUnder] = useState("100000");
-
-  const addFlow = () => {
-    if (!draftName.trim()) {
-      toast({ kind: "warn", title: "Name required" });
-      return;
+  const loadFlows = () => {
+    const loaded = ApprovalStorage.getAll();
+    setFlows(loaded);
+    if (loaded.length > 0 && !loaded.find(f => f.name === selectedFlowName)) {
+      setSelectedFlowName(loaded[0].name);
     }
-    const id = `F-${Math.floor(10 + Math.random() * 90)}`;
-    setFlows((p) => [
-      {
-        id,
-        name: draftName.trim(),
-        status: "Draft",
-        appliesTo: ["Purchases"],
-        thresholds: [{ currency: "UGX", under: Number(draftUnder.replace(/[^0-9]/g, "")) || 0, autoApprove: true, note: "Auto-approve under threshold" }],
-        eligibility: ["Requester must not be Viewer"],
-        stages: [
-          {
-            id: uid("S"),
-            name: "Manager approval",
-            type: "Manager",
-            requiredApprovers: 1,
-            delegatesAllowed: true,
-            escalationAfter: "2h",
-            notifyChannels: ["In-app", "Email"],
-            note: "Default stage",
-          },
-        ],
-        lastEdited: "Just now",
-      },
-      ...p,
-    ]);
-    setAddOpen(false);
-    toast({ kind: "success", title: "Flow created", message: id });
   };
 
+  useEffect(() => {
+    loadFlows();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reload when returning to this page (e.g., after editing)
+  useEffect(() => {
+    const handleFocus = () => loadFlows();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const flow = useMemo(() => flows.find((f) => f.name === selectedFlowName) || flows[0], [flows, selectedFlowName]);
+
+  const openEdit = (id: string = "new") => navigate(`/console/settings/approvals/workflows/${id}/edit`);
+
   const toggleFlowStatus = () => {
-    if (!canEdit) {
+    if (!canEdit || !flow) {
       toast({ kind: "warn", title: "Admin required" });
       return;
     }
-    setFlows((p) => p.map((f) => (f.id === flow.id ? { ...f, status: f.status === "Active" ? "Archived" : "Active", lastEdited: "Just now" } : f)));
+    const updated = { ...flow, status: flow.status === "Active" ? "Archived" as const : "Active" as const };
+    ApprovalStorage.save(updated);
+    loadFlows();
     toast({ kind: "success", title: "Status updated" });
   };
 
-  const addStage = () => {
-    if (!canEdit) {
-      toast({ kind: "warn", title: "Admin required" });
-      return;
-    }
-    const st: ApprovalStage = {
-      id: uid("S"),
-      name: `Stage ${flow.stages.length + 1}`,
-      type: "Custom",
-      requiredApprovers: 1,
-      delegatesAllowed: true,
-      escalationAfter: "4h",
-      notifyChannels: ["In-app", "Email"],
-      note: "New stage",
-    };
-    setFlows((p) => p.map((f) => (f.id === flow.id ? { ...f, stages: [...f.stages, st], lastEdited: "Just now" } : f)));
-    toast({ kind: "success", title: "Stage added" });
-  };
-
   const toggleChannel = (stageId: string, ch: Channel) => {
-    if (!canEdit) {
+    if (!canEdit || !flow) {
       toast({ kind: "warn", title: "Admin required" });
       return;
     }
-    setFlows((p) =>
-      p.map((f) => {
-        if (f.id !== flow.id) return f;
-        return {
-          ...f,
-          stages: f.stages.map((s) => {
-            if (s.id !== stageId) return s;
-            const has = s.notifyChannels.includes(ch);
-            return { ...s, notifyChannels: has ? s.notifyChannels.filter((x) => x !== ch) : [...s.notifyChannels, ch] };
-          }),
-          lastEdited: "Just now",
-        };
-      })
-    );
+    const updatedStages = flow.stages.map((s) => {
+      if (s.id !== stageId) return s;
+      const has = s.notifyChannels.includes(ch);
+      return { ...s, notifyChannels: has ? s.notifyChannels.filter((x) => x !== ch) : [...s.notifyChannels, ch] };
+    });
+    const updated = { ...flow, stages: updatedStages };
+    ApprovalStorage.save(updated);
+    loadFlows();
     toast({ kind: "success", title: "Channels updated" });
   };
+
+  if (!flow) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-slate-500">No workflows found. <button onClick={() => openEdit("new")} className="text-emerald-600 underline">Create one</button></p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: "radial-gradient(90% 60% at 50% 0%, rgba(3,205,140,0.18), rgba(255,255,255,0))" }}>
@@ -475,18 +262,12 @@ export default function ApprovalWorkflowBuilder() {
 
               <div className="flex flex-wrap items-center gap-2">
                 <div className="min-w-[220px]">
-                  <Select value={orgId} onChange={setOrgId} options={orgs.map((o) => o.id)} />
+                  <Select value={orgName} onChange={setOrgName} options={orgs.map((o) => o.name)} />
                 </div>
                 <div className="min-w-[260px]">
-                  <Select value={flowId} onChange={setFlowId} options={flows.map((f) => f.id)} />
+                  <Select value={selectedFlowName} onChange={setSelectedFlowName} options={flows.map((f) => f.name)} />
                 </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Switch", message: "Open wallet switcher" })}>
-                  <ChevronRight className="h-4 w-4" /> Switch
-                </Button>
-                <Button variant="outline" onClick={openAdmin}>
-                  <ChevronRight className="h-4 w-4" /> Admin Console
-                </Button>
-                <Button variant="primary" disabled={!canEdit} title={!canEdit ? "Admin required" : "New"} onClick={() => setAddOpen(true)}>
+                <Button variant="primary" disabled={!canEdit} title={!canEdit ? "Admin required" : "New"} onClick={() => openEdit("new")}>
                   <Plus className="h-4 w-4" /> New flow
                 </Button>
               </div>
@@ -518,39 +299,35 @@ export default function ApprovalWorkflowBuilder() {
                       <Button variant={flow.status === "Active" ? "outline" : "primary"} disabled={!canEdit} title={!canEdit ? "Admin required" : "Toggle"} onClick={toggleFlowStatus}>
                         {flow.status === "Active" ? "Archive" : "Activate"}
                       </Button>
-                      <Button variant="outline" onClick={openAdmin}><ChevronRight className="h-4 w-4" /> Advanced</Button>
+                      <Button variant="outline" onClick={() => openEdit(flow.id)}><ChevronRight className="h-4 w-4" /> Edit</Button>
                     </div>
                   }
                 >
                   <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                    <div className="text-sm font-semibold text-slate-900">Auto-approve thresholds</div>
-                    <div className="mt-3 space-y-2">
-                      {flow.thresholds.map((t, idx) => (
-                        <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-sm font-semibold text-slate-900">{t.currency}</div>
-                                <Pill label={t.autoApprove ? "Auto" : "No auto"} tone={t.autoApprove ? "good" : "neutral"} />
-                                <Pill label={`Under ${formatUGX(t.under)}`} tone="neutral" />
-                              </div>
-                              <div className="mt-1 text-sm text-slate-600">{t.note}</div>
-                            </div>
-                            <Button variant="outline" onClick={openAdmin} className="px-3 py-2"><ChevronRight className="h-4 w-4" /></Button>
+                    <div className="text-sm font-semibold text-slate-900">Auto-approve threshold</div>
+                    <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-sm font-semibold text-slate-900">{flow.thresholdCurrency}</div>
+                            <Pill label="Auto" tone="good" />
+                            <Pill label={`Under ${formatUGX(flow.thresholdAmount)}`} tone="neutral" />
                           </div>
+                          <div className="mt-1 text-sm text-slate-600">Auto-approve transactions under this threshold</div>
                         </div>
-                      ))}
+                        <Button variant="outline" onClick={() => openEdit(flow.id)} className="px-3 py-2"><ChevronRight className="h-4 w-4" /></Button>
+                      </div>
                     </div>
                   </div>
 
                   <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-semibold text-slate-900">Stages</div>
+                        <div className="text-sm font-semibold text-slate-900">Stages ({flow.stages.length})</div>
                         <div className="mt-1 text-sm text-slate-600">Multi-stage approvals with escalation and delegation</div>
                       </div>
-                      <Button variant="primary" disabled={!canEdit} title={!canEdit ? "Admin required" : "Add"} onClick={addStage}>
-                        <Plus className="h-4 w-4" /> Add stage
+                      <Button variant="outline" onClick={() => openEdit(flow.id)}>
+                        <Plus className="h-4 w-4" /> Edit stages
                       </Button>
                     </div>
 
@@ -563,7 +340,7 @@ export default function ApprovalWorkflowBuilder() {
                                 <div className="text-sm font-semibold text-slate-900">{s.name}</div>
                                 <Pill label={s.type} tone="neutral" />
                                 <Pill label={`${s.requiredApprovers} approver(s)`} tone="info" />
-                                <Pill label={s.delegatesAllowed ? "Delegation" : "No delegation"} tone={s.delegatesAllowed ? "neutral" : "neutral"} />
+                                <Pill label={s.delegatesAllowed ? "Delegation" : "No delegation"} tone="neutral" />
                                 <Pill label={`Escalate ${s.escalationAfter}`} tone="warn" />
                               </div>
                               <div className="mt-1 text-sm text-slate-600">{s.note}</div>
@@ -574,12 +351,11 @@ export default function ApprovalWorkflowBuilder() {
                               </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                              {(["In-app", "Email", "WhatsApp", "WeChat", "SMS"] as Channel[]).slice(0, 4).map((c) => (
+                              {(["In-app", "Email", "WhatsApp", "WeChat"] as Channel[]).map((c) => (
                                 <Button key={c} variant={s.notifyChannels.includes(c) ? "primary" : "outline"} className="px-3 py-2" disabled={!canEdit} title={!canEdit ? "Admin required" : "Toggle"} onClick={() => toggleChannel(s.id, c)}>
                                   {c}
                                 </Button>
                               ))}
-                              <Button variant="outline" onClick={openAdmin}><ChevronRight className="h-4 w-4" /> Edit</Button>
                             </div>
                           </div>
                         </div>
@@ -587,7 +363,7 @@ export default function ApprovalWorkflowBuilder() {
                     </div>
 
                     <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                      <div className="flex items-start gap-2"><Info className="mt-0.5 h-4 w-4" /><div>WeChat is supported as a channel for approval notifications where enabled.</div></div>
+                      <div className="flex items-start gap-2"><Info className="mt-0.5 h-4 w-4" /><div>Changes to channels are saved immediately. Click Edit to manage stages.</div></div>
                     </div>
                   </div>
                 </Section>
@@ -596,57 +372,26 @@ export default function ApprovalWorkflowBuilder() {
               <div className="space-y-4 lg:col-span-4">
                 <Section
                   title="Scenario simulation"
-                  subtitle="What happens if..."
-                  right={<Pill label={result.decision} tone={result.decision === "Auto-approved" ? "good" : result.decision === "Blocked" ? "bad" : "info"} />}
+                  subtitle="Test workflow behavior"
+                  right={<Pill label="Ready" tone="good" />}
                 >
                   <div className="space-y-3">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                      <div className="text-xs font-semibold text-slate-600">Type</div>
-                      <div className="mt-2"><Select value={scenario.type} onChange={(v) => setScenario((p) => ({ ...p, type: v as any }))} options={["Purchases", "Payouts", "Refunds"]} /></div>
-                      <div className="mt-3 text-xs font-semibold text-slate-600">Amount (UGX)</div>
-                      <div className="mt-2"><input value={String(scenario.amountUGX)} onChange={(e) => setScenario((p) => ({ ...p, amountUGX: Number(e.target.value.replace(/[^0-9]/g, "")) || 0 }))} className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold" /></div>
-                      <div className="mt-3 text-xs font-semibold text-slate-600">Requester role</div>
-                      <div className="mt-2"><Select value={scenario.requesterRole} onChange={(v) => setScenario((p) => ({ ...p, requesterRole: v as any }))} options={["Member", "Approver", "Finance", "Admin", "Owner", "Viewer"]} /></div>
-                      <div className="mt-3 text-xs font-semibold text-slate-600">Module</div>
-                      <div className="mt-2"><Select value={scenario.module} onChange={(v) => setScenario((p) => ({ ...p, module: v }))} options={["CorporatePay", "E-Commerce", "Services", "EV Charging", "Rides & Logistics"]} /></div>
-                      <div className="mt-3 text-xs font-semibold text-slate-600">Vendor</div>
-                      <div className="mt-2"><input value={scenario.vendor} onChange={(e) => setScenario((p) => ({ ...p, vendor: e.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold" /></div>
-                    </div>
-
-                    <div className={cn("rounded-3xl border p-4", result.decision === "Auto-approved" ? "border-emerald-200 bg-emerald-50" : result.decision === "Blocked" ? "border-rose-200 bg-rose-50" : "border-blue-200 bg-blue-50")}>
+                    <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
                       <div className="flex items-start gap-3">
-                        <div className={cn("grid h-10 w-10 place-items-center rounded-2xl", result.decision === "Auto-approved" ? "bg-white text-emerald-700" : result.decision === "Blocked" ? "bg-white text-rose-700" : "bg-white text-blue-700")}>
-                          {result.decision === "Auto-approved" ? <BadgeCheck className="h-5 w-5" /> : result.decision === "Blocked" ? <AlertTriangle className="h-5 w-5" /> : <Timer className="h-5 w-5" />}
+                        <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-emerald-700">
+                          <Timer className="h-5 w-5" />
                         </div>
                         <div>
-                          <div className="text-sm font-semibold text-slate-900">{result.decision}</div>
-                          <div className="mt-1 text-sm text-slate-700">{result.reason}</div>
-                          {result.stages.length ? (
-                            <div className="mt-3 space-y-2">
-                              {result.stages.map((s, idx) => (
-                                <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-3">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                      <div className="text-sm font-semibold text-slate-900">{s.stage}</div>
-                                      <div className="mt-1 text-xs text-slate-500">Approvers: {s.required} • SLA: {s.sla}</div>
-                                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                                        {s.channels.map((c) => (
-                                          <Pill key={c} label={c} tone={c === "WeChat" || c === "WhatsApp" ? "info" : "neutral"} />
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : null}
+                          <div className="text-sm font-semibold text-slate-900">Workflow active</div>
+                          <div className="mt-1 text-sm text-slate-700">{flow.stages.length} stage(s) configured</div>
+                          <div className="mt-2 text-xs text-emerald-600">Auto-approve under {formatUGX(flow.thresholdAmount)}</div>
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Preview", message: "This would preview the actual approval journey." })}>
+                        <Button variant="outline" onClick={() => navigate("/console/settings/approvals/workflows/preview")}>
                           <ChevronRight className="h-4 w-4" /> Preview
                         </Button>
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Receipt", message: "Approval chain will show in receipt drawer." })}>
+                        <Button variant="outline" onClick={() => navigate("/console/receipt/approval-demo")}>
                           <ChevronRight className="h-4 w-4" /> Receipt
                         </Button>
                       </div>
@@ -669,13 +414,13 @@ export default function ApprovalWorkflowBuilder() {
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-slate-900">Premium approvals</div>
-                      <div className="mt-1 text-sm text-slate-600">Escalation, delegation, SLA, and multi-channel (including WeChat).</div>
+                      <div className="mt-1 text-sm text-slate-600">Escalation, delegation, SLA, and multi-channel.</div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <Pill label="SLA" tone="neutral" />
                         <Pill label="Delegation" tone="neutral" />
                         <Pill label="WeChat" tone="info" />
                       </div>
-                      <div className="mt-3"><Button variant="outline" onClick={openAdmin}><ChevronRight className="h-4 w-4" /> Admin Console</Button></div>
+                      <div className="mt-3"><Button variant="outline" onClick={() => openEdit(flow.id)}><ChevronRight className="h-4 w-4" /> Edit Workflow</Button></div>
                     </div>
                   </div>
                 </div>
@@ -691,7 +436,7 @@ export default function ApprovalWorkflowBuilder() {
                     <div className="mt-1 text-sm text-slate-600">Enable auto-approve under threshold for low-value requests to reduce workload.</div>
                   </div>
                 </div>
-                <Button variant="primary" disabled={!canEdit} title={!canEdit ? "Admin required" : "New"} onClick={() => setAddOpen(true)}>
+                <Button variant="primary" disabled={!canEdit} title={!canEdit ? "Admin required" : "New"} onClick={() => openEdit("new")}>
                   <Plus className="h-4 w-4" /> New flow
                 </Button>
               </div>
@@ -699,51 +444,6 @@ export default function ApprovalWorkflowBuilder() {
           </div>
         </div>
       </div>
-
-      <Modal
-        open={addOpen}
-        title="Create approval flow"
-        subtitle="Draft a flow with basic thresholds"
-        onClose={() => setAddOpen(false)}
-        footer={
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-sm text-slate-600"><Info className="h-4 w-4" /> Draft flows should be simulated before activation.</div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={addFlow}><Check className="h-4 w-4" /> Create</Button>
-            </div>
-          </div>
-        }
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="rounded-3xl border border-slate-200 bg-white p-4">
-            <div className="text-sm font-semibold text-slate-900">Draft</div>
-            <div className="mt-3 space-y-3">
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Name</div>
-                <div className="mt-1"><input value={draftName} onChange={(e) => setDraftName(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold" /></div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-slate-600">Auto-approve under (UGX)</div>
-                <div className="mt-1"><input value={draftUnder} onChange={(e) => setDraftUnder(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold" /></div>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                <div className="flex items-start gap-2"><Info className="mt-0.5 h-4 w-4" /><div>Advanced settings for SLA, delegation, and channels are available in Admin Console.</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-sm font-semibold text-slate-900">Preview</div>
-            <div className="mt-3 space-y-2 text-sm text-slate-700">
-              <div className="flex items-center justify-between"><span className="text-slate-500">Name</span><span className="font-semibold">{draftName}</span></div>
-              <div className="flex items-center justify-between"><span className="text-slate-500">Under</span><span className="font-semibold">{formatUGX(Number(draftUnder.replace(/[^0-9]/g, "")) || 0)}</span></div>
-              <div className="mt-3"><Pill label="Draft" tone="warn" /> <Pill label="Simulate" tone="info" /></div>
-              <div className="mt-4"><Button variant="outline" onClick={openAdmin}><ChevronRight className="h-4 w-4" /> Advanced editor</Button></div>
-            </div>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
