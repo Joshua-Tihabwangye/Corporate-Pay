@@ -307,8 +307,8 @@ export default function PolicyBuilder() {
     []
   );
 
-  const [orgId, setOrgId] = useState(orgs[0].id);
-  const org = useMemo(() => orgs.find((o) => o.id === orgId) || orgs[0], [orgs, orgId]);
+  const [orgName, setOrgName] = useState(orgs[0].name);
+  const org = useMemo(() => orgs.find((o) => o.name === orgName) || orgs[0], [orgs, orgName]);
   const canEdit = useMemo(() => ["Owner", "Admin", "Finance"].includes(org.role), [org.role]);
 
   const [rules, setRules] = useState<PolicyRule[]>([
@@ -467,7 +467,7 @@ export default function PolicyBuilder() {
     toast({ kind: "success", title: "Status updated" });
   };
 
-  const openAdmin = () => toast({ kind: "info", title: "Open Admin Console", message: "Deep link to full policy editor." });
+  const openPolicyEdit = (policyId: string) => navigate(`/console/settings/policies/${policyId}/edit`);
 
   const copy = async (text: string) => {
     try {
@@ -507,14 +507,8 @@ export default function PolicyBuilder() {
 
               <div className="flex flex-wrap items-center gap-2">
                 <div className="min-w-[220px]">
-                  <Select value={orgId} onChange={setOrgId} options={orgs.map((o) => o.id)} />
+                  <Select value={orgName} onChange={setOrgName} options={orgs.map((o) => o.name)} />
                 </div>
-                <Button variant="outline" onClick={() => toast({ kind: "info", title: "Switch", message: "Open wallet switcher" })}>
-                  <ChevronRight className="h-4 w-4" /> Switch
-                </Button>
-                <Button variant="outline" onClick={openAdmin}>
-                  <ChevronRight className="h-4 w-4" /> Admin Console
-                </Button>
                 <Button variant="primary" disabled={!canEdit} title={!canEdit ? "Admin required" : "Add"} onClick={() => setAddOpen(true)}>
                   <Plus className="h-4 w-4" /> New policy
                 </Button>
@@ -592,7 +586,7 @@ export default function PolicyBuilder() {
                             <Button variant="outline" onClick={() => copy(r.id)} className="px-3 py-2">
                               <Copy className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" onClick={openAdmin}>
+                            <Button variant="outline" onClick={() => openPolicyEdit(r.id)}>
                               <ChevronRight className="h-4 w-4" /> Edit
                             </Button>
                             <Button variant={r.status === "Active" ? "outline" : "primary"} disabled={!canEdit} title={!canEdit ? "Admin required" : "Toggle"} onClick={() => toggleStatus(r.id)}>
@@ -669,10 +663,10 @@ export default function PolicyBuilder() {
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Open approvals", message: "Deep link to Approval Workflow Builder" })}>
+                        <Button variant="outline" onClick={() => navigate("/console/settings/approvals/workflows")}>
                           <ChevronRight className="h-4 w-4" /> Approvals
                         </Button>
-                        <Button variant="outline" onClick={() => toast({ kind: "info", title: "Receipt", message: "Policy reason would appear in receipt drawer." })}>
+                        <Button variant="outline" onClick={() => navigate(`/console/receipt/${sim.vendor.replace(/\s+/g, '-').toLowerCase()}`)}>
                           <ChevronRight className="h-4 w-4" /> Receipt
                         </Button>
                       </div>
@@ -681,7 +675,7 @@ export default function PolicyBuilder() {
                     <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                       <div className="text-sm font-semibold text-slate-900">Tip</div>
                       <div className="mt-1 text-sm text-slate-600">Use simulation to validate changes before activating policies.</div>
-                      <div className="mt-3"><Button variant="outline" onClick={() => toast({ kind: "info", title: "Run full simulation", message: "This would run scenario suite." })}><ChevronRight className="h-4 w-4" /> Scenario suite</Button></div>
+                      <div className="mt-3"><Button variant="outline" onClick={() => navigate("/console/settings/policies/scenarios")}><ChevronRight className="h-4 w-4" /> Scenario suite</Button></div>
                     </div>
                   </div>
                 </Section>
@@ -697,7 +691,7 @@ export default function PolicyBuilder() {
                     <div>
                       <div className="text-sm font-semibold text-slate-900">Premium policy control</div>
                       <div className="mt-1 text-sm text-slate-600">Out-of-policy handling, attestations, and attachment thresholds.</div>
-                      <div className="mt-3"><Button variant="outline" onClick={openAdmin}><ChevronRight className="h-4 w-4" /> Admin Console</Button></div>
+                      <div className="mt-3"><Button variant="outline" onClick={() => navigate("/console/settings/policies/scenarios")}><ChevronRight className="h-4 w-4" /> Policy Scenarios</Button></div>
                     </div>
                   </div>
                 </div>
@@ -771,7 +765,7 @@ export default function PolicyBuilder() {
               <div className="flex items-center justify-between"><span className="text-slate-500">Threshold</span><span className="font-semibold">{formatUGX(Number(draftAmount.replace(/[^0-9]/g, "")) || 0)}</span></div>
               <div className="flex items-center justify-between"><span className="text-slate-500">Decision</span><span className="font-semibold">{draftAction}</span></div>
               <div className="mt-3"><Pill label="Draft" tone="warn" /> <Pill label="Audit-ready" tone="neutral" /></div>
-              <div className="mt-4"><Button variant="outline" onClick={openAdmin}><ChevronRight className="h-4 w-4" /> Advanced editor</Button></div>
+              <div className="mt-4"><Button variant="outline" onClick={() => openPolicyEdit('new')}><ChevronRight className="h-4 w-4" /> Advanced editor</Button></div>
             </div>
           </div>
         </div>
