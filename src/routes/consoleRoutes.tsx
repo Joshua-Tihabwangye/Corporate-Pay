@@ -42,6 +42,9 @@ import SecurityDeviceDetail from '../pages/generated/corporate_pay_security_devi
 import SecurityLoginDetail from '../pages/generated/corporate_pay_security_login_detail';
 import SecurityKeyDetail from '../pages/generated/corporate_pay_security_key_detail';
 import SecurityForensicsDetail from '../pages/generated/corporate_pay_security_forensics_detail';
+import PolicyEdit from '../pages/generated/corporate_pay_policy_edit';
+import PolicyScenarios from '../pages/generated/corporate_pay_policy_scenarios';
+import ReceiptDrawer from '../pages/generated/corporate_pay_receipt_drawer';
 
 /**
  * Console routes - main dashboard area with dynamic page loading
@@ -150,6 +153,18 @@ export const consoleRoutes: RouteObject[] = [
     {
         path: "/console/settings/policies",
         element: <ProtectedRoute><Console><PolicyBuilder /></Console></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/policies/:policyId/edit",
+        element: <ProtectedRoute><Console><PolicyEdit /></Console></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/policies/scenarios",
+        element: <ProtectedRoute><Console><PolicyScenarios /></Console></ProtectedRoute>,
+    },
+    {
+        path: "/console/receipt/:id",
+        element: <ProtectedRoute><Console><ReceiptDrawer /></Console></ProtectedRoute>,
     },
     {
         path: "/console/settings/approvals/workflows",
