@@ -37,6 +37,11 @@ import Integrations from '../pages/generated/corporate_pay_integrations_develope
 import Security from '../pages/generated/corporate_pay_security_audit_compliance';
 import SupportTools from '../pages/generated/corporate_pay__support_admin_tool';
 import AdminSettings from '../pages/generated/corporate_pay_admin_settings';
+import SecurityAuditDetail from '../pages/generated/corporate_pay_security_audit_detail';
+import SecurityDeviceDetail from '../pages/generated/corporate_pay_security_device_detail';
+import SecurityLoginDetail from '../pages/generated/corporate_pay_security_login_detail';
+import SecurityKeyDetail from '../pages/generated/corporate_pay_security_key_detail';
+import SecurityForensicsDetail from '../pages/generated/corporate_pay_security_forensics_detail';
 
 /**
  * Console routes - main dashboard area with dynamic page loading
@@ -177,6 +182,26 @@ export const consoleRoutes: RouteObject[] = [
     {
         path: "/console/settings/security",
         element: <ProtectedRoute><Console><Security /></Console></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/security/audit/:id",
+        element: <ProtectedRoute><Console><SecurityAuditDetail /></Console></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/security/devices/:id",
+        element: <ProtectedRoute><Console><SecurityDeviceDetail /></Console></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/security/logins/:id",
+        element: <ProtectedRoute><Console><SecurityLoginDetail /></Console></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/security/keys/:keyId",
+        element: <ProtectedRoute><Console><SecurityKeyDetail /></Console></ProtectedRoute>,
+    },
+    {
+        path: "/console/settings/security/forensics/:id",
+        element: <ProtectedRoute><Console><SecurityForensicsDetail /></Console></ProtectedRoute>,
     },
     {
         path: "/console/settings/support-tools",
